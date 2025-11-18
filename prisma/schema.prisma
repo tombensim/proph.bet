@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth Models
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  
+  // App specific fields
+  role          Role      @default(USER)
+  points        Int       @default(1000)
+  
+  createdMarkets Market[]  @relation("CreatedMarkets")
+  bets           Bet[]
+  sentTransfers  Transaction[] @relation("Sender")
+  receivedTransfers Transaction[] @relation("Receiver")
+  notifications  Notification[]
+  
+  // For "Hidden" logic
+  hiddenFromMarkets Market[] @relation("HiddenUsers")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+ 
+  @@id([identifier, token])
+}
+
+// App Specific Models
+
+model Market {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  type        MarketType
+  status      MarketStatus @default(OPEN)
+  
+  creatorId   String
+  creator     User      @relation("CreatedMarkets", fields: [creatorId], references: [id])
+  
+  resolutionDate DateTime
+  
+  options     Option[]
+  bets        Bet[]
+  
+  hiddenUsers User[]    @relation("HiddenUsers")
+  
+  minBet      Int?
+  maxBet      Int?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Option {
+  id        String   @id @default(cuid())
+  text      String
+  marketId  String
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  bets      Bet[]
+}
+
+model Bet {
+  id        String   @id @default(cuid())
+  amount    Int
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  marketId  String
+  market    Market   @relation(fields: [marketId], references: [id])
+  
+  optionId  String?
+  option    Option?  @relation(fields: [optionId], references: [id])
+  
+  numericValue Float?
+
+  createdAt DateTime @default(now())
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  amount    Int
+  type      TransactionType
+  
+  fromUserId String?
+  fromUser   User?   @relation("Sender", fields: [fromUserId], references: [id])
+  
+  toUserId   String?
+  toUser     User?   @relation("Receiver", fields: [toUserId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MarketType {
+  BINARY
+  MULTIPLE_CHOICE
+  NUMERIC_RANGE
+}
+
+enum MarketStatus {
+  OPEN
+  PENDING_RESOLUTION
+  RESOLVED
+  CANCELLED
+}
+
+enum TransactionType {
+  BET_PLACED
+  WIN_PAYOUT
+  USER_TRANSFER
+  MONTHLY_RESET
+}
+
+enum NotificationType {
+  MARKET_RESOLVED
+  BET_RESOLVED
+  WIN_PAYOUT
+  MARKET_CREATED
+  MONTHLY_WINNER
+  POINTS_RESET
+}
