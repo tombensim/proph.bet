@@ -44,13 +44,6 @@ export async function placeBetAction(data: PlaceBetValues) {
 
   // AMM Logic requires Options
   if (market.type === MarketType.NUMERIC_RANGE) {
-     // For numeric, we currently don't have an AMM spec in the prompt. 
-     // Fallback to simple logging or error?
-     // The prompt said "Replace static 50/50... with AMM". 
-     // Numeric range usually uses buckets. 
-     // For this task, I'll support Binary/Multi and throw/ignore Numeric AMM logic or leave as is (fixed payout logic in resolution).
-     // However, resolution-payout will change. 
-     // Let's focus on BINARY/MULTI support.
      if (numericValue === undefined) throw new Error("Please provide a numeric value")
   } else {
      if (!optionId) throw new Error("Please select an option")
@@ -95,14 +88,8 @@ export async function placeBetAction(data: PlaceBetValues) {
         if (!targetOption) throw new Error("Option not found")
 
         // Calculate k (product of all pools)
-        // k = P1 * P2 * ... * Pn
         const poolBalances = options.map(o => o.liquidity)
         const k = poolBalances.reduce((acc, val) => acc * val, 1)
-
-        // Logic:
-        // 1. Add 'amount' to ALL OTHER pools
-        // 2. Calculate new target pool = k / (product of others)
-        // 3. Shares = amount + (oldTarget - newTarget)
         
         const otherOptions = options.filter(o => o.id !== optionId)
         
@@ -115,7 +102,6 @@ export async function placeBetAction(data: PlaceBetValues) {
         }
 
         // Calculate new target liquidity
-        // NewOtherProduct = Product(oldOther + amount)
         const newOtherProduct = otherOptions.reduce((acc, o) => acc * (o.liquidity + amount), 1)
         const newTargetLiquidity = k / newOtherProduct
 
@@ -126,12 +112,33 @@ export async function placeBetAction(data: PlaceBetValues) {
         })
 
         // Calculate Shares
-        // User gets 'amount' (minted) + swapped amount
         const swappedShares = targetOption.liquidity - newTargetLiquidity
         shares = amount + swappedShares
+
+        // --- RECORD PRICE HISTORY ---
+        // Fetch fresh state to record accurate prices
+        const updatedOptions = await tx.option.findMany({
+            where: { marketId: market.id }
+        })
+
+        // Calculate implied probability for each option: (1/Liq) / Sum(1/Liq)
+        const inverseSum = updatedOptions.reduce((sum, o) => sum + (1 / o.liquidity), 0)
+        const batchTimestamp = new Date()
+
+        for (const opt of updatedOptions) {
+            const probability = (1 / opt.liquidity) / inverseSum
+            
+            await tx.priceHistory.create({
+                data: {
+                    marketId: market.id,
+                    optionId: opt.id,
+                    price: probability,
+                    createdAt: batchTimestamp
+                }
+            })
+        }
+
     } else if (market.type === MarketType.NUMERIC_RANGE) {
-        // Fallback for numeric if needed, or treat amount as shares for now (1:1) 
-        // until numeric AMM is spec'd
         shares = amount 
     }
 

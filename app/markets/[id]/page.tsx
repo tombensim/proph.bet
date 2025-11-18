@@ -8,6 +8,7 @@ import { BetForm } from "./bet-form"
 import { ResolveMarketForm } from "./resolve-form"
 import { Separator } from "@/components/ui/separator"
 import { CommentsSection } from "./comments-section"
+import { PriceChart } from "@/components/market/PriceChart"
 import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 
@@ -28,6 +29,9 @@ export default async function MarketPage(props: PageProps) {
       bets: {
         include: { user: true, option: true },
         orderBy: { createdAt: 'desc' }
+      },
+      priceHistory: {
+        orderBy: { createdAt: 'asc' }
       },
       hiddenUsers: {
          select: { id: true }
@@ -78,6 +82,19 @@ export default async function MarketPage(props: PageProps) {
   const isAdmin = session.user.role === "ADMIN"
   const totalPool = market.bets.reduce((acc, bet) => acc + bet.amount, 0)
 
+  // Prepare Chart Data
+  const chartDataMap = new Map()
+  market.priceHistory.forEach(h => {
+     const time = h.createdAt.toISOString()
+     if (!chartDataMap.has(time)) {
+         chartDataMap.set(time, { date: time })
+     }
+     const entry = chartDataMap.get(time)
+     entry[h.optionId] = h.price
+  })
+
+  const chartData = Array.from(chartDataMap.values())
+
   return (
     <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 space-y-6">
@@ -92,9 +109,21 @@ export default async function MarketPage(props: PageProps) {
              {hideBets && <Badge variant="secondary" className="ml-auto">Bets Hidden</Badge>}
           </div>
           <h1 className="text-3xl font-bold mb-2">{market.title}</h1>
-          <div className="text-muted-foreground whitespace-pre-wrap">
+          <div className="text-muted-foreground whitespace-pre-wrap mb-4">
             {market.description}
           </div>
+
+          {/* Price Chart */}
+          {(market.type === "BINARY" || market.type === "MULTIPLE_CHOICE") && (
+             <Card>
+               <CardHeader className="pb-2">
+                 <CardTitle className="text-sm font-medium">Probability Over Time</CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <PriceChart data={chartData} options={market.options} />
+               </CardContent>
+             </Card>
+          )}
           
           {/* Show Resolution Evidence if Closed */}
           {market.status === "RESOLVED" && market.resolutionImage && (
