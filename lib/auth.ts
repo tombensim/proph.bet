@@ -13,10 +13,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       Credentials({
         name: "Dev Login",
         credentials: {
-          email: { label: "Email", type: "text", defaultValue: "tom@genoox.com" },
+          email: { label: "Email", type: "text", defaultValue: "dev@genoox.com" },
         },
         async authorize(credentials) {
-          const email = (credentials?.email as string) || "tom@genoox.com"
+          const email = (credentials?.email as string) || "dev@genoox.com"
           
           // Create or get the dev user
           const user = await prisma.user.upsert({
@@ -36,7 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ] : [])
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
       }
@@ -45,6 +45,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string
+        
+        // For dev mode, ensure user exists in DB
+        if (process.env.NODE_ENV === "development" && session.user.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: session.user.email }
+          })
+          if (dbUser) {
+            session.user.id = dbUser.id
+          }
+        }
       }
       return session
     }

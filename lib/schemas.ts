@@ -11,6 +11,8 @@ export const createMarketSchema = z.object({
   options: z.array(z.object({ value: z.string() })).optional(),
   minBet: z.coerce.number().optional(),
   maxBet: z.coerce.number().optional(),
+  hiddenFromUserIds: z.array(z.string()).optional(),
+  hideBetsFromUserIds: z.array(z.string()).optional(),
 }).refine((data) => {
   if (data.type === MarketType.MULTIPLE_CHOICE) {
     return data.options && data.options.length >= 2
@@ -22,4 +24,3 @@ export const createMarketSchema = z.object({
 })
 
 export type CreateMarketValues = z.infer<typeof createMarketSchema>
-

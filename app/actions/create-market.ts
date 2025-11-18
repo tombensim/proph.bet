@@ -8,6 +8,8 @@ import { createMarketSchema, CreateMarketValues } from "@/lib/schemas"
 
 export async function createMarketAction(data: CreateMarketValues) {
   const session = await auth()
+  console.log("Session:", JSON.stringify(session, null, 2))
+  
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
   }
@@ -17,7 +19,17 @@ export async function createMarketAction(data: CreateMarketValues) {
     throw new Error("Invalid data")
   }
   
-  const { title, description, type, resolutionDate, options, minBet, maxBet } = validated.data
+  const { 
+    title, 
+    description, 
+    type, 
+    resolutionDate, 
+    options, 
+    minBet, 
+    maxBet,
+    hiddenFromUserIds,
+    hideBetsFromUserIds
+  } = validated.data
 
   const market = await prisma.market.create({
     data: {
@@ -32,6 +44,12 @@ export async function createMarketAction(data: CreateMarketValues) {
         create: options.map(o => ({ text: o.value }))
       } : type === MarketType.BINARY ? {
         create: [{ text: "Yes" }, { text: "No" }]
+      } : undefined,
+      hiddenUsers: hiddenFromUserIds && hiddenFromUserIds.length > 0 ? {
+        connect: hiddenFromUserIds.map(id => ({ id }))
+      } : undefined,
+      hideBetsFromUsers: hideBetsFromUserIds && hideBetsFromUserIds.length > 0 ? {
+        connect: hideBetsFromUserIds.map(id => ({ id }))
       } : undefined
     },
   })

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BetForm } from "./bet-form"
 import { ResolveMarketForm } from "./resolve-form"
 import { Separator } from "@/components/ui/separator"
+import Link from "next/link"
+import { ExternalLink } from "lucide-react"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -28,6 +30,9 @@ export default async function MarketPage(props: PageProps) {
       },
       hiddenUsers: {
          select: { id: true }
+      },
+      hideBetsFromUsers: {
+         select: { id: true }
       }
     }
   })
@@ -47,6 +52,9 @@ export default async function MarketPage(props: PageProps) {
      )
   }
 
+  // Check bet visibility
+  const hideBets = market.hideBetsFromUsers.some(u => u.id === session.user!.id)
+
   // Get current user points
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -54,6 +62,7 @@ export default async function MarketPage(props: PageProps) {
   })
   
   const isCreator = market.creatorId === session.user.id
+  const isAdmin = session.user.role === "ADMIN"
   const totalPool = market.bets.reduce((acc, bet) => acc + bet.amount, 0)
 
   return (
@@ -67,11 +76,34 @@ export default async function MarketPage(props: PageProps) {
              ) : (
                <Badge variant="destructive">Closed</Badge>
              )}
+             {hideBets && <Badge variant="secondary" className="ml-auto">Bets Hidden</Badge>}
           </div>
           <h1 className="text-3xl font-bold mb-2">{market.title}</h1>
           <div className="text-muted-foreground whitespace-pre-wrap">
             {market.description}
           </div>
+          
+          {/* Show Resolution Evidence if Closed */}
+          {market.status === "RESOLVED" && market.resolutionImage && (
+            <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                Resolution Evidence
+                {isAdmin && <Badge variant="outline" className="ml-2">Admin Review</Badge>}
+              </h3>
+              <Link 
+                href={market.resolutionImage} 
+                target="_blank" 
+                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Screenshot
+              </Link>
+              {/* Simple embed if image */}
+              <div className="mt-2 rounded-md overflow-hidden border max-w-sm">
+                 <img src={market.resolutionImage} alt="Evidence" className="w-full h-auto" />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Resolution Interface for Creator */}
@@ -85,24 +117,30 @@ export default async function MarketPage(props: PageProps) {
 
         <div>
            <h3 className="font-semibold mb-4">Recent Activity</h3>
-           <div className="space-y-4">
-             {market.bets.length === 0 ? (
-               <p className="text-sm text-muted-foreground">No bets placed yet.</p>
-             ) : (
-               market.bets.map(bet => (
-                 <div key={bet.id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
-                    <div className="flex flex-col">
-                       <span className="font-medium">{bet.user.name || "Anonymous"}</span>
-                       <span className="text-xs text-muted-foreground">
-                         {bet.option?.text ? `Bet on "${bet.option.text}"` : 
-                          bet.numericValue ? `Predicted ${bet.numericValue}` : "Placed a bet"}
-                       </span>
-                    </div>
-                    <span className="font-mono font-medium">+{bet.amount} pts</span>
-                 </div>
-               ))
-             )}
-           </div>
+           {hideBets ? (
+             <div className="text-center py-8 bg-muted/20 rounded-lg border border-dashed">
+               <p className="text-muted-foreground">Activity is hidden for you.</p>
+             </div>
+           ) : (
+             <div className="space-y-4">
+               {market.bets.length === 0 ? (
+                 <p className="text-sm text-muted-foreground">No bets placed yet.</p>
+               ) : (
+                 market.bets.map(bet => (
+                   <div key={bet.id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
+                      <div className="flex flex-col">
+                         <span className="font-medium">{bet.user.name || "Anonymous"}</span>
+                         <span className="text-xs text-muted-foreground">
+                           {bet.option?.text ? `Bet on "${bet.option.text}"` : 
+                            bet.numericValue ? `Predicted ${bet.numericValue}` : "Placed a bet"}
+                         </span>
+                      </div>
+                      <span className="font-mono font-medium">+{bet.amount} pts</span>
+                   </div>
+                 ))
+               )}
+             </div>
+           )}
         </div>
       </div>
 
@@ -130,4 +168,3 @@ export default async function MarketPage(props: PageProps) {
     </div>
   )
 }
-

@@ -3,13 +3,14 @@
 import { useState, useTransition } from "react"
 import { Market, Option } from "@prisma/client"
 import { resolveMarketAction } from "@/app/actions/resolve-market"
-import { Button } from "@/components/ui/button"
+import { getUploadUrlAction } from "@/app/actions/storage"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
+import { Loader2, Upload, FileCheck } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface ResolveMarketFormProps {
   market: Market & { options: Option[] }
@@ -17,9 +18,41 @@ interface ResolveMarketFormProps {
 
 export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
   const [isPending, startTransition] = useTransition()
+  const [isUploading, setIsUploading] = useState(false)
   const [winningOptionId, setWinningOptionId] = useState<string>("")
   const [winningValue, setWinningValue] = useState<string>("")
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null)
   
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    console.log("File selected")
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      // 1. Get Presigned URL
+      const { uploadUrl, publicUrl } = await getUploadUrlAction(file.type)
+      
+      // 2. Upload to S3 (MinIO)
+      const res = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type }
+      })
+
+      if (!res.ok) throw new Error("Upload failed status: " + res.status)
+
+      setUploadedUrl(publicUrl)
+    } catch (error) {
+      console.error("Upload failed:", error)
+      alert("Failed to upload evidence. Check console for details.")
+    } finally {
+      setIsUploading(false)
+      // Clear value to allow re-upload if needed
+      e.target.value = "" 
+    }
+  }
+
   function onResolve() {
     if (!confirm("Are you sure? This cannot be undone.")) return
 
@@ -28,7 +61,8 @@ export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
         await resolveMarketAction({
           marketId: market.id,
           winningOptionId: winningOptionId || undefined,
-          winningValue: winningValue ? parseFloat(winningValue) : undefined
+          winningValue: winningValue ? parseFloat(winningValue) : undefined,
+          resolutionImage: uploadedUrl || undefined
         })
       } catch (error) {
         alert("Failed to resolve")
@@ -72,9 +106,34 @@ export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
            </div>
         )}
 
+        <div className="space-y-2">
+          <Label>Evidence Screenshot (Optional)</Label>
+          <div className="flex flex-col gap-2">
+            {/* Plain file input for maximum reliability. Once confirmed working, we can restyle. */}
+            <Input
+              id="evidence-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              disabled={isUploading || !!uploadedUrl}
+            />
+
+            {isUploading && (
+              <span className="inline-flex items-center text-xs text-muted-foreground">
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                Uploading...
+              </span>
+            )}
+
+            {uploadedUrl && (
+              <span className="text-xs text-green-600 font-medium">Evidence attached</span>
+            )}
+          </div>
+        </div>
+
         <Button 
           onClick={onResolve} 
-          disabled={isPending || (!winningOptionId && !winningValue)}
+          disabled={isPending || (!winningOptionId && !winningValue) || isUploading}
           variant="destructive"
           className="w-full"
         >
@@ -85,4 +144,3 @@ export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
     </Card>
   )
 }
-

@@ -27,8 +27,9 @@ model User {
   receivedTransfers Transaction[] @relation("Receiver")
   notifications  Notification[]
   
-  // For "Hidden" logic
-  hiddenFromMarkets Market[] @relation("HiddenUsers")
+  // Visibility Relations
+  hiddenFromMarkets Market[] @relation("HiddenMarketUsers")
+  hiddenBetsFromMarkets Market[] @relation("HiddenBetsUsers")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -90,10 +91,14 @@ model Market {
   options     Option[]
   bets        Bet[]
   
-  hiddenUsers User[]    @relation("HiddenUsers")
+  // Visibility Relations
+  hiddenUsers       User[]    @relation("HiddenMarketUsers")
+  hideBetsFromUsers User[]    @relation("HiddenBetsUsers")
   
   minBet      Int?
   maxBet      Int?
+
+  resolutionImage String? // Evidence URL
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

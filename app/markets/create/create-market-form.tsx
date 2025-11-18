@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { createMarketAction } from "@/app/actions/create-market"
 import { CreateMarketValues, createMarketSchema } from "@/lib/schemas"
 import { useTransition } from "react"
+import { MultiUserSelector } from "@/components/ui/multi-user-selector"
 
 export function CreateMarketForm() {
   const [isPending, startTransition] = useTransition()
@@ -44,6 +45,8 @@ export function CreateMarketForm() {
       description: "",
       type: "BINARY",
       minBet: 10,
+      hiddenFromUserIds: [],
+      hideBetsFromUserIds: [],
     },
   })
 
@@ -245,6 +248,52 @@ export function CreateMarketForm() {
           />
         </div>
 
+        <div className="space-y-6 border p-4 rounded-lg bg-muted/20">
+          <h3 className="font-medium">Visibility Settings (Optional)</h3>
+          
+          <FormField
+            control={form.control}
+            name="hiddenFromUserIds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hide Entire Market From</FormLabel>
+                <FormControl>
+                  <MultiUserSelector 
+                    value={field.value} 
+                    onChange={field.onChange}
+                    placeholder="Select users who cannot see this market..."
+                  />
+                </FormControl>
+                <FormDescription>
+                  These users will see a locked market and cannot access details.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="hideBetsFromUserIds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hide Bets Activity From</FormLabel>
+                <FormControl>
+                  <MultiUserSelector 
+                    value={field.value} 
+                    onChange={field.onChange}
+                    placeholder="Select users who cannot see others' bets..."
+                  />
+                </FormControl>
+                <FormDescription>
+                  These users can bet, but cannot see who else bet or what they bet on.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <Button type="submit" disabled={isPending}>
           {isPending ? "Creating..." : "Create Market"}
         </Button>
@@ -252,4 +301,3 @@ export function CreateMarketForm() {
     </Form>
   )
 }
-
