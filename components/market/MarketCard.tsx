@@ -1,21 +1,47 @@
-import { Market, User } from "@prisma/client"
+import { Market, User, Bet, Option } from "@prisma/client"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
+import { Coins, TrendingUp } from "lucide-react"
 
 interface MarketWithDetails extends Market {
   creator: User
+  options: Option[]
   _count: {
     bets: number
   }
+  userBets?: (Bet & { option: Option | null })[]
 }
 
 export function MarketCard({ market }: { market: MarketWithDetails }) {
+  const hasPositions = market.userBets && market.userBets.length > 0
+  
+  let probabilityDisplay = null
+  
+  if (market.type === "BINARY" && market.options.length >= 2) {
+    const yesOption = market.options.find(o => o.text.toLowerCase() === "yes")
+    const noOption = market.options.find(o => o.text.toLowerCase() === "no")
+    
+    if (yesOption && noOption) {
+      const total = yesOption.liquidity + noOption.liquidity
+      // Price(Yes) = No_Pool / (Yes_Pool + No_Pool)
+      const yesPrice = noOption.liquidity / total
+      const percent = Math.round(yesPrice * 100)
+      
+      probabilityDisplay = (
+        <div className="flex items-center gap-2">
+           <div className="text-2xl font-bold text-green-600">{percent}%</div>
+           <div className="text-xs text-muted-foreground uppercase font-bold tracking-wide">Chance</div>
+        </div>
+      )
+    }
+  }
+
   return (
     <Link href={`/markets/${market.id}`}>
-      <Card className="h-full hover:bg-muted/50 transition-colors cursor-pointer flex flex-col">
-        <CardHeader>
+      <Card className={`h-full transition-all cursor-pointer flex flex-col ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'}`}>
+        <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-2">
             <CardTitle className="text-lg leading-tight">{market.title}</CardTitle>
             <Badge variant={market.type === "BINARY" ? "default" : "secondary"}>
@@ -26,8 +52,28 @@ export function MarketCard({ market }: { market: MarketWithDetails }) {
             {market.description}
           </div>
         </CardHeader>
-        <CardContent className="mt-auto">
-           <div className="text-sm text-muted-foreground">
+        <CardContent className="mt-auto space-y-4">
+           {/* Probability for Binary Markets */}
+           {probabilityDisplay && (
+             <div className="bg-background/50 p-3 rounded-lg border shadow-sm">
+               {probabilityDisplay}
+             </div>
+           )}
+
+           {/* User Positions Indicator */}
+           {hasPositions && (
+             <div className="flex flex-wrap gap-2">
+               {market.userBets!.map(bet => (
+                 <Badge key={bet.id} variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 flex items-center gap-1 text-xs">
+                   <Coins className="h-3 w-3" />
+                   {bet.option?.text || bet.numericValue || "Bet"}
+                   <span className="ml-1 opacity-70">({bet.amount})</span>
+                 </Badge>
+               ))}
+             </div>
+           )}
+
+           <div className="text-sm text-muted-foreground flex items-center gap-2">
              Created by {market.creator.name || "Unknown"}
            </div>
         </CardContent>
@@ -39,4 +85,3 @@ export function MarketCard({ market }: { market: MarketWithDetails }) {
     </Link>
   )
 }
-

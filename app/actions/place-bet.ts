@@ -28,7 +28,7 @@ export async function placeBetAction(data: PlaceBetValues) {
 
   const { marketId, amount, optionId, numericValue } = validated.data
 
-  // 1. Fetch Market and User logic
+  // 1. Fetch Market and Options
   const market = await prisma.market.findUnique({
     where: { id: marketId },
     include: { options: true }
@@ -42,25 +42,18 @@ export async function placeBetAction(data: PlaceBetValues) {
   if (market.minBet && amount < market.minBet) throw new Error(`Minimum bet is ${market.minBet}`)
   if (market.maxBet && amount > market.maxBet) throw new Error(`Maximum bet is ${market.maxBet}`)
 
-  // Validate Market Type logic
-  if (market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE) {
-    if (!optionId) throw new Error("Please select an option")
-    const validOption = market.options.find(o => o.id === optionId) || 
-                        (market.type === MarketType.BINARY && (optionId === "YES" || optionId === "NO")) // Binary might not have options in DB if handled virtually, but let's stick to DB options or consistent logic.
-                        // Wait, for BINARY my schema doesn't strictly enforce pre-made options. 
-                        // Let's assume for BINARY we might create options on the fly or use specific IDs?
-                        // Actually, easier if BINARY just uses 2 options created at market creation or we handle it here.
-                        // Let's look at how I created markets. 
-                        // My CreateMarketAction didn't create options for Binary.
-                        // So for Binary, we should probably create "Yes" and "No" options on the fly or handle them as specific strings?
-                        // Better: When creating a Binary market, I should have created options. 
-                        // Let's fix that in future. For now, I will assume Binary options might be dynamic or stored in optionId.
-                        // Actually, let's standardise: Even Binary markets should have Option records "Yes" and "No". 
-                        // I'll check the create action again.
-  }
-
+  // AMM Logic requires Options
   if (market.type === MarketType.NUMERIC_RANGE) {
-    if (numericValue === undefined) throw new Error("Please provide a numeric value")
+     // For numeric, we currently don't have an AMM spec in the prompt. 
+     // Fallback to simple logging or error?
+     // The prompt said "Replace static 50/50... with AMM". 
+     // Numeric range usually uses buckets. 
+     // For this task, I'll support Binary/Multi and throw/ignore Numeric AMM logic or leave as is (fixed payout logic in resolution).
+     // However, resolution-payout will change. 
+     // Let's focus on BINARY/MULTI support.
+     if (numericValue === undefined) throw new Error("Please provide a numeric value")
+  } else {
+     if (!optionId) throw new Error("Please select an option")
   }
 
   // 2. Execute Transaction
@@ -89,12 +82,57 @@ export async function placeBetAction(data: PlaceBetValues) {
       }
     })
 
-    // Check if Binary market needs options created (lazy init)
-    let finalOptionId = optionId
-    if (market.type === MarketType.BINARY) {
-        // If we passed "YES" or "NO" but no DB option exists, we might need to handle it.
-        // However, to keep it clean, I'll assume for now we are finding the option ID from the frontend.
-        // If the frontend passed an ID, use it.
+    // CPMM Logic
+    let shares = 0;
+    let finalOptionId = optionId;
+
+    if ((market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE) && optionId && market.options.length > 0) {
+        const options = await tx.option.findMany({
+            where: { marketId: market.id }
+        })
+        
+        const targetOption = options.find(o => o.id === optionId)
+        if (!targetOption) throw new Error("Option not found")
+
+        // Calculate k (product of all pools)
+        // k = P1 * P2 * ... * Pn
+        const poolBalances = options.map(o => o.liquidity)
+        const k = poolBalances.reduce((acc, val) => acc * val, 1)
+
+        // Logic:
+        // 1. Add 'amount' to ALL OTHER pools
+        // 2. Calculate new target pool = k / (product of others)
+        // 3. Shares = amount + (oldTarget - newTarget)
+        
+        const otherOptions = options.filter(o => o.id !== optionId)
+        
+        // Update other pools
+        for (const other of otherOptions) {
+            await tx.option.update({
+                where: { id: other.id },
+                data: { liquidity: { increment: amount } }
+            })
+        }
+
+        // Calculate new target liquidity
+        // NewOtherProduct = Product(oldOther + amount)
+        const newOtherProduct = otherOptions.reduce((acc, o) => acc * (o.liquidity + amount), 1)
+        const newTargetLiquidity = k / newOtherProduct
+
+        // Update target pool
+        await tx.option.update({
+            where: { id: targetOption.id },
+            data: { liquidity: newTargetLiquidity }
+        })
+
+        // Calculate Shares
+        // User gets 'amount' (minted) + swapped amount
+        const swappedShares = targetOption.liquidity - newTargetLiquidity
+        shares = amount + swappedShares
+    } else if (market.type === MarketType.NUMERIC_RANGE) {
+        // Fallback for numeric if needed, or treat amount as shares for now (1:1) 
+        // until numeric AMM is spec'd
+        shares = amount 
     }
 
     // Create Bet
@@ -103,6 +141,7 @@ export async function placeBetAction(data: PlaceBetValues) {
         userId: user.id,
         marketId: market.id,
         amount,
+        shares: shares, // Store calculated shares
         optionId: finalOptionId, 
         numericValue
       }
@@ -112,4 +151,3 @@ export async function placeBetAction(data: PlaceBetValues) {
   revalidatePath(`/markets/${marketId}`)
   revalidatePath('/markets')
 }
-

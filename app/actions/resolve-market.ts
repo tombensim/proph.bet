@@ -37,14 +37,24 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
   await prisma.$transaction(async (tx) => {
     
     let winningBets = []
-    const totalPool = market.bets.reduce((sum, bet) => sum + bet.amount, 0)
+    let totalPayoutPool = 0
+    let totalWinningWeight = 0 // shares for AMM, amount for Numeric
 
-    // 1. Identify Winners
+    // 1. Determine Pool and Winners
     if (market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE) {
        if (!winningOptionId) throw new Error("Must select a winning option")
+       
+       // AMM Payout: Pool is the sum of all option liquidities
+       totalPayoutPool = market.options.reduce((sum, opt) => sum + opt.liquidity, 0)
+       
        winningBets = market.bets.filter(b => b.optionId === winningOptionId)
+       totalWinningWeight = winningBets.reduce((sum, b) => sum + b.shares, 0)
+       
     } else if (market.type === MarketType.NUMERIC_RANGE) {
        if (winningValue === undefined) throw new Error("Must provide winning value")
+       
+       // Numeric Payout: Pool is sum of all bet amounts (Parimutuel)
+       totalPayoutPool = market.bets.reduce((sum, bet) => sum + bet.amount, 0)
        
        // Find the closest difference
        const betsWithDiff = market.bets.map(b => ({
@@ -54,15 +64,16 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
        
        const minDiff = Math.min(...betsWithDiff.map(b => b.diff))
        winningBets = betsWithDiff.filter(b => b.diff === minDiff)
+       totalWinningWeight = winningBets.reduce((sum, b) => sum + b.amount, 0) // Weight by amount for numeric
     }
 
     // 2. Distribute Winnings
-    const totalWinningBetAmount = winningBets.reduce((sum, b) => sum + b.amount, 0)
-
-    if (totalWinningBetAmount > 0) {
+    if (winningBets.length > 0 && totalWinningWeight > 0) {
       for (const bet of winningBets) {
-        const share = bet.amount / totalWinningBetAmount
-        const payout = Math.floor(share * totalPool)
+        // Calculate share of the pot
+        const weight = (market.type === MarketType.NUMERIC_RANGE) ? bet.amount : bet.shares
+        const share = weight / totalWinningWeight
+        const payout = Math.floor(share * totalPayoutPool)
 
         if (payout > 0) {
           await tx.user.update({
@@ -75,6 +86,15 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
               amount: payout,
               type: TransactionType.WIN_PAYOUT,
               toUserId: bet.userId
+            }
+          })
+          
+          // Notify user (optional, but good practice)
+          await tx.notification.create({
+            data: {
+              userId: bet.userId,
+              type: "WIN_PAYOUT",
+              content: `You won ${payout} points on market: ${market.title}`
             }
           })
         }

@@ -39,13 +39,13 @@ async function ensureBucketExists() {
   }
 }
 
-export async function getUploadUrlAction(contentType: string) {
+export async function getUploadUrlAction(contentType: string, folder: string = "evidence") {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 
   await ensureBucketExists()
 
-  const fileKey = `evidence/${session.user.id}/${uuidv4()}`
+  const fileKey = `${folder}/${session.user.id}/${uuidv4()}`
   
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,

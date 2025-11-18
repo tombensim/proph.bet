@@ -39,11 +39,11 @@ export function UserNav({ user }: { user: any }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            Profile
+          <DropdownMenuItem asChild>
+            <a href="/settings" className="cursor-pointer">Profile</a>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            Settings
+          <DropdownMenuItem asChild>
+             <a href="/settings" className="cursor-pointer">Settings</a>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

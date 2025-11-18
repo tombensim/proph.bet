@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BetForm } from "./bet-form"
 import { ResolveMarketForm } from "./resolve-form"
 import { Separator } from "@/components/ui/separator"
+import { CommentsSection } from "./comments-section"
 import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 
@@ -33,6 +34,18 @@ export default async function MarketPage(props: PageProps) {
       },
       hideBetsFromUsers: {
          select: { id: true }
+      },
+      comments: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
       }
     }
   })
@@ -142,6 +155,16 @@ export default async function MarketPage(props: PageProps) {
              </div>
            )}
         </div>
+
+        <Separator />
+
+        {/* Comments Section */}
+        <CommentsSection
+          marketId={params.id}
+          initialComments={market.comments}
+          currentUserId={session.user.id}
+          isAdmin={isAdmin}
+        />
       </div>
 
       <div className="lg:col-span-1">

@@ -26,6 +26,7 @@ model User {
   sentTransfers  Transaction[] @relation("Sender")
   receivedTransfers Transaction[] @relation("Receiver")
   notifications  Notification[]
+  comments       Comment[]
   
   // Visibility Relations
   hiddenFromMarkets Market[] @relation("HiddenMarketUsers")
@@ -90,6 +91,7 @@ model Market {
   
   options     Option[]
   bets        Bet[]
+  comments    Comment[]
   
   // Visibility Relations
   hiddenUsers       User[]    @relation("HiddenMarketUsers")
@@ -110,11 +112,13 @@ model Option {
   marketId  String
   market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
   bets      Bet[]
+  liquidity Float    @default(100) // AMM Pool Balance
 }
 
 model Bet {
   id        String   @id @default(cuid())
   amount    Int
+  shares    Float    @default(0)
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   marketId  String
@@ -150,6 +154,17 @@ model Notification {
   content   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  marketId  String
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {
