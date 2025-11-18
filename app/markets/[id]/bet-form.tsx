@@ -25,9 +25,6 @@ const betSchema = z.object({
   numericValue: z.coerce.number().optional(),
 }).refine((data) => {
     // Custom validation to ensure optionId is present for non-numeric markets
-    // We can't easily check market type here inside schema without passing context, 
-    // but the server action handles strict validation.
-    // For client-side feedback, we can leave it looser or pass type.
     return true
 })
 
@@ -42,6 +39,15 @@ export function BetForm({ market, userPoints }: BetFormProps) {
       amount: market.minBet || 10,
     }
   })
+
+  // Calculate probabilities for display
+  const inverseSum = market.options.reduce((sum, o) => sum + (1 / (o.liquidity || 100)), 0)
+  const getProbability = (liquidity: number) => {
+     if (inverseSum === 0) return 0
+     return (1 / (liquidity || 100)) / inverseSum
+  }
+
+  const currentOptionId = form.watch("optionId")
 
   function onSubmit(data: z.infer<typeof betSchema>) {
     setError(null)
@@ -91,18 +97,33 @@ export function BetForm({ market, userPoints }: BetFormProps) {
                   <RadioGroup
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    className="flex gap-4"
+                    className="flex gap-4 w-full"
                   >
-                    {market.options.map((option) => (
-                      <FormItem key={option.id} className="flex items-center space-x-2 space-y-0 border p-4 rounded-lg cursor-pointer hover:bg-accent">
-                        <FormControl>
-                          <RadioGroupItem value={option.id} />
-                        </FormControl>
-                        <FormLabel className="font-normal cursor-pointer">
-                          {option.text}
-                        </FormLabel>
-                      </FormItem>
-                    ))}
+                    {market.options.map((option) => {
+                      const prob = getProbability(option.liquidity)
+                      const percent = Math.round(prob * 100)
+                      const isSelected = currentOptionId === option.id
+                      
+                      return (
+                        <FormItem key={option.id} className="flex-1 space-y-0">
+                           <FormControl>
+                             <Label
+                               htmlFor={option.id} 
+                               className={`
+                                 flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-all h-full
+                                 ${isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-accent border-muted"}
+                               `}
+                             >
+                               <div className="flex items-center gap-2">
+                                 <RadioGroupItem value={option.id} id={option.id} />
+                                 <span className="font-medium">{option.text}</span>
+                               </div>
+                               <span className="text-sm font-bold text-muted-foreground">{percent}%</span>
+                             </Label>
+                           </FormControl>
+                        </FormItem>
+                      )
+                    })}
                   </RadioGroup>
                 </FormControl>
                 <FormMessage />
@@ -125,11 +146,18 @@ export function BetForm({ market, userPoints }: BetFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {market.options.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.text}
-                      </SelectItem>
-                    ))}
+                    {market.options.map((option) => {
+                      const prob = getProbability(option.liquidity)
+                      const percent = Math.round(prob * 100)
+                      return (
+                        <SelectItem key={option.id} value={option.id}>
+                          <div className="flex justify-between w-full gap-4 items-center min-w-[200px]">
+                            <span>{option.text}</span>
+                            <span className="text-muted-foreground font-mono text-xs">{percent}%</span>
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
                 <FormMessage />
