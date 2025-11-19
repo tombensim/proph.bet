@@ -37,6 +37,9 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
     
     const currentArena = memberships.find(m => m.arenaId === currentArenaId)?.arena
 
+    const activeArenas = memberships.filter(m => !m.arena.archivedAt)
+    const archivedArenas = memberships.filter(m => m.arena.archivedAt)
+
     return (
         <>
             <Popover open={open} onOpenChange={setOpen}>
@@ -52,7 +55,7 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                         <CommandList>
                             <CommandEmpty>No arena found.</CommandEmpty>
                             <CommandGroup heading="Arenas">
-                                {memberships.map((membership) => (
+                                {activeArenas.map((membership) => (
                                     <CommandItem
                                         key={membership.arena.id}
                                         onSelect={() => {
@@ -71,6 +74,31 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
+                            {archivedArenas.length > 0 && (
+                                <>
+                                    <CommandSeparator />
+                                    <CommandGroup heading="Archived">
+                                        {archivedArenas.map((membership) => (
+                                            <CommandItem
+                                                key={membership.arena.id}
+                                                onSelect={() => {
+                                                    router.push(`/arenas/${membership.arena.id}/markets`)
+                                                    setOpen(false)
+                                                }}
+                                                className="text-sm text-muted-foreground"
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "me-2 h-4 w-4",
+                                                        currentArenaId === membership.arena.id ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                {membership.arena.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </>
+                            )}
                             {canCreate && (
                                 <>
                                     <CommandSeparator />
