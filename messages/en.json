@@ -23,6 +23,8 @@
     "next": "Next",
     "page": "Page {current} of {total}",
     "view": "View",
+    "filter": "Filter",
+    "status": "Status",
     "noFileChosen": "No file chosen",
     "chooseFile": "Choose File"
   },
