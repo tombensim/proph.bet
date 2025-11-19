@@ -7,6 +7,9 @@ import { Role } from "@prisma/client"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   debug: true,
+  pages: {
+    signIn: "/auth/signin",
+  },
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   secret: process.env.AUTH_SECRET,
