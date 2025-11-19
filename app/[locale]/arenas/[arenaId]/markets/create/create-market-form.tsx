@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
-import { CalendarIcon, Trash2, Plus, Link as LinkIcon, ImageIcon, X, Loader2 } from "lucide-react"
+import { CalendarIcon, Trash2, Plus, Link as LinkIcon, ImageIcon, X, Loader2, Sparkles } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -37,11 +37,13 @@ import { MultiUserSelector } from "@/components/ui/multi-user-selector"
 import { getUploadUrlAction } from "@/app/actions/storage"
 import { AssetType } from "@prisma/client"
 import { useTranslations } from 'next-intl';
+import { generateDescriptionAction } from "@/app/actions/generate-description"
 
 export function CreateMarketForm({ arenaId }: { arenaId: string }) {
   const t = useTranslations('CreateMarket.form');
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const form = useForm<CreateMarketValues>({
     // @ts-ignore
@@ -78,6 +80,39 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
         console.error(error)
       }
     })
+  }
+
+  async function handleGenerateDescription() {
+    const title = form.getValues("title")
+    const type = form.getValues("type")
+    const options = form.getValues("options")
+    const resolutionDate = form.getValues("resolutionDate")
+
+    if (!title || title.trim().length < 10) {
+      alert("Please enter a title (at least 10 characters) before generating a description")
+      return
+    }
+
+    setIsGenerating(true)
+    try {
+      const result = await generateDescriptionAction({
+        title,
+        type,
+        options: options?.map(o => o.value).filter(Boolean),
+        resolutionDate,
+      })
+
+      if (result.error) {
+        alert(result.error)
+      } else if (result.description) {
+        form.setValue("description", result.description)
+      }
+    } catch (error) {
+      console.error("Failed to generate description:", error)
+      alert("Failed to generate description. Please try again.")
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -136,7 +171,23 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('description')}</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>{t('description')}</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateDescription}
+                  disabled={isGenerating || !form.watch("title")}
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin me-2" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 me-2" />
+                  )}
+                  {isGenerating ? "Generating..." : "Generate with AI"}
+                </Button>
+              </div>
               <FormControl>
                 <Textarea 
                   placeholder={t('descriptionPlaceholder')} 
