@@ -93,6 +93,7 @@ model Market {
   bets        Bet[]
   comments    Comment[]
   priceHistory PriceHistory[]
+  transactions Transaction[] // Payouts linked to this market
   
   // Visibility Relations
   hiddenUsers       User[]    @relation("HiddenMarketUsers")
@@ -102,6 +103,8 @@ model Market {
   maxBet      Int?
 
   resolutionImage String? // Evidence URL
+  winningOptionId String?
+  winningValue    Float?
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -157,6 +160,9 @@ model Transaction {
   
   toUserId   String?
   toUser     User?   @relation("Receiver", fields: [toUserId], references: [id])
+
+  marketId   String?
+  market     Market? @relation(fields: [marketId], references: [id])
 
   createdAt DateTime @default(now())
 }

@@ -26,14 +26,14 @@ export async function Navbar() {
           <Link href="/markets" className="text-sm font-medium transition-colors hover:text-primary">
             Markets
           </Link>
-          <Link href="/markets/create" className="text-sm font-medium transition-colors hover:text-primary">
-            Create Market
-          </Link>
           <Link href="/leaderboard" className="text-sm font-medium transition-colors hover:text-primary">
             Leaderboard
           </Link>
            <Link href="/transfer" className="text-sm font-medium transition-colors hover:text-primary">
             Transfer
+          </Link>
+           <Link href="/history" className="text-sm font-medium transition-colors hover:text-primary">
+            History
           </Link>
         </nav>
         <div className="ml-auto flex items-center space-x-4">

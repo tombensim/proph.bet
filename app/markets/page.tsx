@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { MarketCard } from "@/components/market/MarketCard"
 import { MarketFilter } from "@/components/market/MarketFilter"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 
 interface PageProps {
@@ -57,7 +59,12 @@ export default async function MarketsPage(props: PageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Active Markets</h1>
-        <MarketFilter />
+        <div className="flex items-center gap-4">
+          <Link href="/markets/create">
+            <Button>Create Market</Button>
+          </Link>
+          <MarketFilter />
+        </div>
       </div>
       {markets.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">

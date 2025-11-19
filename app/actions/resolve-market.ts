@@ -85,7 +85,8 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
             data: {
               amount: payout,
               type: TransactionType.WIN_PAYOUT,
-              toUserId: bet.userId
+              toUserId: bet.userId,
+              marketId: market.id
             }
           })
           
@@ -106,7 +107,9 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
       where: { id: market.id },
       data: { 
         status: MarketStatus.RESOLVED,
-        resolutionImage: resolutionImage
+        resolutionImage: resolutionImage,
+        winningOptionId: winningOptionId,
+        winningValue: winningValue
       }
     })
   })
