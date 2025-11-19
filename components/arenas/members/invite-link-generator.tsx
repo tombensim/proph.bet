@@ -1,5 +1,6 @@
 "use client"
 
+import { useLocale } from "next-intl"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -15,6 +16,7 @@ interface InviteLinkGeneratorProps {
 }
 
 export function InviteLinkGenerator({ arenaId, activeLinks }: InviteLinkGeneratorProps) {
+  const locale = useLocale()
   const [loading, setLoading] = useState(false)
   const [expiresIn, setExpiresIn] = useState("168") // Default 7 days
 
@@ -41,7 +43,7 @@ export function InviteLinkGenerator({ arenaId, activeLinks }: InviteLinkGenerato
   }
   
   const copyLink = (token: string) => {
-      const link = `${window.location.origin}/invite/${token}`
+      const link = `${window.location.origin}/${locale}/invite/${token}`
       navigator.clipboard.writeText(link)
       toast.success("Link copied to clipboard")
   }
