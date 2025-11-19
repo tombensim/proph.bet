@@ -31,12 +31,14 @@ export default async function ArenaSetupPage(props: PageProps) {
       const settings = await getArenaSettingsAction(arenaId)
       
       return (
-        <div className="container max-w-3xl py-12">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold mb-2">Welcome to your new Arena!</h1>
-            <p className="text-muted-foreground">Let's get everything set up just the way you like it.</p>
+        <div className="min-h-screen flex items-center justify-center py-8 px-4">
+          <div className="w-full max-w-3xl space-y-8">
+            <div className="text-center">
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome to your new Arena!</h1>
+              <p className="text-sm md:text-base text-muted-foreground">Let's get everything set up just the way you like it.</p>
+            </div>
+            <ArenaSetupWizard settings={settings} arenaId={arenaId} />
           </div>
-          <ArenaSetupWizard settings={settings} arenaId={arenaId} />
         </div>
       )
   } catch (error) {

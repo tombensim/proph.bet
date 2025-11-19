@@ -85,15 +85,15 @@ export function ArenaSetupWizard({ settings, arenaId }: { settings: ArenaSetting
   }
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
+    <div className="w-full space-y-6">
         {/* Progress Steps */}
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex justify-center gap-2 md:gap-4 mb-8">
             {[1, 2, 3].map((s) => (
-                <div key={s} className={`flex items-center gap-2 ${s === step ? "text-primary font-bold" : "text-muted-foreground"}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${s <= step ? "bg-primary text-primary-foreground border-primary" : "border-muted"}`}>
-                        {s < step ? <Check className="w-4 h-4" /> : s}
+                <div key={s} className={`flex items-center gap-1 md:gap-2 ${s === step ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                    <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center border-2 text-sm ${s <= step ? "bg-primary text-primary-foreground border-primary" : "border-muted"}`}>
+                        {s < step ? <Check className="w-3 h-3 md:w-4 md:h-4" /> : s}
                     </div>
-                    <span className="hidden sm:inline">
+                    <span className="hidden sm:inline text-xs md:text-sm">
                         {s === 1 ? "Cycles & Points" : s === 2 ? "Market Rules" : "Review"}
                     </span>
                 </div>
@@ -162,8 +162,8 @@ export function ArenaSetupWizard({ settings, arenaId }: { settings: ArenaSetting
                         </div>
 
                         <div className="space-y-3">
-                            <Label>Require Admin Approval?</Label>
-                             <div className="flex gap-4">
+                            <Label className="text-sm md:text-base">Require Admin Approval?</Label>
+                             <div className="flex flex-col sm:flex-row gap-3">
                                 <Button 
                                     type="button" 
                                     variant={formData.requireApproval ? "default" : "outline"}
@@ -207,39 +207,39 @@ export function ArenaSetupWizard({ settings, arenaId }: { settings: ArenaSetting
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="bg-muted/30 border rounded-lg divide-y">
-                            <div className="flex justify-between items-center p-4">
-                                <span className="text-sm text-muted-foreground">Reset Frequency</span>
-                                <span className="font-medium">{formatLabel(formData.resetFrequency)}</span>
+                            <div className="flex justify-between items-center p-3 md:p-4">
+                                <span className="text-xs md:text-sm text-muted-foreground">Reset Frequency</span>
+                                <span className="font-medium text-sm md:text-base">{formatLabel(formData.resetFrequency)}</span>
                             </div>
-                            <div className="flex justify-between items-center p-4">
-                                <span className="text-sm text-muted-foreground">Points per Cycle</span>
-                                <span className="font-medium">{formData.monthlyAllocation.toLocaleString()}</span>
+                            <div className="flex justify-between items-center p-3 md:p-4">
+                                <span className="text-xs md:text-sm text-muted-foreground">Points per Cycle</span>
+                                <span className="font-medium text-sm md:text-base">{formData.monthlyAllocation.toLocaleString()}</span>
                             </div>
-                             <div className="flex justify-between items-center p-4">
-                                <span className="text-sm text-muted-foreground">Creator Policy</span>
-                                <span className="font-medium">{formatLabel(formData.creationPolicy)}</span>
+                             <div className="flex justify-between items-center p-3 md:p-4">
+                                <span className="text-xs md:text-sm text-muted-foreground">Creator Policy</span>
+                                <span className="font-medium text-sm md:text-base">{formatLabel(formData.creationPolicy)}</span>
                             </div>
-                             <div className="flex justify-between items-center p-4">
-                                <span className="text-sm text-muted-foreground">Approval Required</span>
-                                <span className="font-medium">{formData.requireApproval ? "Yes" : "No"}</span>
+                             <div className="flex justify-between items-center p-3 md:p-4">
+                                <span className="text-xs md:text-sm text-muted-foreground">Approval Required</span>
+                                <span className="font-medium text-sm md:text-base">{formData.requireApproval ? "Yes" : "No"}</span>
                             </div>
-                             <div className="flex justify-between items-center p-4">
-                                <span className="text-sm text-muted-foreground">Language</span>
-                                <span className="font-medium">{formData.defaultLanguage.toUpperCase()}</span>
+                             <div className="flex justify-between items-center p-3 md:p-4">
+                                <span className="text-xs md:text-sm text-muted-foreground">Language</span>
+                                <span className="font-medium text-sm md:text-base">{formData.defaultLanguage.toUpperCase()}</span>
                             </div>
                         </div>
                     </CardContent>
                 </>
             )}
 
-            <CardFooter className="flex justify-between">
-                <Button variant="ghost" onClick={handleBack} disabled={step === 1 || isPending}>
-                    <ChevronLeft className="mr-2 w-4 h-4" /> Back
+            <CardFooter className="flex justify-between gap-2">
+                <Button variant="ghost" onClick={handleBack} disabled={step === 1 || isPending} size="sm" className="md:size-default">
+                    <ChevronLeft className="mr-1 md:mr-2 w-4 h-4" /> <span className="hidden sm:inline">Back</span><span className="sm:hidden">Back</span>
                 </Button>
-                <Button onClick={handleNext} disabled={isPending}>
-                    {isPending && <Loader2 className="mr-2 w-4 h-4 animate-spin" />}
+                <Button onClick={handleNext} disabled={isPending} size="sm" className="md:size-default">
+                    {isPending && <Loader2 className="mr-1 md:mr-2 w-4 h-4 animate-spin" />}
                     {step === 3 ? "Finish Setup" : "Next"}
-                    {step < 3 && <ChevronRight className="ml-2 w-4 h-4" />}
+                    {step < 3 && <ChevronRight className="ml-1 md:ml-2 w-4 h-4" />}
                 </Button>
             </CardFooter>
         </Card>
