@@ -47,6 +47,7 @@ export async function createMarketAction(data: CreateMarketValues) {
   // 3. CHECK & DEDUCT POINTS (Transaction)
   await prisma.$transaction(async (tx) => {
     // Verify membership
+    if (!session?.user?.id) throw new Error("Unauthorized")
     const membership = await tx.arenaMembership.findUnique({
       where: {
         userId_arenaId: {
