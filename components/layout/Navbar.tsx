@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { UserNav } from "@/components/layout/UserNav"
 import { Button } from "@/components/ui/button"
 import { ArenaSwitcher } from "./ArenaSwitcher"
-import { Menu } from "lucide-react"
+import { Menu, Bell } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -133,6 +133,12 @@ export async function Navbar({ arenaId }: NavbarProps) {
             <LocaleSwitcher />
            {session?.user ? (
              <div className="flex items-center gap-2 md:gap-4">
+                <Link href="/activity">
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                        <Bell className="h-5 w-5" />
+                        <span className="sr-only">Activity</span>
+                    </Button>
+                </Link>
                 {arenaId && (
                   <span className="text-sm text-muted-foreground font-mono whitespace-nowrap">
                     {points} <span className="hidden md:inline">{t('points')}</span>

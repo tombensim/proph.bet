@@ -44,9 +44,10 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} dir={locale === 'he' ? 'rtl' : 'ltr'}>
+    <html lang={locale} dir={locale === 'he' ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans`}
+        suppressHydrationWarning
       >
         <NextIntlClientProvider messages={messages}>
           <main className="container mx-auto py-8 px-4">
