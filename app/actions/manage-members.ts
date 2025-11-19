@@ -46,7 +46,8 @@ export async function addMemberAction(email: string, arenaId: string) {
     })
 
     // Send notification email
-    const arenaLink = `${process.env.NEXT_PUBLIC_APP_URL}/arenas/${arenaId}/markets`
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://proph.bet";
+    const arenaLink = `${baseUrl}/arenas/${arenaId}/markets`
     
     try {
       await resend.emails.send({
@@ -72,7 +73,8 @@ export async function addMemberAction(email: string, arenaId: string) {
     })
 
     const token = uuidv4()
-    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://proph.bet";
+    const inviteLink = `${baseUrl}/invite/${token}`
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
     if (existingInvite) {

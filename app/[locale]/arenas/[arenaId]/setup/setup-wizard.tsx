@@ -78,8 +78,14 @@ export function ArenaSetupWizard({ settings, arenaId }: { settings: ArenaSetting
       })
   }
 
+  const formatLabel = (value: string): string => {
+      // Convert ENUM values to readable format
+      const words = value.toLowerCase().split('_')
+      return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-2xl mx-auto">
         {/* Progress Steps */}
         <div className="flex justify-center gap-4 mb-8">
             {[1, 2, 3].map((s) => (
@@ -200,26 +206,26 @@ export function ArenaSetupWizard({ settings, arenaId }: { settings: ArenaSetting
                         <CardDescription>Does this look correct?</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="bg-muted/50 p-4 rounded-lg space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Reset Frequency:</span>
-                                <span className="font-medium">{formData.resetFrequency}</span>
+                        <div className="bg-muted/30 border rounded-lg divide-y">
+                            <div className="flex justify-between items-center p-4">
+                                <span className="text-sm text-muted-foreground">Reset Frequency</span>
+                                <span className="font-medium">{formatLabel(formData.resetFrequency)}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Monthly Points:</span>
-                                <span className="font-medium">{formData.monthlyAllocation}</span>
+                            <div className="flex justify-between items-center p-4">
+                                <span className="text-sm text-muted-foreground">Points per Cycle</span>
+                                <span className="font-medium">{formData.monthlyAllocation.toLocaleString()}</span>
                             </div>
-                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Creator Policy:</span>
-                                <span className="font-medium">{formData.creationPolicy}</span>
+                             <div className="flex justify-between items-center p-4">
+                                <span className="text-sm text-muted-foreground">Creator Policy</span>
+                                <span className="font-medium">{formatLabel(formData.creationPolicy)}</span>
                             </div>
-                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Approval Required:</span>
+                             <div className="flex justify-between items-center p-4">
+                                <span className="text-sm text-muted-foreground">Approval Required</span>
                                 <span className="font-medium">{formData.requireApproval ? "Yes" : "No"}</span>
                             </div>
-                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Language:</span>
-                                <span className="font-medium uppercase">{formData.defaultLanguage}</span>
+                             <div className="flex justify-between items-center p-4">
+                                <span className="text-sm text-muted-foreground">Language</span>
+                                <span className="font-medium">{formData.defaultLanguage.toUpperCase()}</span>
                             </div>
                         </div>
                     </CardContent>

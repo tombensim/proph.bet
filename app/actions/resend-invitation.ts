@@ -37,7 +37,8 @@ export async function resendInvitationAction(invitationId: string) {
     data: { token, expiresAt }
   })
 
-  const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://proph.bet";
+  const inviteLink = `${baseUrl}/invite/${token}`
   const arenaName = invitation.arena.name
   const inviterName = session.user.name || "A user"
 

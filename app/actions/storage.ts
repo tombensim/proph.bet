@@ -1,16 +1,21 @@
 "use server"
 
 import { s3Client, BUCKET_NAME } from "@/lib/s3"
-import { PutObjectCommand, CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand } from "@aws-sdk/client-s3"
+import { PutObjectCommand, CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand, PutBucketCorsCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { auth } from "@/lib/auth"
 import { v4 as uuidv4 } from "uuid"
 
-async function ensureBucketExists() {
+async function ensureBucketConfig() {
+  let bucketExists = false
   try {
     await s3Client.send(new HeadBucketCommand({ Bucket: BUCKET_NAME }))
+    bucketExists = true
   } catch (error) {
-    // Bucket doesn't exist, create it
+    // Bucket doesn't exist, will create
+  }
+
+  if (!bucketExists) {
     try {
       await s3Client.send(new CreateBucketCommand({ Bucket: BUCKET_NAME }))
       
@@ -37,13 +42,33 @@ async function ensureBucketExists() {
       console.error("Failed to create bucket or set policy:", createError)
     }
   }
+
+  // Always ensure CORS is configured (safe to update)
+  try {
+    await s3Client.send(new PutBucketCorsCommand({
+      Bucket: BUCKET_NAME,
+      CORSConfiguration: {
+        CORSRules: [
+          {
+            AllowedHeaders: ["*"],
+            AllowedMethods: ["PUT", "POST", "GET", "HEAD"],
+            AllowedOrigins: ["*"],
+            ExposeHeaders: ["ETag"],
+            MaxAgeSeconds: 3000
+          }
+        ]
+      }
+    }))
+  } catch (corsError) {
+    console.error("Failed to set CORS:", corsError)
+  }
 }
 
 export async function getUploadUrlAction(contentType: string, folder: string = "evidence") {
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 
-  await ensureBucketExists()
+  await ensureBucketConfig()
 
   const fileKey = `${folder}/${session.user.id}/${uuidv4()}`
   

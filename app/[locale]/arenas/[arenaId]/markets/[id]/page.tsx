@@ -12,7 +12,7 @@ import { PriceChart } from "@/components/market/PriceChart"
 import { Link } from "@/lib/navigation"
 import { ExternalLink, ImageIcon, LinkIcon } from "lucide-react"
 import { getTranslations } from 'next-intl/server';
-import { generateGradient } from "@/lib/utils"
+import { EditMarketCover } from "./edit-market-cover"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -114,21 +114,12 @@ export default async function MarketPage(props: PageProps) {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header Section - Always at top */}
       <div>
-        {heroImage ? (
-          <div className="mb-6 rounded-xl overflow-hidden border bg-muted relative aspect-video">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src={heroImage.url} 
-              alt={heroImage.label || market.title} 
-              className="object-cover w-full h-full"
-            />
-          </div>
-        ) : (
-          <div 
-            className="mb-6 rounded-xl overflow-hidden border relative aspect-video"
-            style={{ background: generateGradient(market.id) }}
-          />
-        )}
+        <EditMarketCover 
+          marketId={market.id} 
+          initialImageUrl={heroImage?.url} 
+          marketTitle={market.title}
+          isCreator={isCreator}
+        />
 
         <div className="flex items-center gap-3 mb-2">
             <Badge>{market.type}</Badge>

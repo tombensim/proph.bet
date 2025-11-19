@@ -59,7 +59,11 @@ export function ArenaDetailsForm({ arena }: { arena: Arena }) {
         headers: { "Content-Type": file.type }
       })
 
-      if (!res.ok) throw new Error("Upload failed")
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error("Upload response error:", res.status, res.statusText, errorText)
+        throw new Error(`Upload failed: ${res.status} ${res.statusText}`)
+      }
 
       form.setValue("coverImage", publicUrl, { shouldDirty: true })
       toast.success("Image uploaded successfully")
