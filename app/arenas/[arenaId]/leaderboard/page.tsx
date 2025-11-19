@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Table,
@@ -64,18 +65,21 @@ export default async function LeaderboardPage(props: PageProps) {
                      {getRankIcon(index)}
                    </div>
                  </TableCell>
-                 <TableCell>
-                   <div className="flex items-center gap-3">
-                     <Avatar className="h-8 w-8">
-                       <AvatarImage src={user.image || ""} />
-                       <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
-                     </Avatar>
-                     <span>{user.name}</span>
-                     {user.id === session.user!.id && (
-                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">You</span>
-                     )}
-                   </div>
-                 </TableCell>
+                  <TableCell>
+                    <Link 
+                      href={`/arenas/${arenaId}/leaderboard/${user.id}`}
+                      className="flex items-center gap-3 hover:opacity-80 transition-opacity group"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.image || ""} />
+                        <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
+                      </Avatar>
+                      <span className="group-hover:underline">{user.name}</span>
+                      {user.id === session.user!.id && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">You</span>
+                      )}
+                    </Link>
+                  </TableCell>
                  <TableCell className="text-right font-bold">
                    {member.points.toLocaleString()}
                  </TableCell>
