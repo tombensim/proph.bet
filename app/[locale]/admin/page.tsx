@@ -1,10 +1,22 @@
-import { getSystemStats } from "@/app/actions/admin"
+import { getSystemStats, getAnalyticsData } from "@/app/actions/admin"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Trophy, Coins, Activity, LayoutGrid } from "lucide-react"
 import { getTranslations } from 'next-intl/server';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default async function AdminDashboard() {
-  const stats = await getSystemStats()
+  const [stats, analytics] = await Promise.all([
+    getSystemStats(),
+    getAnalyticsData()
+  ])
   const t = await getTranslations('Admin');
 
   return (
@@ -51,6 +63,72 @@ export default async function AdminDashboard() {
             <p className="text-xs text-muted-foreground">
               {t('volume', { amount: stats.totalVolume.toLocaleString() })}
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>{t('analytics.topArenas')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('analytics.table.arena')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.table.bets')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.table.volume')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.table.activeMarkets')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.table.members')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {analytics.arenaStats.map((arena) => (
+                  <TableRow key={arena.id}>
+                    <TableCell className="font-medium">{arena.name}</TableCell>
+                    <TableCell className="text-right">{arena.totalBets}</TableCell>
+                    <TableCell className="text-right">{arena.totalVolume.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{arena.activeMarkets}</TableCell>
+                    <TableCell className="text-right">{arena.totalMembers}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>{t('analytics.topUsers')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('analytics.table.user')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.table.bets')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.table.winnings')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {analytics.userStats.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="flex items-center gap-2 font-medium">
+                       <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                        <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span>{user.name || "User"}</span>
+                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">{user.totalBets}</TableCell>
+                    <TableCell className="text-right">{user.totalWon.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

@@ -35,6 +35,8 @@
     "noPositions": "אין לך עמדות פתוחות עדיין.",
     "noPending": "לא נמצאו שווקים ממתינים.",
     "noMarkets": "לא נמצאו שווקים פעילים. למה לא ליצור אחד?",
+    "searchPlaceholder": "חפש שווקים...",
+    "trending": "חם עכשיו",
     "createdBy": "נוצר על ידי {name}",
     "betsCount": "{count} הימורים",
     "endsIn": "מסתיים {timeAgo}",

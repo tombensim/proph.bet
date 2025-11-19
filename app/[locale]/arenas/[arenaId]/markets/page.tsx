@@ -2,17 +2,20 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { MarketCard } from "@/components/market/MarketCard"
 import { MarketFilter } from "@/components/market/MarketFilter"
+import { MarketSearch } from "@/components/market/MarketSearch"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/lib/navigation"
 import { redirect } from "next/navigation"
 import { ArenaRole, Role } from "@prisma/client"
 import { getTranslations } from 'next-intl/server';
+import { Flame } from "lucide-react"
 
 interface PageProps {
   searchParams: Promise<{ 
     status?: string | string[]
     show?: string
-    filter?: string 
+    filter?: string
+    q?: string 
   }>
   params: Promise<{ arenaId: string }>
 }
@@ -30,14 +33,16 @@ export default async function MarketsPage(props: PageProps) {
   const membership = await prisma.arenaMembership.findUnique({
     where: { userId_arenaId: { userId: session.user.id, arenaId } }
   })
+  // Cast to any to avoid linter error if types are outdated relative to schema
   const isAdmin = session.user.role === Role.ADMIN || 
-                  session.user.role === Role.GLOBAL_ADMIN || 
+                  (session.user.role as any) === "GLOBAL_ADMIN" || 
                   membership?.role === ArenaRole.ADMIN
 
   // Parse Filters
   const statusParam = searchParams.status
   const showParam = searchParams.show
   const legacyFilter = searchParams.filter
+  const query = searchParams.q
 
   let statuses: string[] = []
   if (Array.isArray(statusParam)) statuses = statusParam
@@ -66,7 +71,7 @@ export default async function MarketsPage(props: PageProps) {
   }
   
   if (statuses.includes('pending') && isAdmin) {
-    OR.push({ approved: false })
+    OR.push({ approved: false } as any)
   }
 
   const whereClause: any = {
@@ -91,16 +96,23 @@ export default async function MarketsPage(props: PageProps) {
     whereClause.id = "NO_MATCH"
   }
 
-  const markets = await prisma.market.findMany({
-    where: whereClause,
-    orderBy: {
-      createdAt: 'desc'
-    },
-    include: {
+  // Apply Search
+  if (query) {
+    whereClause.AND = [
+      {
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } }
+        ]
+      }
+    ]
+  }
+
+  const includeConfig = {
        creator: true,
        options: true,
        assets: {
-         where: { type: "IMAGE" },
+         where: { type: "IMAGE" } as const,
          take: 1
        },
        _count: {
@@ -116,22 +128,87 @@ export default async function MarketsPage(props: PageProps) {
          }
        }
     }
+
+  const markets = await prisma.market.findMany({
+    where: whereClause,
+    orderBy: {
+      createdAt: 'desc'
+    },
+    include: includeConfig
   })
+
+  // Fetch Trending Markets (Only if not searching and on default view)
+  const isDefaultView = !query && !showMyPositions && statuses.length === 1 && statuses[0] === 'open'
+  
+  let trendingMarkets: typeof markets = []
+
+  if (isDefaultView) {
+      const recentCutoff = new Date()
+      recentCutoff.setDate(recentCutoff.getDate() - 3)
+
+      trendingMarkets = await prisma.market.findMany({
+          where: {
+              arenaId,
+              status: "OPEN",
+              approved: true,
+              bets: {
+                  some: {
+                      createdAt: { gte: recentCutoff }
+                  }
+              },
+              hiddenUsers: { none: { id: session.user.id } }
+          } as any,
+          orderBy: {
+              bets: { _count: 'desc' }
+          },
+          take: 3,
+          include: includeConfig
+      })
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <div className="flex items-center gap-4">
-          <Link href={`/arenas/${arenaId}/markets/create`}>
-            <Button>{t('createMarket')}</Button>
-          </Link>
-          <MarketFilter isAdmin={isAdmin} />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <MarketSearch />
+          <div className="flex items-center gap-2">
+            <Link href={`/arenas/${arenaId}/markets/create`}>
+                <Button>{t('createMarket')}</Button>
+            </Link>
+            <MarketFilter isAdmin={isAdmin} />
+          </div>
         </div>
       </div>
+
+      {/* Trending Section */}
+      {trendingMarkets.length > 0 && (
+          <div className="space-y-3">
+              <div className="flex items-center gap-2 text-lg font-semibold text-orange-600">
+                  <Flame className="h-5 w-5 fill-orange-600" />
+                  {t('trending')}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {trendingMarkets.map(market => (
+                    <MarketCard 
+                      key={market.id} 
+                      market={{
+                        ...market,
+                        userBets: market.bets
+                      }} 
+                      isAdmin={isAdmin}
+                    />
+                  ))}
+              </div>
+              <div className="border-b my-6" />
+          </div>
+      )}
+
       {markets.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          {showMyPositions ? (
+          {query ? (
+             <p>{t('noMarkets')}</p>
+          ) : showMyPositions ? (
             <p>{t('noPositions')}</p>
           ) : statuses.includes("pending") && statuses.length === 1 ? (
             <p>{t('noPending')}</p>

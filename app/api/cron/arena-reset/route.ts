@@ -20,7 +20,9 @@ export async function GET(req: Request) {
         }
       }
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
       settings: true,
       members: true
     }

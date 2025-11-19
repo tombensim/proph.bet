@@ -32,8 +32,34 @@ export default async function LeaderboardPage(props: PageProps) {
   const arena = await prisma.arena.findUnique({
     where: { id: arenaId },
     include: {
+        settings: true,
         members: {
-            include: { user: true },
+            include: { 
+                user: {
+                    include: {
+                        bets: {
+                            where: { market: { arenaId: arenaId } },
+                            include: {
+                                market: {
+                                    select: {
+                                        status: true,
+                                        winningOptionId: true,
+                                        winningValue: true
+                                    }
+                                }
+                            }
+                        },
+                        createdMarkets: {
+                            where: { arenaId: arenaId },
+                            select: {
+                                bets: {
+                                    select: { amount: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             orderBy: { points: 'desc' },
             take: 50
         }
@@ -43,6 +69,7 @@ export default async function LeaderboardPage(props: PageProps) {
   if (!arena) return redirect("/")
 
   const memberships = arena.members
+  const feePercent = (arena.settings?.tradingFeePercent ?? 0) / 100
 
   const getRankIcon = (index: number) => {
     switch (index) {
@@ -66,12 +93,39 @@ export default async function LeaderboardPage(props: PageProps) {
              <TableRow>
                <TableHead className="w-[80px] text-center">{t('table.rank')}</TableHead>
                <TableHead>{t('table.user')}</TableHead>
+               <TableHead className="text-center">{t('table.record')}</TableHead>
+               <TableHead className="text-center">{t('table.winRate')}</TableHead>
+               <TableHead className="text-center">{t('table.created')}</TableHead>
+               <TableHead className="text-center">{t('table.fees')}</TableHead>
                <TableHead className="text-end">{t('table.points')}</TableHead>
              </TableRow>
            </TableHeader>
            <TableBody>
              {memberships.map((member, index) => {
                const user = member.user
+               
+               // Stats Calculation
+               const userBets = user.bets
+               const wins = userBets.filter(b => 
+                 b.market.status === 'RESOLVED' && 
+                 b.market.winningOptionId && 
+                 b.optionId === b.market.winningOptionId
+               ).length
+               
+               const losses = userBets.filter(b => 
+                 b.market.status === 'RESOLVED' && 
+                 b.market.winningOptionId && 
+                 b.optionId !== b.market.winningOptionId
+               ).length
+
+               const resolvedBets = wins + losses
+               const winRate = resolvedBets > 0 ? Math.round((wins / resolvedBets) * 100) : 0
+               
+               const createdCount = user.createdMarkets.length
+               const feesEarned = user.createdMarkets.reduce((total, market) => {
+                 return total + market.bets.reduce((sum, bet) => sum + Math.floor(bet.amount * feePercent), 0)
+               }, 0)
+
                return (
                <TableRow key={user.id}>
                  <TableCell className="font-medium text-center">
@@ -93,6 +147,18 @@ export default async function LeaderboardPage(props: PageProps) {
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{t('table.you')}</span>
                       )}
                     </Link>
+                  </TableCell>
+                  <TableCell className="text-center font-mono text-sm">
+                    {wins} - {losses}
+                  </TableCell>
+                  <TableCell className="text-center font-mono text-sm">
+                    {resolvedBets > 0 ? `${winRate}%` : '-'}
+                  </TableCell>
+                  <TableCell className="text-center font-mono text-sm">
+                    {createdCount}
+                  </TableCell>
+                  <TableCell className="text-center font-mono text-sm text-muted-foreground">
+                    {feesEarned > 0 ? feesEarned.toLocaleString() : '-'}
                   </TableCell>
                  <TableCell className="text-end font-bold">
                    {member.points.toLocaleString()}

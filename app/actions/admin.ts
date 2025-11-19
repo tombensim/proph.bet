@@ -122,7 +122,15 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
       skip,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        coverImage: true,
+        slug: true,
+        createdAt: true,
+        updatedAt: true,
+        archivedAt: true,
         _count: {
           select: {
             members: true,
@@ -146,6 +154,7 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
 
   const arenasWithStorage = await Promise.all(arenas.map(async (arena) => {
     const files: string[] = []
+    // @ts-ignore - coverImage exists in schema but client might be stale
     if (arena.coverImage) files.push(arena.coverImage)
     
     for (const market of arena.markets) {
@@ -182,4 +191,109 @@ export async function updateUserRole(userId: string, role: Role) {
   })
   
   revalidatePath("/admin/users")
+}
+
+export async function getAnalyticsData() {
+  await requireAdmin()
+
+  // 1. Arena Stats
+  const arenas = await prisma.arena.findMany({
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          members: true,
+          markets: true
+        }
+      },
+      markets: {
+        select: {
+          status: true
+        }
+      }
+    }
+  })
+
+  const arenaTransactions = await prisma.transaction.groupBy({
+    by: ['arenaId'],
+    where: {
+      type: 'BET_PLACED',
+      arenaId: { not: null }
+    },
+    _sum: {
+      amount: true
+    },
+    _count: {
+      _all: true
+    }
+  })
+
+  const arenaStats = arenas.map(arena => {
+    const txStats = arenaTransactions.find(tx => tx.arenaId === arena.id)
+    const activeMarkets = arena.markets.filter(m => m.status === 'OPEN').length
+    
+    return {
+      id: arena.id,
+      name: arena.name,
+      totalMembers: arena._count.members,
+      totalMarkets: arena._count.markets,
+      activeMarkets,
+      totalBets: txStats?._count._all || 0,
+      totalVolume: txStats?._sum.amount || 0
+    }
+  }).sort((a, b) => b.totalVolume - a.totalVolume)
+
+  // 2. User Stats (Top 20 by bet count)
+  const users = await prisma.user.findMany({
+    take: 20,
+    orderBy: {
+      bets: {
+        _count: 'desc'
+      }
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      _count: {
+        select: {
+          bets: true,
+          createdMarkets: true
+        }
+      }
+    }
+  })
+
+  const userIds = users.map(u => u.id)
+
+  const winnings = await prisma.transaction.groupBy({
+    by: ['toUserId'],
+    where: {
+      type: 'WIN_PAYOUT',
+      toUserId: { in: userIds }
+    },
+    _sum: {
+      amount: true
+    }
+  })
+
+  const userStats = users.map(user => {
+    const userWinnings = winnings.find(w => w.toUserId === user.id)
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      totalBets: user._count.bets,
+      marketsCreated: user._count.createdMarkets,
+      totalWon: userWinnings?._sum.amount || 0
+    }
+  })
+
+  return {
+    arenaStats,
+    userStats
+  }
 }

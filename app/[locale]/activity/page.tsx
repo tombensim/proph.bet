@@ -26,7 +26,14 @@ export default async function ActivityPage({
       userId: session.user.id,
       arena: { archivedAt: null }
     },
-    include: { arena: true }
+    include: { 
+      arena: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    }
   })
 
   const arenas = memberships.map(m => ({

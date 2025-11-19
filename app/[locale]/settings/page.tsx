@@ -39,7 +39,14 @@ export default async function SettingsPage() {
   // Fetch user's arenas
   const memberships = await prisma.arenaMembership.findMany({
     where: { userId: session.user.id },
-    include: { arena: true }
+    include: { 
+      arena: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    }
   })
   
   const arenas = memberships.map(m => ({

@@ -37,6 +37,8 @@
     "noPositions": "You don't have any open positions yet.",
     "noPending": "No pending markets found.",
     "noMarkets": "No active markets found. Why not create one?",
+    "searchPlaceholder": "Search markets...",
+    "trending": "Trending Now",
     "createdBy": "Created by {name}",
     "betsCount": "{count} bets",
     "endsIn": "Ends {timeAgo}",
@@ -250,6 +252,20 @@
         "markets": "Markets",
         "storage": "Storage",
         "created": "Created"
+      }
+    },
+    "analytics": {
+      "topArenas": "Top Arenas by Activity",
+      "topUsers": "Top Users by Activity",
+      "table": {
+        "arena": "Arena",
+        "user": "User",
+        "bets": "Bets",
+        "volume": "Volume",
+        "winnings": "Winnings",
+        "activeMarkets": "Active Mkts",
+        "marketsCreated": "Mkts Created",
+        "members": "Members"
       }
     }
   },

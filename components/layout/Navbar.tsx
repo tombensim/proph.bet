@@ -38,9 +38,6 @@ export async function Navbar({ arenaId }: NavbarProps) {
             userId: session.user.id,
             arenaId: arenaId
             }
-        },
-        include: {
-            arena: true
         }
         })
         if (membership) {
@@ -55,7 +52,18 @@ export async function Navbar({ arenaId }: NavbarProps) {
     // Fetch all memberships for switcher
     allMemberships = await prisma.arenaMembership.findMany({
         where: { userId: session.user.id },
-        include: { arena: true }
+        include: { 
+          arena: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              archivedAt: true,
+              coverImage: true,
+              description: true
+            }
+          }
+        }
     })
   }
 
