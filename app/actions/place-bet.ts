@@ -55,10 +55,11 @@ export async function placeBetAction(data: PlaceBetValues) {
   // 2. Execute Transaction
   await prisma.$transaction(async (tx) => {
     // Get user arena membership
+    if (!session?.user?.id) throw new Error("Unauthorized")
     const membership = await tx.arenaMembership.findUnique({
       where: { 
         userId_arenaId: { 
-          userId: session.user!.id,
+          userId: session.user.id,
           arenaId
         } 
       }
@@ -83,7 +84,7 @@ export async function placeBetAction(data: PlaceBetValues) {
       data: {
         amount: amount,
         type: TransactionType.BET_PLACED,
-        fromUserId: session.user!.id,
+        fromUserId: session.user.id,
         marketId: market.id,
         arenaId
       }
@@ -183,7 +184,7 @@ export async function placeBetAction(data: PlaceBetValues) {
     // Create Bet
     await tx.bet.create({
       data: {
-        userId: session.user!.id,
+        userId: session.user.id,
         marketId: market.id,
         amount: netBetAmount, // Store net amount
         shares: shares, // Store calculated shares
