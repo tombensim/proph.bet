@@ -4,30 +4,44 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "@/lib/navigation"
 import { useSearchParams } from "next/navigation"
 
-export function MarketFilter() {
+export function MarketFilter({ isAdmin }: { isAdmin?: boolean }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const currentFilter = searchParams.get("filter")
 
-  const toggleFilter = () => {
-    if (currentFilter === "my-positions") {
-      router.push("/markets")
+  const setFilter = (filter: string | null) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (filter) {
+      params.set("filter", filter)
     } else {
-      router.push("/markets?filter=my-positions")
+      params.delete("filter")
     }
+    router.push(`?${params.toString()}`)
   }
 
   return (
-    <Button 
-      variant={currentFilter === "my-positions" ? "default" : "outline"}
-      onClick={toggleFilter}
-      className="gap-2"
-    >
-      My Positions
-      {currentFilter === "my-positions" && (
-        <span className="ms-1 h-2 w-2 rounded-full bg-primary-foreground animate-pulse" />
+    <div className="flex gap-2">
+      <Button 
+        variant={currentFilter === "my-positions" ? "default" : "outline"}
+        onClick={() => setFilter(currentFilter === "my-positions" ? null : "my-positions")}
+        className="gap-2"
+      >
+        My Positions
+        {currentFilter === "my-positions" && (
+          <span className="ms-1 h-2 w-2 rounded-full bg-primary-foreground animate-pulse" />
+        )}
+      </Button>
+      
+      {isAdmin && (
+        <Button 
+          variant={currentFilter === "pending" ? "default" : "outline"}
+          onClick={() => setFilter(currentFilter === "pending" ? null : "pending")}
+          className="gap-2 border-yellow-500/50 hover:bg-yellow-500/10 data-[state=active]:bg-yellow-500"
+        >
+          Pending Approval
+        </Button>
       )}
-    </Button>
+    </div>
   )
 }
 

@@ -5,6 +5,7 @@ import { MarketFilter } from "@/components/market/MarketFilter"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/lib/navigation"
 import { redirect } from "next/navigation"
+import { ArenaRole, Role } from "@prisma/client"
 
 interface PageProps {
   searchParams: Promise<{ filter?: string }>
@@ -19,24 +20,49 @@ export default async function MarketsPage(props: PageProps) {
   const searchParams = await props.searchParams
   const filter = searchParams.filter
 
-  const markets = await prisma.market.findMany({
-    where: {
-      arenaId,
-      hiddenUsers: {
-        none: {
-          id: session.user.id
-        }
-      },
-      status: {
-        in: ["OPEN", "PENDING_RESOLUTION"]
-      },
-      // Filter by user's bets if requested
-      bets: filter === "my-positions" ? {
-        some: {
-          userId: session.user.id
-        }
-      } : undefined
+  // Check Admin Status
+  const membership = await prisma.arenaMembership.findUnique({
+    where: { userId_arenaId: { userId: session.user.id, arenaId } }
+  })
+  const isAdmin = session.user.role === Role.ADMIN || 
+                  session.user.role === Role.GLOBAL_ADMIN || 
+                  membership?.role === ArenaRole.ADMIN
+
+  const whereClause: any = {
+    arenaId,
+    hiddenUsers: {
+      none: {
+        id: session.user.id
+      }
     },
+    status: {
+      in: ["OPEN", "PENDING_RESOLUTION"]
+    },
+    bets: filter === "my-positions" ? {
+      some: {
+        userId: session.user.id
+      }
+    } : undefined
+  }
+
+  // Filter Logic for Approval
+  if (filter === "pending") {
+    if (!isAdmin) {
+        // If user tries to access pending but isn't admin, just show nothing or redirect
+        whereClause.approved = false 
+        whereClause.status = "OPEN" // Only show open pending markets?
+    } else {
+        whereClause.approved = false
+    }
+  } else {
+    // Default view: Show approved markets OR pending markets created by self OR all if admin?
+    // Usually: Show approved only. Admin can switch filter to see pending.
+    // Or maybe admins see pending mixed in? Let's stick to strict approved unless filter=pending
+    whereClause.approved = true
+  }
+
+  const markets = await prisma.market.findMany({
+    where: whereClause,
     orderBy: {
       createdAt: 'desc'
     },
@@ -70,13 +96,15 @@ export default async function MarketsPage(props: PageProps) {
           <Link href={`/arenas/${arenaId}/markets/create`}>
             <Button>Create Market</Button>
           </Link>
-          <MarketFilter />
+          <MarketFilter isAdmin={isAdmin} />
         </div>
       </div>
       {markets.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           {filter === "my-positions" ? (
             <p>You don't have any open positions yet.</p>
+          ) : filter === "pending" ? (
+            <p>No pending markets found.</p>
           ) : (
             <p>No active markets found. Why not create one?</p>
           )}
@@ -90,6 +118,7 @@ export default async function MarketsPage(props: PageProps) {
                 ...market,
                 userBets: market.bets
               }} 
+              isAdmin={isAdmin}
             />
           ))}
         </div>

@@ -33,8 +33,31 @@ export async function createMarketAction(data: CreateMarketValues) {
     assets
   } = validated.data
 
-  // 1. DEFINE SEED AMOUNT
-  const SEED_AMOUNT = 100; // Cost per option
+  // 1. CHECK ARENA SETTINGS & PERMISSIONS
+  const arenaSettings = await prisma.arenaSettings.findUnique({
+    where: { arenaId }
+  })
+  
+  // Fallback defaults if no settings exist yet
+  const creationPolicy = arenaSettings?.creationPolicy ?? "EVERYONE"
+  const SEED_AMOUNT = arenaSettings?.seedLiquidity ?? 100
+  const requireApproval = arenaSettings?.requireApproval ?? false
+  const defaultLanguage = arenaSettings?.defaultLanguage ?? "en"
+
+  // Check Creation Policy
+  if (creationPolicy === "ADMIN") {
+    // Check if user is admin
+    const membership = await prisma.arenaMembership.findUnique({
+      where: { userId_arenaId: { userId: session.user.id, arenaId } }
+    })
+    const isGlobalAdmin = session.user.role === "ADMIN" || session.user.role === "GLOBAL_ADMIN"
+    const isArenaAdmin = membership?.role === "ADMIN"
+    
+    if (!isGlobalAdmin && !isArenaAdmin) {
+      throw new Error("Only admins can create markets in this arena")
+    }
+  }
+  // TODO: Implement APPROVED_CREATORS logic if needed later
 
   // 2. CALCULATE TOTAL COST
   let totalCost = 0;
@@ -109,7 +132,9 @@ export async function createMarketAction(data: CreateMarketValues) {
             url: a.url,
             label: a.label
           }))
-        } : undefined
+        } : undefined,
+        approved: !requireApproval,
+        language: defaultLanguage
       },
       include: { options: true }
     })

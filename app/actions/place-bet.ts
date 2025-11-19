@@ -91,7 +91,8 @@ export async function placeBetAction(data: PlaceBetValues) {
     })
 
     // --- FEE LOGIC ---
-    const FEE_PERCENT = 0.02
+    const arenaSettings = await tx.arenaSettings.findUnique({ where: { arenaId } })
+    const FEE_PERCENT = (arenaSettings?.tradingFeePercent ?? 0) / 100
     const fee = Math.floor(amount * FEE_PERCENT)
     const netBetAmount = amount - fee
 

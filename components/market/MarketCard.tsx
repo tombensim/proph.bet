@@ -3,7 +3,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
-import { Coins } from "lucide-react"
+import { Coins, AlertTriangle } from "lucide-react"
+import { ApproveMarketButton } from "./ApproveMarketButton"
 
 interface MarketWithDetails extends Market {
   creator: User
@@ -15,9 +16,10 @@ interface MarketWithDetails extends Market {
   assets?: MarketAsset[]
 }
 
-export function MarketCard({ market }: { market: MarketWithDetails }) {
+export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isAdmin?: boolean }) {
   const hasPositions = market.userBets && market.userBets.length > 0
   const coverImage = market.assets?.find(a => a.type === "IMAGE")?.url
+  const isPending = market.approved === false
   
   let probabilityDisplay = null
   
@@ -46,7 +48,14 @@ export function MarketCard({ market }: { market: MarketWithDetails }) {
 
   return (
     <Link href={href}>
-      <Card className={`h-full transition-all cursor-pointer flex flex-col overflow-hidden ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'}`}>
+      <Card className={`h-full transition-all cursor-pointer flex flex-col overflow-hidden relative ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''}`}>
+        {isPending && (
+            <div className="absolute top-2 right-2 z-10">
+                <Badge variant="destructive" className="gap-1 bg-yellow-500 hover:bg-yellow-600">
+                    <AlertTriangle className="w-3 h-3" /> Pending
+                </Badge>
+            </div>
+        )}
         {coverImage && (
           <div className="relative h-32 w-full overflow-hidden bg-muted">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -97,6 +106,12 @@ export function MarketCard({ market }: { market: MarketWithDetails }) {
            <span>{market._count.bets} bets</span>
            <span>Ends {formatDistanceToNow(new Date(market.resolutionDate), { addSuffix: true })}</span>
         </CardFooter>
+        
+        {isPending && isAdmin && market.arenaId && (
+            <div className="p-2 border-t bg-yellow-100/50">
+                <ApproveMarketButton marketId={market.id} arenaId={market.arenaId} />
+            </div>
+        )}
       </Card>
     </Link>
   )

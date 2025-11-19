@@ -91,9 +91,67 @@ model Arena {
   markets     Market[]
   transactions Transaction[]
   invitations Invitation[]
-  
+  settings    ArenaSettings?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model ArenaSettings {
+  id        String   @id @default(cuid())
+  arenaId   String   @unique
+  arena     Arena    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+
+  // Cycle
+  resetFrequency ResetFrequency @default(MONTHLY)
+  nextResetDate  DateTime?
+  winnerRule     WinnerRule     @default(HIGHEST_BALANCE)
+
+  // Points
+  monthlyAllocation Int     @default(1000)
+  allowCarryover    Boolean @default(false)
+  allowTransfers    Boolean @default(true)
+  transferLimit     Int?    // Max points per transfer (null = unlimited)
+
+  // Markets
+  creationPolicy         MarketCreationPolicy @default(EVERYONE)
+  allowedTypes           MarketType[]         @default([BINARY, MULTIPLE_CHOICE])
+  defaultExpirationHours Int                  @default(72)
+  requireApproval        Boolean              @default(false)
+  defaultLanguage        String               @default("en")
+
+  // AMM
+  ammType           AMMType @default(FPMM)
+  tradingFeePercent Float   @default(0)
+  seedLiquidity     Int     @default(50)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ResetFrequency {
+  WEEKLY
+  MONTHLY
+  CUSTOM
+  MANUAL
+}
+
+enum WinnerRule {
+  HIGHEST_BALANCE
+  MOST_BETS_WON
+  HIGHEST_ROI
+}
+
+enum MarketCreationPolicy {
+  EVERYONE
+  ADMIN
+  APPROVED_CREATORS
+}
+
+enum AMMType {
+  FPMM
+  LMSR
+  FIXED_ODDS
 }
 
 model ArenaMembership {
@@ -134,6 +192,9 @@ model Market {
   transactions Transaction[] // Payouts linked to this market
   assets      MarketAsset[] // New relation
   
+  approved    Boolean   @default(true)
+  language    String    @default("en")
+
   // Visibility Relations
   hiddenUsers       User[]    @relation("HiddenMarketUsers")
   hideBetsFromUsers User[]    @relation("HiddenBetsUsers")

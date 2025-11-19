@@ -28,6 +28,19 @@ export async function transferPointsAction(data: TransferValues) {
 
   const { email, amount, arenaId } = validated.data
 
+  // 0. Check Arena Rules
+  const arenaSettings = await prisma.arenaSettings.findUnique({ where: { arenaId } })
+  const allowTransfers = arenaSettings?.allowTransfers ?? true
+  const transferLimit = arenaSettings?.transferLimit
+
+  if (!allowTransfers) {
+    throw new Error("Point transfers are disabled in this arena")
+  }
+
+  if (transferLimit && amount > transferLimit) {
+    throw new Error(`Transfer limit exceeded. Maximum allowed is ${transferLimit} points.`)
+  }
+
   if (email === session.user.email) {
       throw new Error("You cannot transfer points to yourself")
   }

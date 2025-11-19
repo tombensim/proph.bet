@@ -13,6 +13,7 @@ import {
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/lib/navigation';
 import { LocaleSwitcher } from "@/components/layout/LocaleSwitcher";
+import { Role } from "@prisma/client"
 
 interface NavbarProps {
   arenaId?: string
@@ -42,7 +43,10 @@ export async function Navbar({ arenaId }: NavbarProps) {
         })
         if (membership) {
             points = membership.points
-            isAdmin = membership.role === "ADMIN"
+            isAdmin = membership.role === "ADMIN" || session.user.role === Role.ADMIN || session.user.role === Role.GLOBAL_ADMIN
+        } else if (session.user.role === Role.ADMIN || session.user.role === Role.GLOBAL_ADMIN) {
+             // Admins might not be members but should see admin options
+             isAdmin = true
         }
     }
 
@@ -80,9 +84,14 @@ export async function Navbar({ arenaId }: NavbarProps) {
                 {t('leaderboard')}
                 </Link>
                 {isAdmin && (
-                    <Link href={`${baseUrl}/members`} className="text-sm font-medium transition-colors hover:text-primary">
-                        {t('members')}
-                    </Link>
+                    <>
+                        <Link href={`${baseUrl}/members`} className="text-sm font-medium transition-colors hover:text-primary">
+                            {t('members')}
+                        </Link>
+                        <Link href={`${baseUrl}/settings`} className="text-sm font-medium transition-colors hover:text-primary">
+                            Settings
+                        </Link>
+                    </>
                 )}
             </nav>
 
@@ -102,9 +111,14 @@ export async function Navbar({ arenaId }: NavbarProps) {
                       <Link href={`${baseUrl}/leaderboard`}>{t('leaderboard')}</Link>
                     </DropdownMenuItem>
                     {isAdmin && (
-                      <DropdownMenuItem asChild>
-                        <Link href={`${baseUrl}/members`}>{t('members')}</Link>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href={`${baseUrl}/members`}>{t('members')}</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`${baseUrl}/settings`}>Settings</Link>
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
