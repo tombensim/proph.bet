@@ -14,6 +14,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/lib/navigation';
 import { LocaleSwitcher } from "@/components/layout/LocaleSwitcher";
 import { Role } from "@prisma/client"
+import Image from "next/image"
 
 interface NavbarProps {
   arenaId?: string
@@ -63,11 +64,12 @@ export async function Navbar({ arenaId }: NavbarProps) {
   return (
     <header className="border-b mb-8">
       <div className="flex h-16 items-center px-4 container mx-auto">
-        <Link href="/" className="font-bold text-xl me-4 hidden md:block">
-          proph.bet
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl me-4 hidden md:flex hover:opacity-80 transition-opacity">
+          <Image src="/chami-beige.png" alt="Logo" width={32} height={32} className="object-contain" />
+          <span>proph.bet</span>
         </Link>
-        <Link href="/" className="font-bold text-xl me-2 md:hidden">
-          pb
+        <Link href="/" className="flex items-center font-bold text-xl me-2 md:hidden hover:opacity-80 transition-opacity">
+          <Image src="/chami-beige.png" alt="Logo" width={32} height={32} className="object-contain" />
         </Link>
 
         {session?.user && (
