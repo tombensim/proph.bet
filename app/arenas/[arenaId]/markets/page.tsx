@@ -43,6 +43,10 @@ export default async function MarketsPage(props: PageProps) {
     include: {
        creator: true,
        options: true,
+       assets: {
+         where: { type: "IMAGE" },
+         take: 1
+       },
        _count: {
          select: { bets: true }
        },

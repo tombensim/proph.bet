@@ -1,9 +1,9 @@
-import { Market, User, Bet, Option } from "@prisma/client"
+import { Market, User, Bet, Option, MarketAsset } from "@prisma/client"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
-import { Coins, TrendingUp } from "lucide-react"
+import { Coins } from "lucide-react"
 
 interface MarketWithDetails extends Market {
   creator: User
@@ -12,10 +12,12 @@ interface MarketWithDetails extends Market {
     bets: number
   }
   userBets?: (Bet & { option: Option | null })[]
+  assets?: MarketAsset[]
 }
 
 export function MarketCard({ market }: { market: MarketWithDetails }) {
   const hasPositions = market.userBets && market.userBets.length > 0
+  const coverImage = market.assets?.find(a => a.type === "IMAGE")?.url
   
   let probabilityDisplay = null
   
@@ -44,7 +46,17 @@ export function MarketCard({ market }: { market: MarketWithDetails }) {
 
   return (
     <Link href={href}>
-      <Card className={`h-full transition-all cursor-pointer flex flex-col ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'}`}>
+      <Card className={`h-full transition-all cursor-pointer flex flex-col overflow-hidden ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'}`}>
+        {coverImage && (
+          <div className="relative h-32 w-full overflow-hidden bg-muted">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={coverImage} 
+              alt={market.title}
+              className="object-cover w-full h-full transition-transform hover:scale-105 duration-500"
+            />
+          </div>
+        )}
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-2">
             <CardTitle className="text-lg leading-tight">{market.title}</CardTitle>

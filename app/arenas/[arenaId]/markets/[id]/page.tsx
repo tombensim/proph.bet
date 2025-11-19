@@ -103,10 +103,26 @@ export default async function MarketPage(props: PageProps) {
 
   const chartData = Array.from(chartDataMap.values())
 
+  // Determine hero image (first image asset)
+  const heroImage = market.assets.find(a => a.type === "IMAGE")
+  const remainingAssets = market.assets.filter(a => a.id !== heroImage?.id)
+
   return (
     <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 space-y-6">
         <div>
+          {/* Hero Image */}
+          {heroImage && (
+            <div className="mb-6 rounded-xl overflow-hidden border bg-muted relative aspect-video">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={heroImage.url} 
+                alt={heroImage.label || market.title} 
+                className="object-cover w-full h-full"
+              />
+            </div>
+          )}
+
           <div className="flex items-center gap-3 mb-2">
              <Badge>{market.type}</Badge>
              {market.status === "OPEN" ? (
@@ -121,12 +137,12 @@ export default async function MarketPage(props: PageProps) {
             {market.description}
           </div>
 
-          {/* Assets / Evidence Section */}
-          {market.assets.length > 0 && (
+          {/* Assets / Evidence Section (excluding hero) */}
+          {remainingAssets.length > 0 && (
             <div className="mb-6 space-y-3">
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Resources & Evidence</h3>
               <div className="grid gap-3 sm:grid-cols-2">
-                {market.assets.map((asset) => (
+                {remainingAssets.map((asset) => (
                   <a 
                     href={asset.url} 
                     target="_blank" 
