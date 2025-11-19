@@ -158,7 +158,11 @@
       "rank": "Rank",
       "user": "User",
       "points": "Points",
-      "you": "You"
+      "you": "You",
+      "record": "Record",
+      "winRate": "Win Rate",
+      "created": "Created",
+      "fees": "Fees"
     }
   },
   "Members": {
