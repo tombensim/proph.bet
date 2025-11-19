@@ -11,8 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy, Medal } from "lucide-react"
 import { getTranslations } from 'next-intl/server';
+import ReactMarkdown from "react-markdown"
 
 interface PageProps {
   params: Promise<{ arenaId: string }>
@@ -26,12 +28,21 @@ export default async function LeaderboardPage(props: PageProps) {
 
   const { arenaId } = await props.params
 
-  const memberships = await prisma.arenaMembership.findMany({
-    where: { arenaId },
-    include: { user: true },
-    orderBy: { points: 'desc' },
-    take: 50
+  // Fetch Arena Details along with Memberships
+  const arena = await prisma.arena.findUnique({
+    where: { id: arenaId },
+    include: {
+        members: {
+            include: { user: true },
+            orderBy: { points: 'desc' },
+            take: 50
+        }
+    }
   })
+
+  if (!arena) return redirect("/")
+
+  const memberships = arena.members
 
   const getRankIcon = (index: number) => {
     switch (index) {
@@ -91,6 +102,24 @@ export default async function LeaderboardPage(props: PageProps) {
            </TableBody>
          </Table>
        </div>
+
+       {/* About Section Moved Here */}
+       {(arena.about || arena.description) && (
+         <Card className="mt-12">
+           <CardHeader>
+             <CardTitle>About {arena.name}</CardTitle>
+           </CardHeader>
+           <CardContent>
+             {arena.about ? (
+               <article className="prose dark:prose-invert max-w-none">
+                 <ReactMarkdown>{arena.about}</ReactMarkdown>
+               </article>
+             ) : (
+               <p className="text-muted-foreground">{arena.description}</p>
+             )}
+           </CardContent>
+         </Card>
+       )}
     </div>
   )
 }

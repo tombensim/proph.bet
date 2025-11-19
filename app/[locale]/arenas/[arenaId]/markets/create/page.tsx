@@ -24,6 +24,7 @@ export default async function CreateMarketPage(props: PageProps) {
   })
 
   const seedLiquidity = arenaSettings?.seedLiquidity ?? 100
+  const tradingFeePercent = arenaSettings?.tradingFeePercent ?? 0
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -44,7 +45,7 @@ export default async function CreateMarketPage(props: PageProps) {
         </div>
       </div>
       <div className="bg-card p-6 rounded-lg border shadow-sm">
-         <CreateMarketForm arenaId={arenaId} seedLiquidity={seedLiquidity} />
+         <CreateMarketForm arenaId={arenaId} seedLiquidity={seedLiquidity} tradingFeePercent={tradingFeePercent} />
       </div>
     </div>
   )

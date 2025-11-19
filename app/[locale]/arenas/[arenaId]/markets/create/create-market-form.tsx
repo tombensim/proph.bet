@@ -39,7 +39,7 @@ import { AssetType } from "@prisma/client"
 import { useTranslations } from 'next-intl';
 import { generateDescriptionAction } from "@/app/actions/generate-description"
 
-export function CreateMarketForm({ arenaId, seedLiquidity = 100 }: { arenaId: string, seedLiquidity?: number }) {
+export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePercent = 0 }: { arenaId: string, seedLiquidity?: number, tradingFeePercent?: number }) {
   const t = useTranslations('CreateMarket.form');
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
@@ -526,7 +526,7 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100 }: { arenaId: st
                 </div>
                 <div className="flex gap-2 items-start text-muted-foreground">
                    <span className="text-green-600 font-medium whitespace-nowrap">{t('incentive').split(":")[0]}:</span>
-                   <span>{t('incentive').split(":")[1]}</span>
+                   <span>{t('incentive').split(":")[1]} ({tradingFeePercent}% trading fee)</span>
                 </div>
                 <div className="flex gap-2 items-start text-muted-foreground">
                    <span className="text-orange-600 font-medium whitespace-nowrap">{t('risk').split(":")[0]}:</span>

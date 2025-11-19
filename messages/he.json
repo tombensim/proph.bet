@@ -22,6 +22,8 @@
     "next": "הבא",
     "page": "עמוד {current} מתוך {total}",
     "view": "צפה",
+    "filter": "סינון",
+    "status": "סטטוס",
     "noFileChosen": "לא נבחר קובץ",
     "chooseFile": "בחר קובץ"
   },

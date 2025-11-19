@@ -54,10 +54,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
 
     // Fetch all memberships for switcher
     allMemberships = await prisma.arenaMembership.findMany({
-        where: { 
-            userId: session.user.id,
-            // arena: { archivedAt: null }
-        },
+        where: { userId: session.user.id },
         include: { arena: true }
     })
   }
@@ -90,10 +87,6 @@ export async function Navbar({ arenaId }: NavbarProps) {
                 <Link href={`${baseUrl}/leaderboard`} className="text-sm font-medium transition-colors hover:text-primary">
                 {t('leaderboard')}
                 </Link>
-                {/* Add Arena About link here */}
-                <Link href={`${baseUrl}/about`} className="text-sm font-medium transition-colors hover:text-primary">
-                    {t('about')}
-                </Link>
                 {isAdmin && (
                     <>
                         <Link href={`${baseUrl}/members`} className="text-sm font-medium transition-colors hover:text-primary">
@@ -125,9 +118,6 @@ export async function Navbar({ arenaId }: NavbarProps) {
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                             <Link href={`${baseUrl}/leaderboard`}>{t('leaderboard')}</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                            <Link href={`${baseUrl}/about`}>{t('about')}</Link>
                             </DropdownMenuItem>
                             {isAdmin && (
                             <>
