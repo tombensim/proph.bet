@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma"
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  secret: process.env.AUTH_SECRET,
   providers: [
     Google,
     ...(process.env.NODE_ENV === "development" ? [
@@ -39,12 +40,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
+        token.role = user.role
+
+        // Auto-assign admin role to tombensim@gmail.com
+        if (user.email === "tombensim@gmail.com") {
+          try {
+             await prisma.user.update({
+               where: { email: "tombensim@gmail.com" },
+               data: { role: "ADMIN" }
+             })
+          } catch (e) {
+             console.error("Failed to auto-assign admin role", e)
+          }
+          token.role = "ADMIN"
+        }
       }
+      
+      // Ensure admin role in token even if not re-logged in
+      if (token.email === "tombensim@gmail.com") {
+        token.role = "ADMIN"
+      }
+
       return token
     },
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string
+        session.user.role = token.role as "USER" | "ADMIN"
         
         // For dev mode, ensure user exists in DB
         if (process.env.NODE_ENV === "development" && session.user.email) {
@@ -53,6 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           })
           if (dbUser) {
             session.user.id = dbUser.id
+            session.user.role = dbUser.role
           }
         }
       }

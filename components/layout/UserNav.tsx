@@ -47,6 +47,11 @@ export function UserNav({ user, arenaId }: { user: any, arenaId?: string }) {
           <DropdownMenuItem asChild>
              <a href="/settings" className="cursor-pointer">Settings</a>
           </DropdownMenuItem>
+          {user.role === "ADMIN" && (
+             <DropdownMenuItem asChild>
+                <a href="/admin" className="cursor-pointer">Admin Panel</a>
+             </DropdownMenuItem>
+          )}
           {arenaId && (
             <>
               <DropdownMenuSeparator />
