@@ -1,59 +1,128 @@
 "use client"
 
+import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "@/lib/navigation"
 import { useSearchParams } from "next/navigation"
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu"
+import { ListFilter } from "lucide-react"
 
 export function MarketFilter({ isAdmin }: { isAdmin?: boolean }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const currentFilter = searchParams.get("filter")
-  const t = useTranslations('Markets');
+  const t = useTranslations('Markets')
+  const tCommon = useTranslations('Common')
 
-  const setFilter = (filter: string | null) => {
+  // Parse current state
+  const getStatuses = () => {
+    const s = searchParams.get("status")
+    const f = searchParams.get("filter")
+    
+    if (s !== null) return s === "" ? [] : s.split(',')
+    
+    // Legacy fallback
+    if (f === 'resolved') return ['resolved']
+    if (f === 'pending') return ['pending']
+    
+    return ['open']
+  }
+
+  const currentStatuses = getStatuses()
+  const showMyPositions = searchParams.get("show") === "my-positions" || searchParams.get("filter") === "my-positions"
+
+  const updateFilters = (updates: { status?: string[], show?: boolean }) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (filter) {
-      params.set("filter", filter)
+    
+    // Cleanup legacy
+    params.delete("filter")
+
+    // Handle Status
+    let nextStatuses = updates.status !== undefined ? updates.status : currentStatuses
+    
+    if (nextStatuses.length === 0) {
+        params.set("status", "")
     } else {
-      params.delete("filter")
+        // If it's just default open and no special view, we can clean up?
+        // No, explicit is better to avoid confusion with default fallback
+        params.set("status", nextStatuses.join(','))
     }
+
+    // If we are back to default state (Open only, no My Positions), we can remove params for cleaner URL
+    if (nextStatuses.length === 1 && nextStatuses[0] === 'open' && !updates.show && !showMyPositions) {
+        params.delete("status")
+        params.delete("show")
+    } else {
+        // Handle Show
+        const nextShow = updates.show !== undefined ? updates.show : showMyPositions
+        if (nextShow) {
+            params.set("show", "my-positions")
+        } else {
+            params.delete("show")
+        }
+    }
+    
     router.push(`?${params.toString()}`)
   }
 
-  return (
-    <div className="flex gap-2">
-      <Button 
-        variant={currentFilter === "my-positions" ? "secondary" : "outline"}
-        onClick={() => setFilter(currentFilter === "my-positions" ? null : "my-positions")}
-        className="gap-2"
-      >
-        {t('myPositions')}
-        {currentFilter === "my-positions" && (
-          <span className="ms-1 h-2 w-2 rounded-full bg-foreground/20" />
-        )}
-      </Button>
-      
-      <Button 
-        variant={currentFilter === "resolved" ? "secondary" : "outline"}
-        onClick={() => setFilter(currentFilter === "resolved" ? null : "resolved")}
-        className="gap-2"
-      >
-        {t('resolved')}
-        {currentFilter === "resolved" && (
-          <span className="ms-1 h-2 w-2 rounded-full bg-foreground/20" />
-        )}
-      </Button>
+  const toggleStatus = (status: string) => {
+    const newStatuses = currentStatuses.includes(status)
+      ? currentStatuses.filter(s => s !== status)
+      : [...currentStatuses, status]
+    
+    updateFilters({ status: newStatuses })
+  }
 
-      {isAdmin && (
-        <Button 
-          variant={currentFilter === "pending" ? "secondary" : "outline"}
-          onClick={() => setFilter(currentFilter === "pending" ? null : "pending")}
-          className="gap-2 border-yellow-500/50 hover:bg-yellow-500/10 data-[state=active]:bg-yellow-500"
-        >
-          {t('pendingApproval')}
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="gap-2">
+          <ListFilter className="h-4 w-4" />
+          {tCommon('filter')}
+          {(currentStatuses.length !== 1 || currentStatuses[0] !== 'open' || showMyPositions) && (
+             <span className="flex h-2 w-2 rounded-full bg-primary" />
+          )}
         </Button>
-      )}
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>{tCommon('status')}</DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          checked={currentStatuses.includes("open")}
+          onCheckedChange={() => toggleStatus("open")}
+        >
+          {tCommon('open')}
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={currentStatuses.includes("resolved")}
+          onCheckedChange={() => toggleStatus("resolved")}
+        >
+          {tCommon('resolved')}
+        </DropdownMenuCheckboxItem>
+        {isAdmin && (
+           <DropdownMenuCheckboxItem
+             checked={currentStatuses.includes("pending")}
+             onCheckedChange={() => toggleStatus("pending")}
+             className="text-yellow-600 focus:text-yellow-700"
+           >
+             {t('pendingApproval')}
+           </DropdownMenuCheckboxItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{tCommon('view')}</DropdownMenuLabel>
+        <DropdownMenuCheckboxItem
+          checked={showMyPositions}
+          onCheckedChange={(checked) => updateFilters({ show: !!checked })}
+        >
+          {t('myPositions')}
+        </DropdownMenuCheckboxItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

@@ -9,7 +9,11 @@ import { ArenaRole, Role } from "@prisma/client"
 import { getTranslations } from 'next-intl/server';
 
 interface PageProps {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ 
+    status?: string | string[]
+    show?: string
+    filter?: string 
+  }>
   params: Promise<{ arenaId: string }>
 }
 
@@ -21,8 +25,7 @@ export default async function MarketsPage(props: PageProps) {
 
   const { arenaId } = await props.params
   const searchParams = await props.searchParams
-  const filter = searchParams.filter
-
+  
   // Check Admin Status
   const membership = await prisma.arenaMembership.findUnique({
     where: { userId_arenaId: { userId: session.user.id, arenaId } }
@@ -31,6 +34,41 @@ export default async function MarketsPage(props: PageProps) {
                   session.user.role === Role.GLOBAL_ADMIN || 
                   membership?.role === ArenaRole.ADMIN
 
+  // Parse Filters
+  const statusParam = searchParams.status
+  const showParam = searchParams.show
+  const legacyFilter = searchParams.filter
+
+  let statuses: string[] = []
+  if (Array.isArray(statusParam)) statuses = statusParam
+  else if (typeof statusParam === 'string') statuses = statusParam.split(',')
+  else if (legacyFilter === 'resolved') statuses = ['resolved']
+  else if (legacyFilter === 'pending') statuses = ['pending']
+  else statuses = ['open'] // Default
+
+  const showMyPositions = showParam === 'my-positions' || legacyFilter === 'my-positions'
+
+  // Build OR clause for statuses
+  const OR: any[] = []
+  
+  if (statuses.includes('open')) {
+    OR.push({ 
+      approved: true, 
+      status: { in: ["OPEN", "PENDING_RESOLUTION"] } 
+    })
+  }
+  
+  if (statuses.includes('resolved')) {
+    OR.push({ 
+      approved: true, 
+      status: "RESOLVED" 
+    })
+  }
+  
+  if (statuses.includes('pending') && isAdmin) {
+    OR.push({ approved: false })
+  }
+
   const whereClause: any = {
     arenaId,
     hiddenUsers: {
@@ -38,29 +76,19 @@ export default async function MarketsPage(props: PageProps) {
         id: session.user.id
       }
     },
-    status: filter === "resolved" ? "RESOLVED" : {
-      in: ["OPEN", "PENDING_RESOLUTION"]
-    },
-    bets: filter === "my-positions" ? {
+    bets: showMyPositions ? {
       some: {
         userId: session.user.id
       }
     } : undefined
   }
 
-  // Filter Logic for Approval
-  if (filter === "pending") {
-    if (!isAdmin) {
-        // If user tries to access pending but isn't admin, just show nothing or redirect
-        whereClause.approved = false 
-        whereClause.status = "OPEN" // Only show open pending markets?
-    } else {
-        whereClause.approved = false
-    }
+  if (OR.length > 0) {
+    whereClause.OR = OR
   } else {
-    // Default view: Show approved only. Admin can switch filter to see pending.
-    // Or maybe admins see pending mixed in? Let's stick to strict approved unless filter=pending
-    whereClause.approved = true
+    // If no valid status selected (e.g. user unchecked all, or selected only pending but is not admin)
+    // Force empty result
+    whereClause.id = "NO_MATCH"
   }
 
   const markets = await prisma.market.findMany({
@@ -103,9 +131,9 @@ export default async function MarketsPage(props: PageProps) {
       </div>
       {markets.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          {filter === "my-positions" ? (
+          {showMyPositions ? (
             <p>{t('noPositions')}</p>
-          ) : filter === "pending" ? (
+          ) : statuses.includes("pending") && statuses.length === 1 ? (
             <p>{t('noPending')}</p>
           ) : (
             <p>{t('noMarkets')}</p>
