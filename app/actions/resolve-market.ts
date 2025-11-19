@@ -28,7 +28,11 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
   })
 
   if (!market) throw new Error("Market not found")
-  if (market.creatorId !== session.user.id && session.user.role !== "ADMIN") {
+  
+  // @ts-ignore - Session types are tricky with NextAuth beta
+  const isAdmin = session.user.role === "ADMIN";
+  
+  if (market.creatorId !== session.user.id && !isAdmin) {
       throw new Error("Only the creator can resolve this market")
   }
   if (market.status === "RESOLVED") throw new Error("Already resolved")
