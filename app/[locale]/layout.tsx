@@ -27,6 +27,7 @@ type Props = {
 };
 
 import { Toaster } from "@/components/ui/sonner"
+import { CommandPalette } from "@/components/layout/CommandPalette"
 
 export default async function RootLayout({
   children,
@@ -53,6 +54,7 @@ export default async function RootLayout({
           <main className="container mx-auto py-8 px-4">
             {children}
           </main>
+          <CommandPalette />
           <Toaster />
         </NextIntlClientProvider>
       </body>
