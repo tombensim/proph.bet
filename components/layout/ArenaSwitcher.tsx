@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, PlusCircle } from "lucide-react"
+import { Check, ChevronRight, ChevronsUpDown, PlusCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,6 +33,7 @@ interface ArenaSwitcherProps {
 export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaSwitcherProps) {
     const [open, setOpen] = React.useState(false)
     const [showCreateDialog, setShowCreateDialog] = React.useState(false)
+    const [showArchived, setShowArchived] = React.useState(false)
     const router = useRouter()
     
     const currentArena = memberships.find(m => m.arenaId === currentArenaId)?.arena
@@ -77,15 +78,27 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                             {archivedArenas.length > 0 && (
                                 <>
                                     <CommandSeparator />
-                                    <CommandGroup heading="Archived">
-                                        {archivedArenas.map((membership) => (
+                                    <CommandGroup>
+                                        <CommandItem
+                                            onSelect={() => setShowArchived(!showArchived)}
+                                            className="text-sm text-muted-foreground cursor-pointer"
+                                        >
+                                            <ChevronRight
+                                                className={cn(
+                                                    "me-2 h-4 w-4 transition-transform",
+                                                    showArchived && "rotate-90"
+                                                )}
+                                            />
+                                            Archived ({archivedArenas.length})
+                                        </CommandItem>
+                                        {showArchived && archivedArenas.map((membership) => (
                                             <CommandItem
                                                 key={membership.arena.id}
                                                 onSelect={() => {
                                                     router.push(`/arenas/${membership.arena.id}/markets`)
                                                     setOpen(false)
                                                 }}
-                                                className="text-sm text-muted-foreground"
+                                                className="text-sm text-muted-foreground pl-8"
                                             >
                                                 <Check
                                                     className={cn(
