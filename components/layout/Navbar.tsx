@@ -49,7 +49,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
     <header className="border-b mb-8">
       <div className="flex h-16 items-center px-4 container mx-auto">
         <Link href="/" className="font-bold text-xl mr-4">
-          OfficePrediction
+          proph.bet
         </Link>
 
         {session?.user && (
@@ -63,12 +63,6 @@ export async function Navbar({ arenaId }: NavbarProps) {
             </Link>
             <Link href={`${baseUrl}/leaderboard`} className="text-sm font-medium transition-colors hover:text-primary">
               Leaderboard
-            </Link>
-             <Link href={`${baseUrl}/transfer`} className="text-sm font-medium transition-colors hover:text-primary">
-              Transfer
-            </Link>
-             <Link href={`${baseUrl}/history`} className="text-sm font-medium transition-colors hover:text-primary">
-              History
             </Link>
             {isAdmin && (
                 <Link href={`${baseUrl}/members`} className="text-sm font-medium transition-colors hover:text-primary">
@@ -86,7 +80,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
                     {points} pts
                   </span>
                 )}
-                <UserNav user={session.user} />
+                <UserNav user={session.user} arenaId={arenaId} />
              </div>
            ) : (
              <Link href="/api/auth/signin">

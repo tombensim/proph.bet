@@ -17,7 +17,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
 
-export function UserNav({ user }: { user: any }) {
+export function UserNav({ user, arenaId }: { user: any, arenaId?: string }) {
+  const baseUrl = arenaId ? `/arenas/${arenaId}` : ""
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -45,6 +47,17 @@ export function UserNav({ user }: { user: any }) {
           <DropdownMenuItem asChild>
              <a href="/settings" className="cursor-pointer">Settings</a>
           </DropdownMenuItem>
+          {arenaId && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a href={`${baseUrl}/transfer`} className="cursor-pointer">Transfer Points</a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={`${baseUrl}/history`} className="cursor-pointer">Bet History</a>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut()}>
