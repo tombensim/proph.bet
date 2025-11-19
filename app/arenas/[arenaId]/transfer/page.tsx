@@ -10,20 +10,24 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { transferPointsAction } from "@/app/actions/transfer-points"
 import { Loader2, Send } from "lucide-react"
+import { useParams } from "next/navigation"
 
-const transferSchema = z.object({
+const formSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   amount: z.coerce.number().int().positive("Amount must be positive"),
 })
 
-type FormValues = z.infer<typeof transferSchema>
+type FormValues = z.infer<typeof formSchema>
 
 export default function TransferPage() {
+  const params = useParams()
+  const arenaId = params.arenaId as string
+  
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(transferSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       amount: 10,
@@ -34,7 +38,10 @@ export default function TransferPage() {
     setError(null)
     startTransition(async () => {
       try {
-        await transferPointsAction(data)
+        await transferPointsAction({
+          ...data,
+          arenaId
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : "Transfer failed")
       }
@@ -100,4 +107,3 @@ export default function TransferPage() {
     </div>
   )
 }
-

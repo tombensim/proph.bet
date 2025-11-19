@@ -35,7 +35,7 @@ import { CreateMarketValues, createMarketSchema } from "@/lib/schemas"
 import { useTransition } from "react"
 import { MultiUserSelector } from "@/components/ui/multi-user-selector"
 
-export function CreateMarketForm() {
+export function CreateMarketForm({ arenaId }: { arenaId: string }) {
   const [isPending, startTransition] = useTransition()
 
   const form = useForm<CreateMarketValues>({
@@ -47,6 +47,7 @@ export function CreateMarketForm() {
       minBet: 10,
       hiddenFromUserIds: [],
       hideBetsFromUserIds: [],
+      arenaId: arenaId,
     },
   })
 

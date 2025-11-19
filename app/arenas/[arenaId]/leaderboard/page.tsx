@@ -12,15 +12,21 @@ import {
 } from "@/components/ui/table"
 import { Trophy, Medal } from "lucide-react"
 
-export default async function LeaderboardPage() {
+interface PageProps {
+  params: Promise<{ arenaId: string }>
+}
+
+export default async function LeaderboardPage(props: PageProps) {
   const session = await auth()
   if (!session?.user) return redirect("/api/auth/signin")
 
-  const users = await prisma.user.findMany({
-    orderBy: {
-      points: 'desc'
-    },
-    take: 50 // Top 50
+  const { arenaId } = await props.params
+
+  const memberships = await prisma.arenaMembership.findMany({
+    where: { arenaId },
+    include: { user: true },
+    orderBy: { points: 'desc' },
+    take: 50
   })
 
   const getRankIcon = (index: number) => {
@@ -35,8 +41,8 @@ export default async function LeaderboardPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
        <div className="text-center space-y-2">
-         <h1 className="text-3xl font-bold">Monthly Leaderboard</h1>
-         <p className="text-muted-foreground">Who is leading the prediction race this month?</p>
+         <h1 className="text-3xl font-bold">Arena Leaderboard</h1>
+         <p className="text-muted-foreground">Who is leading the prediction race in this arena?</p>
        </div>
 
        <div className="border rounded-lg">
@@ -49,7 +55,9 @@ export default async function LeaderboardPage() {
              </TableRow>
            </TableHeader>
            <TableBody>
-             {users.map((user, index) => (
+             {memberships.map((member, index) => {
+               const user = member.user
+               return (
                <TableRow key={user.id}>
                  <TableCell className="font-medium text-center">
                    <div className="flex justify-center">
@@ -69,14 +77,13 @@ export default async function LeaderboardPage() {
                    </div>
                  </TableCell>
                  <TableCell className="text-right font-bold">
-                   {user.points.toLocaleString()}
+                   {member.points.toLocaleString()}
                  </TableCell>
                </TableRow>
-             ))}
+             )})}
            </TableBody>
          </Table>
        </div>
     </div>
   )
 }
-

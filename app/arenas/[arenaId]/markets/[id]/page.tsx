@@ -13,16 +13,18 @@ import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ arenaId: string; id: string }>
 }
 
 export default async function MarketPage(props: PageProps) {
   const params = await props.params;
+  const { arenaId, id } = params
+  
   const session = await auth()
   if (!session?.user?.id) return redirect("/api/auth/signin")
 
   const market = await prisma.market.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       creator: true,
       options: true,
@@ -72,9 +74,14 @@ export default async function MarketPage(props: PageProps) {
   // Check bet visibility
   const hideBets = market.hideBetsFromUsers.some(u => u.id === session.user!.id)
 
-  // Get current user points
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+  // Get current user points from ArenaMembership
+  const membership = await prisma.arenaMembership.findUnique({
+    where: { 
+        userId_arenaId: { 
+            userId: session.user.id, 
+            arenaId 
+        } 
+    },
     select: { points: true }
   })
   
@@ -142,7 +149,7 @@ export default async function MarketPage(props: PageProps) {
               </Link>
               {/* Simple embed if image */}
               <div className="mt-2 rounded-md overflow-hidden border max-w-sm">
-                 <img src={market.resolutionImage} alt="Evidence" className="w-full h-auto" />
+                <img src={market.resolutionImage} alt="Evidence" className="w-full h-auto" />
               </div>
             </div>
           )}
@@ -189,7 +196,7 @@ export default async function MarketPage(props: PageProps) {
 
         {/* Comments Section */}
         <CommentsSection
-          marketId={params.id}
+          marketId={id}
           initialComments={market.comments}
           currentUserId={session.user.id}
           isAdmin={isAdmin}
@@ -212,7 +219,7 @@ export default async function MarketPage(props: PageProps) {
              </div>
 
              {market.status === "OPEN" && (
-                <BetForm market={market} userPoints={user?.points || 0} />
+                <BetForm market={market} userPoints={membership?.points || 0} />
              )}
           </CardContent>
         </Card>

@@ -13,6 +13,7 @@ export const createMarketSchema = z.object({
   maxBet: z.coerce.number().optional(),
   hiddenFromUserIds: z.array(z.string()).optional(),
   hideBetsFromUserIds: z.array(z.string()).optional(),
+  arenaId: z.string().min(1, "Arena ID is required"),
 }).refine((data) => {
   if (data.type === MarketType.MULTIPLE_CHOICE) {
     return data.options && data.options.length >= 2

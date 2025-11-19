@@ -37,6 +37,7 @@ export async function placeBetAction(data: PlaceBetValues) {
   if (!market) throw new Error("Market not found")
   if (market.status !== "OPEN") throw new Error("Market is closed")
   if (new Date() > market.resolutionDate) throw new Error("Market has expired")
+  if (!market.arenaId) throw new Error("Market configuration error: No Arena ID")
 
   // Validate bet limits
   if (market.minBet && amount < market.minBet) throw new Error(`Minimum bet is ${market.minBet}`)
@@ -49,20 +50,31 @@ export async function placeBetAction(data: PlaceBetValues) {
      if (!optionId) throw new Error("Please select an option")
   }
 
+  const arenaId = market.arenaId
+
   // 2. Execute Transaction
   await prisma.$transaction(async (tx) => {
-    // Get fresh user balance
-    const user = await tx.user.findUniqueOrThrow({
-      where: { id: session.user!.id }
+    // Get user arena membership
+    const membership = await tx.arenaMembership.findUnique({
+      where: { 
+        userId_arenaId: { 
+          userId: session.user!.id,
+          arenaId
+        } 
+      }
     })
 
-    if (user.points < amount) {
-      throw new Error(`Insufficient points. You have ${user.points}.`)
+    if (!membership) {
+      throw new Error("You are not a member of this arena")
     }
 
-    // Deduct points
-    await tx.user.update({
-      where: { id: user.id },
+    if (membership.points < amount) {
+      throw new Error(`Insufficient points. You have ${membership.points}.`)
+    }
+
+    // Deduct points from arena membership
+    await tx.arenaMembership.update({
+      where: { id: membership.id },
       data: { points: { decrement: amount } }
     })
 
@@ -71,7 +83,9 @@ export async function placeBetAction(data: PlaceBetValues) {
       data: {
         amount: amount,
         type: TransactionType.BET_PLACED,
-        fromUserId: user.id,
+        fromUserId: session.user!.id,
+        marketId: market.id,
+        arenaId
       }
     })
 
@@ -145,7 +159,7 @@ export async function placeBetAction(data: PlaceBetValues) {
     // Create Bet
     await tx.bet.create({
       data: {
-        userId: user.id,
+        userId: session.user!.id,
         marketId: market.id,
         amount,
         shares: shares, // Store calculated shares
@@ -155,6 +169,6 @@ export async function placeBetAction(data: PlaceBetValues) {
     })
   })
 
-  revalidatePath(`/markets/${marketId}`)
-  revalidatePath('/markets')
+  revalidatePath(`/arenas/${arenaId}/markets/${marketId}`)
+  revalidatePath(`/arenas/${arenaId}/markets`)
 }

@@ -18,8 +18,10 @@ model User {
   sessions      Session[]
   
   // App specific fields
-  role          Role      @default(USER)
-  points        Int       @default(1000)
+  role          Role      @default(USER) // System-level role
+  points        Int       @default(1000) // DEPRECATED: Migrating to ArenaMembership.points
+  
+  memberships   ArenaMembership[]
   
   createdMarkets Market[]  @relation("CreatedMarkets")
   bets           Bet[]
@@ -77,6 +79,36 @@ model VerificationToken {
 
 // App Specific Models
 
+model Arena {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  slug        String   @unique // For friendly URLs if needed, or just use ID
+  
+  members     ArenaMembership[]
+  markets     Market[]
+  transactions Transaction[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ArenaMembership {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  arenaId   String
+  arena     Arena     @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  
+  role      ArenaRole @default(MEMBER)
+  points    Int       @default(1000)
+  
+  joinedAt  DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, arenaId])
+}
+
 model Market {
   id          String    @id @default(cuid())
   title       String
@@ -86,6 +118,9 @@ model Market {
   
   creatorId   String
   creator     User      @relation("CreatedMarkets", fields: [creatorId], references: [id])
+  
+  arenaId     String?   // Optional during migration, made required later
+  arena       Arena?    @relation(fields: [arenaId], references: [id])
   
   resolutionDate DateTime
   
@@ -164,6 +199,9 @@ model Transaction {
   marketId   String?
   market     Market? @relation(fields: [marketId], references: [id])
 
+  arenaId    String?
+  arena      Arena?  @relation(fields: [arenaId], references: [id])
+
   createdAt DateTime @default(now())
 }
 
@@ -190,6 +228,11 @@ model Comment {
 
 enum Role {
   USER
+  ADMIN
+}
+
+enum ArenaRole {
+  MEMBER
   ADMIN
 }
 

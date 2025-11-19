@@ -28,8 +28,23 @@ export async function createMarketAction(data: CreateMarketValues) {
     minBet, 
     maxBet,
     hiddenFromUserIds,
-    hideBetsFromUserIds
+    hideBetsFromUserIds,
+    arenaId
   } = validated.data
+
+  // Verify membership
+  const membership = await prisma.arenaMembership.findUnique({
+    where: {
+      userId_arenaId: {
+        userId: session.user.id,
+        arenaId
+      }
+    }
+  })
+
+  if (!membership) {
+    throw new Error("Unauthorized: You are not a member of this arena")
+  }
 
   const market = await prisma.market.create({
     data: {
@@ -38,6 +53,7 @@ export async function createMarketAction(data: CreateMarketValues) {
       type,
       resolutionDate,
       creatorId: session.user.id,
+      arenaId,
       minBet: minBet || null,
       maxBet: maxBet || null,
       options: type === MarketType.MULTIPLE_CHOICE && options ? {
@@ -54,5 +70,5 @@ export async function createMarketAction(data: CreateMarketValues) {
     },
   })
 
-  redirect(`/markets`)
+  redirect(`/arenas/${arenaId}/markets`)
 }

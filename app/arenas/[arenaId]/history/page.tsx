@@ -14,12 +14,19 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default async function HistoryPage() {
+interface PageProps {
+  params: Promise<{ arenaId: string }>
+}
+
+export default async function HistoryPage(props: PageProps) {
   const session = await auth()
   if (!session?.user) return redirect("/api/auth/signin")
 
+  const { arenaId } = await props.params
+
   const closedMarkets = await prisma.market.findMany({
     where: {
+      arenaId,
       status: "RESOLVED",
       bets: {
         some: {
@@ -130,7 +137,7 @@ export default async function HistoryPage() {
                 return (
                   <TableRow key={market.id}>
                     <TableCell className="font-medium">
-                      <Link href={`/markets/${market.id}`} className="hover:underline">
+                      <Link href={`/arenas/${arenaId}/markets/${market.id}`} className="hover:underline">
                         {market.title}
                       </Link>
                       <div className="text-xs text-muted-foreground">
@@ -168,4 +175,3 @@ export default async function HistoryPage() {
     </div>
   )
 }
-

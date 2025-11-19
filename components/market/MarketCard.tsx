@@ -38,8 +38,12 @@ export function MarketCard({ market }: { market: MarketWithDetails }) {
     }
   }
 
+  const href = market.arenaId 
+    ? `/arenas/${market.arenaId}/markets/${market.id}`
+    : `/markets/${market.id}`
+
   return (
-    <Link href={`/markets/${market.id}`}>
+    <Link href={href}>
       <Card className={`h-full transition-all cursor-pointer flex flex-col ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'}`}>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-2">

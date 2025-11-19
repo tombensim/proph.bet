@@ -32,6 +32,9 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
       throw new Error("Only the creator can resolve this market")
   }
   if (market.status === "RESOLVED") throw new Error("Already resolved")
+  
+  const arenaId = market.arenaId
+  if (!arenaId) throw new Error("Market configuration error: No Arena ID")
 
   // Payout Logic
   await prisma.$transaction(async (tx) => {
@@ -76,28 +79,41 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
         const payout = Math.floor(share * totalPayoutPool)
 
         if (payout > 0) {
-          await tx.user.update({
-             where: { id: bet.userId },
-             data: { points: { increment: payout } }
+          // Find membership to credit
+          const membership = await tx.arenaMembership.findUnique({
+            where: { 
+              userId_arenaId: { 
+                userId: bet.userId, 
+                arenaId 
+              } 
+            }
           })
 
-          await tx.transaction.create({
-            data: {
-              amount: payout,
-              type: TransactionType.WIN_PAYOUT,
-              toUserId: bet.userId,
-              marketId: market.id
-            }
-          })
-          
-          // Notify user (optional, but good practice)
-          await tx.notification.create({
-            data: {
-              userId: bet.userId,
-              type: "WIN_PAYOUT",
-              content: `You won ${payout} points on market: ${market.title}`
-            }
-          })
+          if (membership) {
+            await tx.arenaMembership.update({
+               where: { id: membership.id },
+               data: { points: { increment: payout } }
+            })
+
+            await tx.transaction.create({
+              data: {
+                amount: payout,
+                type: TransactionType.WIN_PAYOUT,
+                toUserId: bet.userId,
+                marketId: market.id,
+                arenaId
+              }
+            })
+            
+            // Notify user (optional, but good practice)
+            await tx.notification.create({
+              data: {
+                userId: bet.userId,
+                type: "WIN_PAYOUT",
+                content: `You won ${payout} points on market: ${market.title}`
+              }
+            })
+          }
         }
       }
     }
@@ -114,5 +130,6 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
     })
   })
 
-  revalidatePath(`/markets/${marketId}`)
+  revalidatePath(`/arenas/${arenaId}/markets/${marketId}`)
+  revalidatePath(`/arenas/${arenaId}/markets`)
 }

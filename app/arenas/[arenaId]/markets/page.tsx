@@ -8,17 +8,20 @@ import { redirect } from "next/navigation"
 
 interface PageProps {
   searchParams: Promise<{ filter?: string }>
+  params: Promise<{ arenaId: string }>
 }
 
 export default async function MarketsPage(props: PageProps) {
   const session = await auth()
   if (!session?.user) return redirect("/api/auth/signin")
 
+  const { arenaId } = await props.params
   const searchParams = await props.searchParams
   const filter = searchParams.filter
 
   const markets = await prisma.market.findMany({
     where: {
+      arenaId,
       hiddenUsers: {
         none: {
           id: session.user.id
@@ -60,7 +63,7 @@ export default async function MarketsPage(props: PageProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Active Markets</h1>
         <div className="flex items-center gap-4">
-          <Link href="/markets/create">
+          <Link href={`/arenas/${arenaId}/markets/create`}>
             <Button>Create Market</Button>
           </Link>
           <MarketFilter />
