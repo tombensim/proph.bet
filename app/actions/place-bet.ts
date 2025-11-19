@@ -89,6 +89,30 @@ export async function placeBetAction(data: PlaceBetValues) {
       }
     })
 
+    // --- FEE LOGIC ---
+    const FEE_PERCENT = 0.02
+    const fee = Math.floor(amount * FEE_PERCENT)
+    const netBetAmount = amount - fee
+
+    if (fee > 0) {
+      // Find creator's membership to credit fee
+      const creatorMembership = await tx.arenaMembership.findUnique({
+        where: { 
+          userId_arenaId: { 
+            userId: market.creatorId, 
+            arenaId 
+          } 
+        }
+      })
+
+      if (creatorMembership) {
+        await tx.arenaMembership.update({
+          where: { id: creatorMembership.id },
+          data: { points: { increment: fee } }
+        })
+      }
+    }
+
     // CPMM Logic
     let shares = 0;
     let finalOptionId = optionId;
@@ -111,12 +135,12 @@ export async function placeBetAction(data: PlaceBetValues) {
         for (const other of otherOptions) {
             await tx.option.update({
                 where: { id: other.id },
-                data: { liquidity: { increment: amount } }
+                data: { liquidity: { increment: netBetAmount } }
             })
         }
 
         // Calculate new target liquidity
-        const newOtherProduct = otherOptions.reduce((acc, o) => acc * (o.liquidity + amount), 1)
+        const newOtherProduct = otherOptions.reduce((acc, o) => acc * (o.liquidity + netBetAmount), 1)
         const newTargetLiquidity = k / newOtherProduct
 
         // Update target pool
@@ -127,7 +151,7 @@ export async function placeBetAction(data: PlaceBetValues) {
 
         // Calculate Shares
         const swappedShares = targetOption.liquidity - newTargetLiquidity
-        shares = amount + swappedShares
+        shares = netBetAmount + swappedShares
 
         // --- RECORD PRICE HISTORY ---
         // Fetch fresh state to record accurate prices
@@ -153,7 +177,7 @@ export async function placeBetAction(data: PlaceBetValues) {
         }
 
     } else if (market.type === MarketType.NUMERIC_RANGE) {
-        shares = amount 
+        shares = netBetAmount 
     }
 
     // Create Bet
@@ -161,7 +185,7 @@ export async function placeBetAction(data: PlaceBetValues) {
       data: {
         userId: session.user!.id,
         marketId: market.id,
-        amount,
+        amount: netBetAmount, // Store net amount
         shares: shares, // Store calculated shares
         optionId: finalOptionId, 
         numericValue

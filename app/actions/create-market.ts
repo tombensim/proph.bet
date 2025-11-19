@@ -32,42 +32,94 @@ export async function createMarketAction(data: CreateMarketValues) {
     arenaId
   } = validated.data
 
-  // Verify membership
-  const membership = await prisma.arenaMembership.findUnique({
-    where: {
-      userId_arenaId: {
-        userId: session.user.id,
-        arenaId
-      }
-    }
-  })
+  // 1. DEFINE SEED AMOUNT
+  const SEED_AMOUNT = 100; // Cost per option
 
-  if (!membership) {
-    throw new Error("Unauthorized: You are not a member of this arena")
+  // 2. CALCULATE TOTAL COST
+  let totalCost = 0;
+  if (type === MarketType.BINARY) {
+    totalCost = SEED_AMOUNT * 2;
+  } else if (type === MarketType.MULTIPLE_CHOICE && options) {
+    totalCost = SEED_AMOUNT * options.length;
   }
 
-  const market = await prisma.market.create({
-    data: {
-      title,
-      description: description || "",
-      type,
-      resolutionDate,
-      creatorId: session.user.id,
-      arenaId,
-      minBet: minBet || null,
-      maxBet: maxBet || null,
-      options: type === MarketType.MULTIPLE_CHOICE && options ? {
-        create: options.map(o => ({ text: o.value }))
-      } : type === MarketType.BINARY ? {
-        create: [{ text: "Yes" }, { text: "No" }]
-      } : undefined,
-      hiddenUsers: hiddenFromUserIds && hiddenFromUserIds.length > 0 ? {
-        connect: hiddenFromUserIds.map(id => ({ id }))
-      } : undefined,
-      hideBetsFromUsers: hideBetsFromUserIds && hideBetsFromUserIds.length > 0 ? {
-        connect: hideBetsFromUserIds.map(id => ({ id }))
-      } : undefined
-    },
+  // 3. CHECK & DEDUCT POINTS (Transaction)
+  await prisma.$transaction(async (tx) => {
+    // Verify membership
+    const membership = await tx.arenaMembership.findUnique({
+      where: {
+        userId_arenaId: {
+          userId: session.user.id,
+          arenaId
+        }
+      }
+    })
+
+    if (!membership) {
+      throw new Error("Unauthorized: You are not a member of this arena")
+    }
+
+    if (totalCost > 0 && membership.points < totalCost) {
+      throw new Error(`Insufficient points. You need ${totalCost} points to seed this market.`)
+    }
+
+    // Deduct cost
+    if (totalCost > 0) {
+      await tx.arenaMembership.update({
+        where: { id: membership.id },
+        data: { points: { decrement: totalCost } }
+      })
+    }
+
+    const market = await tx.market.create({
+      data: {
+        title,
+        description: description || "",
+        type,
+        resolutionDate,
+        creatorId: session.user.id,
+        arenaId,
+        minBet: minBet || null,
+        maxBet: maxBet || null,
+        options: type === MarketType.MULTIPLE_CHOICE && options ? {
+          create: options.map(o => ({ 
+            text: o.value,
+            liquidity: SEED_AMOUNT // Initialize with seed amount
+          }))
+        } : type === MarketType.BINARY ? {
+          create: [{ 
+            text: "Yes", 
+            liquidity: SEED_AMOUNT 
+          }, { 
+            text: "No",
+            liquidity: SEED_AMOUNT
+          }]
+        } : undefined,
+        hiddenUsers: hiddenFromUserIds && hiddenFromUserIds.length > 0 ? {
+          connect: hiddenFromUserIds.map(id => ({ id }))
+        } : undefined,
+        hideBetsFromUsers: hideBetsFromUserIds && hideBetsFromUserIds.length > 0 ? {
+          connect: hideBetsFromUserIds.map(id => ({ id }))
+        } : undefined
+      },
+      include: { options: true }
+    })
+
+    // 5. ISSUE "LP SHARES" (BETS) TO CREATOR
+    // The creator effectively bets on EVERYTHING.
+    if (totalCost > 0 && market.options.length > 0) {
+      for (const option of market.options) {
+        await tx.bet.create({
+          data: {
+            userId: session.user.id,
+            marketId: market.id,
+            optionId: option.id,
+            amount: SEED_AMOUNT,
+            shares: SEED_AMOUNT, // Initial 1:1 ratio
+          }
+        })
+      }
+    }
   })
 
   redirect(`/arenas/${arenaId}/markets`)
