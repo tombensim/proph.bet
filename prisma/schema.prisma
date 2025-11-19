@@ -28,6 +28,7 @@ model User {
   sentTransfers  Transaction[] @relation("Sender")
   receivedTransfers Transaction[] @relation("Receiver")
   notifications  Notification[]
+  notificationSettings NotificationSettings?
   comments       Comment[]
   
   // Visibility Relations
@@ -93,6 +94,7 @@ model Arena {
   transactions Transaction[]
   invitations Invitation[]
   settings    ArenaSettings?
+  notifications Notification[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -289,7 +291,40 @@ model Notification {
   type      NotificationType
   content   String
   read      Boolean  @default(false)
+  
+  arenaId   String?
+  arena     Arena?    @relation(fields: [arenaId], references: [id])
+  metadata  Json?
+
   createdAt DateTime @default(now())
+}
+
+model NotificationSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Settings (Email, Web)
+  email_BET_RESOLVED   Boolean @default(true)
+  web_BET_RESOLVED     Boolean @default(true)
+  
+  email_MARKET_RESOLVED Boolean @default(true)
+  web_MARKET_RESOLVED   Boolean @default(true)
+  
+  email_WIN_PAYOUT     Boolean @default(true)
+  web_WIN_PAYOUT       Boolean @default(true)
+  
+  email_MARKET_CREATED Boolean @default(false)
+  web_MARKET_CREATED   Boolean @default(true)
+  
+  email_MONTHLY_WINNER Boolean @default(true)
+  web_MONTHLY_WINNER   Boolean @default(true)
+  
+  email_POINTS_RESET   Boolean @default(true)
+  web_POINTS_RESET     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Comment {

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { AssetType } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
+// Updates the cover image for a market
 export async function updateMarketCoverAction(marketId: string, imageUrl: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
@@ -46,4 +47,3 @@ export async function updateMarketCoverAction(marketId: string, imageUrl: string
 
   revalidatePath(`/arenas/${market.arenaId}/markets/${marketId}`)
 }
-

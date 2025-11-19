@@ -11,13 +11,22 @@ async function ensureBucketConfig() {
   try {
     await s3Client.send(new HeadBucketCommand({ Bucket: BUCKET_NAME }))
     bucketExists = true
-  } catch (error) {
-    // Bucket doesn't exist, will create
+  } catch (error: any) {
+    // 404 means bucket not found, anything else is a real error (connection, auth, etc)
+    if (error?.$metadata?.httpStatusCode === 404 || error?.name === 'NotFound') {
+       bucketExists = false
+    } else {
+       console.error("Error checking bucket existence:", error)
+       // If we can't check if it exists (e.g. connection refused), we probably can't create it either.
+       // But we'll try creating anyway if it might be missing.
+    }
   }
 
   if (!bucketExists) {
     try {
+      console.log(`Attempting to create bucket: ${BUCKET_NAME}`)
       await s3Client.send(new CreateBucketCommand({ Bucket: BUCKET_NAME }))
+      console.log(`Bucket ${BUCKET_NAME} created successfully`)
       
       // Set bucket policy to allow public read access
       const bucketPolicy = {
@@ -37,9 +46,11 @@ async function ensureBucketConfig() {
         Policy: JSON.stringify(bucketPolicy)
       }))
       
-      console.log("Bucket created and public read policy set")
+      console.log("Public read policy set")
     } catch (createError) {
       console.error("Failed to create bucket or set policy:", createError)
+      // Throwing here prevents generating a useless upload URL
+      throw new Error(`Failed to initialize storage bucket: ${createError}`)
     }
   }
 
@@ -60,7 +71,8 @@ async function ensureBucketConfig() {
       }
     }))
   } catch (corsError) {
-    console.error("Failed to set CORS:", corsError)
+    // Non-fatal, but good to log
+    console.warn("Failed to set CORS:", corsError)
   }
 }
 
@@ -68,7 +80,12 @@ export async function getUploadUrlAction(contentType: string, folder: string = "
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 
-  await ensureBucketConfig()
+  try {
+    await ensureBucketConfig()
+  } catch (error) {
+    console.error("Bucket configuration failed:", error)
+    throw new Error("Storage system unavailable")
+  }
 
   const fileKey = `${folder}/${session.user.id}/${uuidv4()}`
   
@@ -93,4 +110,3 @@ export async function getUploadUrlAction(contentType: string, folder: string = "
 
   return { uploadUrl: url, publicUrl, fileKey }
 }
-

@@ -4,7 +4,8 @@ import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { TransactionType, MarketType, MarketStatus } from "@prisma/client"
+import { TransactionType, MarketType, MarketStatus, NotificationType } from "@prisma/client"
+import { createNotification } from "@/lib/notifications"
 
 const resolveSchema = z.object({
   marketId: z.string(),
@@ -23,7 +24,8 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
     where: { id: marketId },
     include: { 
       bets: true,
-      options: true 
+      options: true,
+      hiddenUsers: true
     }
   })
 
@@ -39,15 +41,16 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
   const arenaId = market.arenaId
   if (!arenaId) throw new Error("Market configuration error: No Arena ID")
 
-  // Payout Logic
-  await prisma.$transaction(async (tx) => {
+  // 1. Calculate Payouts and Updates (Atomic Transaction)
+  const resolutionResult = await prisma.$transaction(async (tx) => {
     
     // @ts-ignore
     let winningBets: any[] = []
     let totalPayoutPool = 0
     let totalWinningWeight = 0 // shares for AMM, amount for Numeric
+    const payouts = new Map<string, number>()
 
-    // 1. Determine Pool and Winners
+    // Determine Pool and Winners
     if (market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE) {
        if (!winningOptionId) throw new Error("Must select a winning option")
        
@@ -74,7 +77,7 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
        totalWinningWeight = winningBets.reduce((sum, b) => sum + b.amount, 0) // Weight by amount for numeric
     }
 
-    // 2. Distribute Winnings
+    // Distribute Winnings
     if (winningBets.length > 0 && totalWinningWeight > 0) {
       for (const bet of winningBets) {
         // Calculate share of the pot
@@ -83,6 +86,10 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
         const payout = Math.floor(share * totalPayoutPool)
 
         if (payout > 0) {
+          // Track payout for notifications
+          const currentPayout = payouts.get(bet.userId) || 0
+          payouts.set(bet.userId, currentPayout + payout)
+
           // Find membership to credit
           const membership = await tx.arenaMembership.findUnique({
             where: { 
@@ -108,21 +115,12 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
                 arenaId
               }
             })
-            
-            // Notify user (optional, but good practice)
-            await tx.notification.create({
-              data: {
-                userId: bet.userId,
-                type: "WIN_PAYOUT",
-                content: `You won ${payout} points on market: ${market.title}`
-              }
-            })
           }
         }
       }
     }
 
-    // 3. Close Market and Save Evidence
+    // Close Market and Save Evidence
     await tx.market.update({
       where: { id: market.id },
       data: { 
@@ -132,7 +130,88 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
         winningValue: winningValue
       }
     })
+
+    return { payouts }
   })
+
+  // 2. Send Notifications (Post-Transaction)
+  const winningOptionName = market.options.find(o => o.id === winningOptionId)?.text || winningValue?.toString() || "Resolved"
+
+  // Group bets by user to send one notification per user
+  const userBets = new Map<string, typeof market.bets>()
+  market.bets.forEach(bet => {
+    const existing = userBets.get(bet.userId) || []
+    userBets.set(bet.userId, [...existing, bet])
+  })
+
+  // Notify Bettors (BET_RESOLVED)
+  for (const [userId, bets] of userBets.entries()) {
+    const profit = resolutionResult.payouts.get(userId) || 0
+    // Net result calculation could be more complex if multiple bets, but for now just check if they got a payout
+    // Or should we compare total wagered vs total payout? 
+    // The prompt implies "Position Closed" -> "BET_RESOLVED"
+    
+    const outcome = profit > 0 ? "WON" : "LOST"
+    
+    await createNotification({
+      userId,
+      type: "BET_RESOLVED",
+      content: profit > 0 
+        ? `You won ${profit} points on market: ${market.title}` 
+        : `Your bet on ${market.title} has been resolved.`,
+      arenaId,
+      metadata: {
+        marketId: market.id,
+        outcome,
+        payout: profit
+      },
+      emailData: {
+        marketTitle: market.title,
+        marketId: market.id,
+        arenaId,
+        outcome,
+        profit
+      }
+    })
+  }
+
+  // Notify Creator (MARKET_RESOLVED)
+  await createNotification({
+    userId: market.creatorId,
+    type: "MARKET_RESOLVED",
+    content: `Your market "${market.title}" has been resolved.`,
+    arenaId,
+    metadata: {
+      marketId: market.id,
+      outcome: winningOptionName
+    },
+    emailData: {
+      marketTitle: market.title,
+      marketId: market.id,
+      arenaId,
+      winningOption: winningOptionName
+    }
+  })
+
+  // Notify Hidden Users (MARKET_RESOLVED)
+  for (const hiddenUser of market.hiddenUsers) {
+    await createNotification({
+      userId: hiddenUser.id,
+      type: "MARKET_RESOLVED",
+      content: `A hidden market you were part of "${market.title}" has been resolved.`,
+      arenaId,
+      metadata: {
+        marketId: market.id,
+        outcome: winningOptionName
+      },
+      emailData: {
+        marketTitle: market.title,
+        marketId: market.id,
+        arenaId,
+        winningOption: winningOptionName
+      }
+    })
+  }
 
   revalidatePath(`/arenas/${arenaId}/markets/${marketId}`)
   revalidatePath(`/arenas/${arenaId}/markets`)
