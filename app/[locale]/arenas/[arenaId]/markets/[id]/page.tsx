@@ -12,6 +12,7 @@ import { PriceChart } from "@/components/market/PriceChart"
 import { Link } from "@/lib/navigation"
 import { ExternalLink, ImageIcon, LinkIcon } from "lucide-react"
 import { getTranslations } from 'next-intl/server';
+import { generateGradient } from "@/lib/utils"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -113,7 +114,7 @@ export default async function MarketPage(props: PageProps) {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header Section - Always at top */}
       <div>
-        {heroImage && (
+        {heroImage ? (
           <div className="mb-6 rounded-xl overflow-hidden border bg-muted relative aspect-video">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
@@ -122,6 +123,11 @@ export default async function MarketPage(props: PageProps) {
               className="object-cover w-full h-full"
             />
           </div>
+        ) : (
+          <div 
+            className="mb-6 rounded-xl overflow-hidden border relative aspect-video"
+            style={{ background: generateGradient(market.id) }}
+          />
         )}
 
         <div className="flex items-center gap-3 mb-2">

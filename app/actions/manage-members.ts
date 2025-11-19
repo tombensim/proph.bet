@@ -119,3 +119,63 @@ export async function addMemberAction(email: string, arenaId: string) {
 
   revalidatePath(`/arenas/${arenaId}/members`)
 }
+
+export async function createPublicInviteAction(arenaId: string, expiresInHours: number | null) {
+    const session = await auth()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+
+    // Check admin
+     const requesterMembership = await prisma.arenaMembership.findUnique({
+        where: { userId_arenaId: { userId: session.user.id, arenaId } }
+      })
+
+      if (requesterMembership?.role !== "ADMIN") {
+        throw new Error("Unauthorized: Only arena admins can create invites")
+      }
+
+      const token = uuidv4()
+      // If expiresInHours is null, set to 100 years
+      const expiresAt = expiresInHours 
+        ? new Date(Date.now() + expiresInHours * 60 * 60 * 1000)
+        : new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000)
+
+      await prisma.invitation.create({
+          data: {
+              arenaId,
+              inviterId: session.user.id,
+              token,
+              expiresAt,
+              email: null, // Public invite
+              status: 'PENDING'
+          }
+      })
+      
+      revalidatePath(`/arenas/${arenaId}/members`)
+      return token
+}
+
+export async function revokeInvitationAction(invitationId: string) {
+    const session = await auth()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+
+    const invitation = await prisma.invitation.findUnique({
+        where: { id: invitationId },
+        select: { arenaId: true }
+    })
+    
+    if (!invitation) throw new Error("Invitation not found")
+
+     const requesterMembership = await prisma.arenaMembership.findUnique({
+        where: { userId_arenaId: { userId: session.user.id, arenaId: invitation.arenaId } }
+      })
+
+      if (requesterMembership?.role !== "ADMIN") {
+        throw new Error("Unauthorized")
+      }
+
+      await prisma.invitation.delete({
+          where: { id: invitationId }
+      })
+      
+      revalidatePath(`/arenas/${invitation.arenaId}/members`)
+}

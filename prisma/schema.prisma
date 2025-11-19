@@ -85,6 +85,7 @@ model Arena {
   id          String   @id @default(cuid())
   name        String
   description String?
+  coverImage  String?
   slug        String   @unique // For friendly URLs if needed, or just use ID
   
   members     ArenaMembership[]
@@ -350,7 +351,7 @@ enum AssetType {
 
 model Invitation {
   id        String   @id @default(cuid())
-  email     String
+  email     String?
   token     String   @unique
   
   arenaId   String

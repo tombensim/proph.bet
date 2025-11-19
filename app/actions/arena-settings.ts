@@ -84,3 +84,40 @@ export async function updateArenaSettingsAction(data: UpdateSettingsValues) {
   return { success: true }
 }
 
+const updateArenaSchema = z.object({
+  id: z.string(),
+  name: z.string().min(3),
+  description: z.string().optional(),
+  coverImage: z.string().optional().nullable(),
+})
+
+export type UpdateArenaValues = z.infer<typeof updateArenaSchema>
+
+export async function getArenaDetailsAction(arenaId: string) {
+  await requireArenaAdmin(arenaId)
+  
+  const arena = await prisma.arena.findUnique({
+    where: { id: arenaId }
+  })
+
+  if (!arena) throw new Error("Arena not found")
+  return arena
+}
+
+export async function updateArenaDetailsAction(data: UpdateArenaValues) {
+  await requireArenaAdmin(data.id)
+  
+  const validated = updateArenaSchema.parse(data)
+  
+  await prisma.arena.update({
+    where: { id: data.id },
+    data: {
+      name: validated.name,
+      description: validated.description,
+      coverImage: validated.coverImage
+    }
+  })
+
+  revalidatePath(`/arenas/${data.id}/settings`)
+  return { success: true }
+}

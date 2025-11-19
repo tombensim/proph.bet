@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns"
 import { Coins, AlertTriangle } from "lucide-react"
 import { ApproveMarketButton } from "./ApproveMarketButton"
 import { useTranslations } from 'next-intl';
+import { generateGradient } from "@/lib/utils"
 
 interface MarketWithDetails extends Market {
   creator: User
@@ -60,7 +61,7 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
                 </Badge>
             </div>
         )}
-        {coverImage && (
+        {coverImage ? (
           <div className="relative h-32 w-full overflow-hidden bg-muted">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
@@ -69,6 +70,11 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
               className="object-cover w-full h-full transition-transform hover:scale-105 duration-500"
             />
           </div>
+        ) : (
+          <div 
+            className="relative h-32 w-full overflow-hidden"
+            style={{ background: generateGradient(market.id) }}
+          />
         )}
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-2">

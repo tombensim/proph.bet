@@ -5,6 +5,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -27,6 +28,7 @@ export const ArenaInvitationEmail = ({
   userEmail,
 }: ArenaInvitationEmailProps) => {
   const previewText = `${inviterName} invited you to join ${arenaName} on Proph.bet`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
   return (
     <Html>
@@ -35,6 +37,15 @@ export const ArenaInvitationEmail = ({
       <Tailwind>
         <Body className="bg-white my-auto mx-auto font-sans">
           <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
+            <Section className="mt-[32px]">
+              <Img
+                src={`${baseUrl}/chami.png`}
+                width="40"
+                height="40"
+                alt="Proph.bet"
+                className="my-0 mx-auto"
+              />
+            </Section>
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
               Join <strong>{arenaName}</strong>
             </Heading>

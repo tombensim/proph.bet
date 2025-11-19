@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { AddMemberForm } from "./add-member-form"
+import { InviteLinkGenerator } from "@/components/arenas/members/invite-link-generator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ResendButton } from "./resend-button"
@@ -48,20 +49,30 @@ export default async function MembersPage(props: PageProps) {
         orderBy: { createdAt: 'desc' }
     })
     
+    const emailInvitations = pendingInvitations.filter(i => i.email)
+    const publicInvitations = pendingInvitations.filter(i => !i.email)
+    
     return (
         <div className="max-w-3xl mx-auto space-y-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold">{t('title')}</h1>
             </div>
             
-            <div className="p-6 border rounded-lg bg-card">
-                <h2 className="text-lg font-semibold mb-4">{t('addForm.title')}</h2>
-                <AddMemberForm arenaId={arenaId} />
+            <div className="grid gap-6 md:grid-cols-2">
+                <div className="p-6 border rounded-lg bg-card">
+                    <h2 className="text-lg font-semibold mb-4">{t('addForm.title')}</h2>
+                    <AddMemberForm arenaId={arenaId} />
+                </div>
+
+                <div className="p-6 border rounded-lg bg-card">
+                    <h2 className="text-lg font-semibold mb-4">Public Invite Link</h2>
+                    <InviteLinkGenerator arenaId={arenaId} activeLinks={publicInvitations} />
+                </div>
             </div>
             
             <div className="border rounded-lg bg-card">
                  <div className="p-4 border-b bg-muted/40 font-medium">
-                     {members.length} {t('table.member')}{members.length !== 1 ? 's' : ''} {pendingInvitations.length > 0 && `(+${pendingInvitations.length} Pending)`}
+                     {members.length} {t('table.member')}{members.length !== 1 ? 's' : ''} {emailInvitations.length > 0 && `(+${emailInvitations.length} Pending)`}
                  </div>
                  
                  {/* Active Members */}
@@ -89,7 +100,7 @@ export default async function MembersPage(props: PageProps) {
                  ))}
 
                  {/* Pending Invitations */}
-                 {pendingInvitations.map(invite => (
+                 {emailInvitations.map(invite => (
                      <div key={invite.id} className="flex items-center justify-between p-4 border-b last:border-0 bg-amber-50/30">
                         <div className="flex items-center gap-3">
                             <Avatar>

@@ -41,6 +41,10 @@ export async function resendInvitationAction(invitationId: string) {
   const arenaName = invitation.arena.name
   const inviterName = session.user.name || "A user"
 
+  if (!invitation.email) {
+      throw new Error("Cannot resend invitation without an email address")
+  }
+
   // Send email
   try {
     await resend.emails.send({

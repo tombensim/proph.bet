@@ -58,7 +58,7 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
   }
 
   const isLoggedIn = !!session?.user
-  const isWrongUser = isLoggedIn && session.user.email?.toLowerCase() !== invitation.email.toLowerCase()
+  const isWrongUser = isLoggedIn && session.user.email?.toLowerCase() !== (invitation.email || "").toLowerCase()
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

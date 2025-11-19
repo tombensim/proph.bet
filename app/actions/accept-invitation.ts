@@ -23,11 +23,8 @@ export async function acceptInvitationAction(token: string) {
   if (invitation.expiresAt < new Date()) throw new Error("Invitation expired")
   if (invitation.status !== 'PENDING') throw new Error("Invitation already used")
 
-  // Check if user matches the email? 
-  // Ideally yes, but maybe they want to accept with a different email?
-  // Security-wise, it's safer to enforce email match OR just invalidate the token once used.
-  // If we enforce email match:
-  if (invitation.email.toLowerCase() !== session.user.email?.toLowerCase()) {
+  // Check if user matches the email (only if email is specified)
+  if (invitation.email && invitation.email.toLowerCase() !== session.user.email?.toLowerCase()) {
       // Allow mismatch? "This invitation was sent to X, but you are logged in as Y."
       // Usually we warn them or block it.
       // For now, let's BLOCK it to prevent accidental accepts by wrong account.
