@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { placeBetAction } from "@/app/actions/place-bet"
 import { Loader2 } from "lucide-react"
 import { useTranslations } from 'next-intl';
+import Image from "next/image"
 
 interface BetFormProps {
   market: Market & { options: Option[] }
@@ -240,14 +241,38 @@ export function BetForm({ market, userPoints }: BetFormProps) {
         )}
 
         {success && (
-          <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
-            {t('success')}
+          <div className="flex items-center gap-3 text-sm text-green-700 bg-green-50 p-3 rounded-md border border-green-200">
+             <div className="relative w-12 h-12 flex-shrink-0 animate-in zoom-in duration-300">
+               <Image 
+                 src="/cham-happy.png" 
+                 alt="Success" 
+                 fill 
+                 className="object-contain"
+               />
+             </div>
+            <div className="flex-1">
+              <p className="font-semibold">{t('success')}</p>
+              <p className="text-xs opacity-90">Good luck!</p>
+            </div>
           </div>
         )}
 
         <Button type="submit" className="w-full" disabled={isPending}>
-          {isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-          {t('placeBet')}
+          {isPending ? (
+             <div className="flex items-center">
+               <div className="relative w-6 h-6 mr-2 animate-spin">
+                 <Image 
+                   src="/chami-spinning.png" 
+                   alt="Loading" 
+                   fill 
+                   className="object-contain"
+                 />
+               </div>
+               <span>Processing...</span>
+             </div>
+          ) : (
+             t('placeBet')
+          )}
         </Button>
       </form>
     </Form>

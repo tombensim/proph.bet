@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Loader2, Upload, FileCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from 'next-intl';
+import Image from "next/image"
 
 interface ResolveMarketFormProps {
   market: Market & { options: Option[] }
@@ -74,9 +75,19 @@ export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
   }
 
   return (
-    <Card className="border-orange-200 bg-orange-50/50">
+    <Card className="border-orange-200 bg-orange-50/50 relative overflow-hidden">
+      <div className="absolute -right-4 -top-4 w-24 h-24 opacity-20 rotate-12 pointer-events-none">
+        <Image 
+          src="/chami-judge.png" 
+          alt="Judge" 
+          fill 
+          className="object-contain"
+        />
+      </div>
       <CardHeader>
-        <CardTitle className="text-orange-700">{t('title')}</CardTitle>
+        <CardTitle className="text-orange-700 flex items-center gap-2">
+          {t('title')}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t('desc')}</p>

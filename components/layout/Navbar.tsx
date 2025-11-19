@@ -57,6 +57,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
     })
   }
 
+  const canCreateArena = session?.user?.role === Role.ADMIN || session?.user?.role === Role.GLOBAL_ADMIN
   const baseUrl = arenaId ? `/arenas/${arenaId}` : ""
 
   return (
@@ -70,13 +71,13 @@ export async function Navbar({ arenaId }: NavbarProps) {
         </Link>
 
         {session?.user && (
-            <ArenaSwitcher memberships={allMemberships} currentArenaId={arenaId} />
+            <ArenaSwitcher memberships={allMemberships} currentArenaId={arenaId} canCreate={canCreateArena} />
         )}
         
         {arenaId && (
           <>
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center space-x-4 lg:space-x-6 ms-4 rtl:space-x-reverse">
+            <nav className="hidden md:flex items-center gap-4 lg:gap-6 ms-4">
                 <Link href={`${baseUrl}/markets`} className="text-sm font-medium transition-colors hover:text-primary">
                 {t('markets')}
                 </Link>
@@ -126,7 +127,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
           </>
         )}
 
-        <div className="ms-auto flex items-center space-x-4 rtl:space-x-reverse">
+        <div className="ms-auto flex items-center gap-4">
             <LocaleSwitcher />
            {session?.user ? (
              <div className="flex items-center gap-2 md:gap-4">

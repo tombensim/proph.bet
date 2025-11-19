@@ -21,7 +21,9 @@
     "previous": "Previous",
     "next": "Next",
     "page": "Page {current} of {total}",
-    "view": "View"
+    "view": "View",
+    "noFileChosen": "No file chosen",
+    "chooseFile": "Choose File"
   },
   "Markets": {
     "title": "Active Markets",
@@ -33,7 +35,8 @@
     "noMarkets": "No active markets found. Why not create one?",
     "createdBy": "Created by {name}",
     "betsCount": "{count} bets",
-    "endsIn": "Ends {timeAgo}"
+    "endsIn": "Ends {timeAgo}",
+    "chance": "Chance"
   },
   "UserNav": {
     "profile": "Profile",
@@ -91,6 +94,7 @@
     "totalPool": "Total Pool",
     "resolvesOn": "Resolves on:",
     "probability": "Probability Over Time",
+    "noPriceHistory": "No price history available yet.",
     "resolutionEvidence": "Resolution Evidence",
     "adminReview": "Admin Review",
     "viewScreenshot": "View Screenshot",

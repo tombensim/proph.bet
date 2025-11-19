@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { Link } from "@/lib/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Plus, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
+import Image from "next/image"
 
 export default async function Home() {
   const session = await auth()
@@ -11,6 +12,15 @@ export default async function Home() {
   if (!session?.user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
+        <div className="relative w-40 h-40 animate-in fade-in zoom-in duration-700">
+          <Image 
+            src="/cham-thinking.png" 
+            alt="Proph.bet Mascot" 
+            fill 
+            className="object-contain drop-shadow-xl"
+            priority
+          />
+        </div>
         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
           proph.bet
         </h1>
@@ -37,18 +47,18 @@ export default async function Home() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Your Arenas</h1>
-        {canCreateArena && (
-          <Link href="/arenas/create">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Arena
-            </Button>
-          </Link>
-        )}
       </div>
 
       {memberships.length === 0 ? (
-        <div className="text-center py-12 border rounded-lg bg-muted/20">
+        <div className="text-center py-12 border rounded-lg bg-muted/20 flex flex-col items-center">
+          <div className="relative w-32 h-32 mb-4 opacity-80">
+            <Image 
+              src="/chami-sad.png" 
+              alt="No Arenas" 
+              fill 
+              className="object-contain"
+            />
+          </div>
           <p className="text-muted-foreground mb-4">You haven't joined any arenas yet.</p>
           {canCreateArena ? (
              <p>Create an arena to get started.</p>

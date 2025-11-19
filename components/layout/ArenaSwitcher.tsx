@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, PlusCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,6 +11,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command"
 import {
   Popover,
@@ -19,57 +20,80 @@ import {
 } from "@/components/ui/popover"
 import { useRouter } from "@/lib/navigation"
 import { Arena, ArenaMembership } from "@prisma/client"
+import { CreateArenaDialog } from "@/components/arenas/create-arena-dialog"
 
 type MembershipWithArena = ArenaMembership & { arena: Arena }
 
 interface ArenaSwitcherProps {
     memberships: MembershipWithArena[]
     currentArenaId?: string
+    canCreate?: boolean
 }
 
-export function ArenaSwitcher({ memberships, currentArenaId }: ArenaSwitcherProps) {
+export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaSwitcherProps) {
     const [open, setOpen] = React.useState(false)
+    const [showCreateDialog, setShowCreateDialog] = React.useState(false)
     const router = useRouter()
     
     const currentArena = memberships.find(m => m.arenaId === currentArenaId)?.arena
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" aria-expanded={open} className="w-[140px] md:w-[200px] justify-between me-2 md:me-6 px-2 md:px-4">
-                    <span className="truncate">{currentArena ? currentArena.name : "Select Arena"}</span>
-                    <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
-                <Command>
-                    <CommandInput placeholder="Search arena..." />
-                    <CommandList>
-                        <CommandEmpty>No arena found.</CommandEmpty>
-                        <CommandGroup heading="Arenas">
-                            {memberships.map((membership) => (
-                                <CommandItem
-                                    key={membership.arena.id}
-                                    onSelect={() => {
-                                        router.push(`/arenas/${membership.arena.id}/markets`)
-                                        setOpen(false)
-                                    }}
-                                    className="text-sm"
-                                >
-                                    <Check
-                                        className={cn(
-                                            "me-2 h-4 w-4",
-                                            currentArenaId === membership.arena.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {membership.arena.name}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
+        <>
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-[140px] md:w-[200px] justify-between me-2 md:me-6 px-2 md:px-4">
+                        <span className="truncate">{currentArena ? currentArena.name : "Select Arena"}</span>
+                        <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search arena..." />
+                        <CommandList>
+                            <CommandEmpty>No arena found.</CommandEmpty>
+                            <CommandGroup heading="Arenas">
+                                {memberships.map((membership) => (
+                                    <CommandItem
+                                        key={membership.arena.id}
+                                        onSelect={() => {
+                                            router.push(`/arenas/${membership.arena.id}/markets`)
+                                            setOpen(false)
+                                        }}
+                                        className="text-sm"
+                                    >
+                                        <Check
+                                            className={cn(
+                                                "me-2 h-4 w-4",
+                                                currentArenaId === membership.arena.id ? "opacity-100" : "opacity-0"
+                                            )}
+                                        />
+                                        {membership.arena.name}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                            {canCreate && (
+                                <>
+                                    <CommandSeparator />
+                                    <CommandGroup>
+                                        <CommandItem
+                                            onSelect={() => {
+                                                setOpen(false)
+                                                setShowCreateDialog(true)
+                                            }}
+                                            className="text-sm"
+                                        >
+                                            <PlusCircle className="me-2 h-4 w-4" />
+                                            Create Arena
+                                        </CommandItem>
+                                    </CommandGroup>
+                                </>
+                            )}
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+            <CreateArenaDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
+        </>
     )
 }
 

@@ -2,6 +2,7 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { format, differenceInDays } from 'date-fns'
+import { useTranslations } from 'next-intl';
 
 interface PriceChartProps {
   data: any[]
@@ -11,10 +12,12 @@ interface PriceChartProps {
 const COLORS = ["#2563eb", "#dc2626", "#16a34a", "#d97706", "#9333ea"]
 
 export function PriceChart({ data, options }: PriceChartProps) {
+  const t = useTranslations('MarketDetail');
+  
   if (!data || data.length === 0) {
     return (
        <div className="h-[300px] flex items-center justify-center text-muted-foreground border rounded-lg bg-muted/10">
-         No price history available yet.
+         {t('noPriceHistory')}
        </div>
     )
   }

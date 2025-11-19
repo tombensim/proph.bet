@@ -21,7 +21,9 @@
     "previous": "הקודם",
     "next": "הבא",
     "page": "עמוד {current} מתוך {total}",
-    "view": "צפה"
+    "view": "צפה",
+    "noFileChosen": "לא נבחר קובץ",
+    "chooseFile": "בחר קובץ"
   },
   "Markets": {
     "title": "שווקים פעילים",
@@ -33,7 +35,8 @@
     "noMarkets": "לא נמצאו שווקים פעילים. למה לא ליצור אחד?",
     "createdBy": "נוצר על ידי {name}",
     "betsCount": "{count} הימורים",
-    "endsIn": "מסתיים {timeAgo}"
+    "endsIn": "מסתיים {timeAgo}",
+    "chance": "סיכוי"
   },
   "UserNav": {
     "profile": "פרופיל",
@@ -91,6 +94,7 @@
     "totalPool": "סך כל הקופה",
     "resolvesOn": "נסגר ב:",
     "probability": "הסתברות לאורך זמן",
+    "noPriceHistory": "עדיין אין היסטוריית מחירים.",
     "resolutionEvidence": "ראיות לסגירה",
     "adminReview": "בדיקת מנהל",
     "viewScreenshot": "צפה בצילום מסך",

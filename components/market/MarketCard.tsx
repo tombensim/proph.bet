@@ -1,3 +1,5 @@
+"use client"
+
 import { Market, User, Bet, Option, MarketAsset } from "@prisma/client"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -5,6 +7,7 @@ import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { Coins, AlertTriangle } from "lucide-react"
 import { ApproveMarketButton } from "./ApproveMarketButton"
+import { useTranslations } from 'next-intl';
 
 interface MarketWithDetails extends Market {
   creator: User
@@ -17,6 +20,7 @@ interface MarketWithDetails extends Market {
 }
 
 export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isAdmin?: boolean }) {
+  const t = useTranslations('Markets');
   const hasPositions = market.userBets && market.userBets.length > 0
   const coverImage = market.assets?.find(a => a.type === "IMAGE")?.url
   const isPending = market.approved === false
@@ -36,7 +40,7 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
       probabilityDisplay = (
         <div className="flex items-center gap-2">
            <div className="text-2xl font-bold text-green-600">{percent}%</div>
-           <div className="text-xs text-muted-foreground uppercase font-bold tracking-wide">Chance</div>
+           <div className="text-xs text-muted-foreground uppercase font-bold tracking-wide">{t('chance')}</div>
         </div>
       )
     }
@@ -50,9 +54,9 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
     <Link href={href}>
       <Card className={`h-full transition-all cursor-pointer flex flex-col overflow-hidden relative ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''}`}>
         {isPending && (
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 end-2 z-10">
                 <Badge variant="destructive" className="gap-1 bg-yellow-500 hover:bg-yellow-600">
-                    <AlertTriangle className="w-3 h-3" /> Pending
+                    <AlertTriangle className="w-3 h-3" /> {t('pendingApproval')}
                 </Badge>
             </div>
         )}
@@ -99,12 +103,12 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
            )}
 
            <div className="text-sm text-muted-foreground flex items-center gap-2">
-             Created by {market.creator.name || "Unknown"}
+             {t('createdBy', { name: market.creator.name || "Unknown" })}
            </div>
         </CardContent>
         <CardFooter className="text-xs text-muted-foreground flex justify-between border-t pt-4">
-           <span>{market._count.bets} bets</span>
-           <span>Ends {formatDistanceToNow(new Date(market.resolutionDate), { addSuffix: true })}</span>
+           <span>{t('betsCount', { count: market._count.bets })}</span>
+           <span>{formatDistanceToNow(new Date(market.resolutionDate), { addSuffix: true })}</span>
         </CardFooter>
         
         {isPending && isAdmin && market.arenaId && (
