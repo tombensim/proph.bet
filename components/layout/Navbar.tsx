@@ -89,7 +89,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
                             {t('members')}
                         </Link>
                         <Link href={`${baseUrl}/settings`} className="text-sm font-medium transition-colors hover:text-primary">
-                            Settings
+                            {t('settings')}
                         </Link>
                     </>
                 )}
@@ -116,7 +116,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
                           <Link href={`${baseUrl}/members`}>{t('members')}</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`${baseUrl}/settings`}>Settings</Link>
+                          <Link href={`${baseUrl}/settings`}>{t('settings')}</Link>
                         </DropdownMenuItem>
                       </>
                     )}

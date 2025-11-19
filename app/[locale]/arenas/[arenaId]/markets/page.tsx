@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Link } from "@/lib/navigation"
 import { redirect } from "next/navigation"
 import { ArenaRole, Role } from "@prisma/client"
+import { getTranslations } from 'next-intl/server';
 
 interface PageProps {
   searchParams: Promise<{ filter?: string }>
@@ -14,6 +15,8 @@ interface PageProps {
 
 export default async function MarketsPage(props: PageProps) {
   const session = await auth()
+  const t = await getTranslations('Markets');
+  
   if (!session?.user) return redirect("/api/auth/signin")
 
   const { arenaId } = await props.params
@@ -55,8 +58,7 @@ export default async function MarketsPage(props: PageProps) {
         whereClause.approved = false
     }
   } else {
-    // Default view: Show approved markets OR pending markets created by self OR all if admin?
-    // Usually: Show approved only. Admin can switch filter to see pending.
+    // Default view: Show approved only. Admin can switch filter to see pending.
     // Or maybe admins see pending mixed in? Let's stick to strict approved unless filter=pending
     whereClause.approved = true
   }
@@ -91,10 +93,10 @@ export default async function MarketsPage(props: PageProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Active Markets</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <div className="flex items-center gap-4">
           <Link href={`/arenas/${arenaId}/markets/create`}>
-            <Button>Create Market</Button>
+            <Button>{t('createMarket')}</Button>
           </Link>
           <MarketFilter isAdmin={isAdmin} />
         </div>
@@ -102,11 +104,11 @@ export default async function MarketsPage(props: PageProps) {
       {markets.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           {filter === "my-positions" ? (
-            <p>You don't have any open positions yet.</p>
+            <p>{t('noPositions')}</p>
           ) : filter === "pending" ? (
-            <p>No pending markets found.</p>
+            <p>{t('noPending')}</p>
           ) : (
-            <p>No active markets found. Why not create one?</p>
+            <p>{t('noMarkets')}</p>
           )}
         </div>
       ) : (

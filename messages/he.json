@@ -3,6 +3,7 @@
     "markets": "שווקים",
     "leaderboard": "טבלת מובילים",
     "members": "חברים",
+    "settings": "הגדרות",
     "signIn": "התחבר",
     "points": "נק׳"
   },
@@ -21,6 +22,26 @@
     "next": "הבא",
     "page": "עמוד {current} מתוך {total}",
     "view": "צפה"
+  },
+  "Markets": {
+    "title": "שווקים פעילים",
+    "createMarket": "צור שוק",
+    "myPositions": "ההימורים שלי",
+    "pendingApproval": "ממתינים לאישור",
+    "noPositions": "אין לך עמדות פתוחות עדיין.",
+    "noPending": "לא נמצאו שווקים ממתינים.",
+    "noMarkets": "לא נמצאו שווקים פעילים. למה לא ליצור אחד?",
+    "createdBy": "נוצר על ידי {name}",
+    "betsCount": "{count} הימורים",
+    "endsIn": "מסתיים {timeAgo}"
+  },
+  "UserNav": {
+    "profile": "פרופיל",
+    "settings": "הגדרות",
+    "adminPanel": "פאנל ניהול",
+    "transferPoints": "העבר נקודות",
+    "betHistory": "היסטוריית הימורים",
+    "logout": "התנתק"
   },
   "CreateMarket": {
     "title": "צור שוק חדש",

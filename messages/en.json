@@ -3,6 +3,7 @@
     "markets": "Markets",
     "leaderboard": "Leaderboard",
     "members": "Members",
+    "settings": "Settings",
     "signIn": "Sign In",
     "points": "pts"
   },
@@ -21,6 +22,26 @@
     "next": "Next",
     "page": "Page {current} of {total}",
     "view": "View"
+  },
+  "Markets": {
+    "title": "Active Markets",
+    "createMarket": "Create Market",
+    "myPositions": "My Positions",
+    "pendingApproval": "Pending Approval",
+    "noPositions": "You don't have any open positions yet.",
+    "noPending": "No pending markets found.",
+    "noMarkets": "No active markets found. Why not create one?",
+    "createdBy": "Created by {name}",
+    "betsCount": "{count} bets",
+    "endsIn": "Ends {timeAgo}"
+  },
+  "UserNav": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "adminPanel": "Admin Panel",
+    "transferPoints": "Transfer Points",
+    "betHistory": "Bet History",
+    "logout": "Log out"
   },
   "CreateMarket": {
     "title": "Create New Market",

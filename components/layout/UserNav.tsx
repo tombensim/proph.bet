@@ -16,9 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
+import { Link } from "@/lib/navigation"
+import { useTranslations } from 'next-intl';
 
 export function UserNav({ user, arenaId }: { user: any, arenaId?: string }) {
   const baseUrl = arenaId ? `/arenas/${arenaId}` : ""
+  const t = useTranslations('UserNav');
 
   return (
     <DropdownMenu>
@@ -42,34 +45,33 @@ export function UserNav({ user, arenaId }: { user: any, arenaId?: string }) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <a href="/settings" className="cursor-pointer">Profile</a>
+            <Link href="/settings" className="cursor-pointer">{t('profile')}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-             <a href="/settings" className="cursor-pointer">Settings</a>
+             <Link href="/settings" className="cursor-pointer">{t('settings')}</Link>
           </DropdownMenuItem>
           {user.role === "ADMIN" && (
              <DropdownMenuItem asChild>
-                <a href="/admin" className="cursor-pointer">Admin Panel</a>
+                <Link href="/admin" className="cursor-pointer">{t('adminPanel')}</Link>
              </DropdownMenuItem>
           )}
           {arenaId && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href={`${baseUrl}/transfer`} className="cursor-pointer">Transfer Points</a>
+                <Link href={`${baseUrl}/transfer`} className="cursor-pointer">{t('transferPoints')}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href={`${baseUrl}/history`} className="cursor-pointer">Bet History</a>
+                <Link href={`${baseUrl}/history`} className="cursor-pointer">{t('betHistory')}</Link>
               </DropdownMenuItem>
             </>
           )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut()}>
-          Log out
+          {t('logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
-
