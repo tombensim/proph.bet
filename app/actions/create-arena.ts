@@ -20,7 +20,7 @@ export async function createArenaAction(data: CreateArenaValues) {
   if (!session?.user?.id) throw new Error("Unauthorized")
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } })
-  if (user?.role !== "ADMIN") throw new Error("Unauthorized: Only system admins can create arenas")
+  if (user?.role !== "ADMIN" && user?.role !== "GLOBAL_ADMIN") throw new Error("Unauthorized: Only system admins and global admins can create arenas")
 
   const validated = createArenaSchema.safeParse(data)
   if (!validated.success) {

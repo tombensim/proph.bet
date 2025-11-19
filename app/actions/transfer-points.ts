@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { TransactionType } from "@prisma/client"
-import { redirect } from "next/navigation"
+import { redirect as nextRedirect } from "next/navigation"
 
 const transferSchema = z.object({
   email: z.string().email(),
@@ -101,5 +101,5 @@ export async function transferPointsAction(data: TransferValues) {
   })
 
   revalidatePath(`/arenas/${arenaId}`)
-  redirect(`/arenas/${arenaId}/leaderboard`)
+  nextRedirect(`/arenas/${arenaId}/leaderboard`)
 }

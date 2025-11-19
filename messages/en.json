@@ -1,0 +1,212 @@
+{
+  "Navbar": {
+    "markets": "Markets",
+    "leaderboard": "Leaderboard",
+    "members": "Members",
+    "signIn": "Sign In",
+    "points": "pts"
+  },
+  "Common": {
+    "language": "Language",
+    "switchLanguage": "Switch Language",
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "open": "Open",
+    "resolved": "Resolved",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}",
+    "view": "View"
+  },
+  "CreateMarket": {
+    "title": "Create New Market",
+    "subtitle": "Set up a new prediction market for your colleagues.",
+    "form": {
+      "marketTitle": "Market Title",
+      "marketTitlePlaceholder": "Will sales exceed $1M in Q4?",
+      "marketTitleDesc": "A clear and concise question.",
+      "description": "Description",
+      "descriptionPlaceholder": "Provide additional context for the market...",
+      "attachments": "Attachments & Evidence",
+      "addLink": "Add Link",
+      "addImage": "Add Image",
+      "attachmentsDesc": "Add links or images to help users research this market.",
+      "marketType": "Market Type",
+      "marketTypePlaceholder": "Select a market type",
+      "binary": "Binary (Yes/No)",
+      "multipleChoice": "Multiple Choice",
+      "numericRange": "Numeric Range",
+      "resolutionDate": "Resolution Date",
+      "pickDate": "Pick a date",
+      "options": "Options",
+      "addOption": "Add Option",
+      "minBet": "Min Bet",
+      "maxBet": "Max Bet (Optional)",
+      "visibility": "Visibility Settings (Optional)",
+      "hideMarket": "Hide Entire Market From",
+      "hideMarketPlaceholder": "Select users who cannot see this market...",
+      "hideMarketDesc": "These users will see a locked market and cannot access details.",
+      "hideBets": "Hide Bets Activity From",
+      "hideBetsPlaceholder": "Select users who cannot see others' bets...",
+      "hideBetsDesc": "These users can bet, but cannot see who else bet or what they bet on.",
+      "submit": "Create Market",
+      "submitting": "Creating..."
+    }
+  },
+  "MarketDetail": {
+    "hiddenMarket": "This market is hidden from you",
+    "hiddenMarketDesc": "You cannot view details or bet on this market.",
+    "open": "Open",
+    "closed": "Closed",
+    "betsHidden": "Bets Hidden",
+    "resources": "Resources & Evidence",
+    "imageAttachment": "Image Attachment",
+    "externalLink": "External Link",
+    "placeBet": "Place Your Bet",
+    "totalPool": "Total Pool",
+    "resolvesOn": "Resolves on:",
+    "probability": "Probability Over Time",
+    "resolutionEvidence": "Resolution Evidence",
+    "adminReview": "Admin Review",
+    "viewScreenshot": "View Screenshot",
+    "recentActivity": "Recent Activity",
+    "hiddenActivity": "Activity is hidden for you.",
+    "noBets": "No bets placed yet.",
+    "betOn": "Bet on \"{option}\"",
+    "predicted": "Predicted {value}",
+    "placedBet": "Placed a bet",
+    "comments": "Comments",
+    "shareThoughts": "Share your thoughts...",
+    "postComment": "Post Comment",
+    "posting": "Posting...",
+    "noComments": "No comments yet. Be the first to share your thoughts!",
+    "edited": "(edited)",
+    "betForm": {
+      "chooseOutcome": "Choose Outcome",
+      "selectOption": "Select Option",
+      "selectOutcome": "Select an outcome",
+      "yourPrediction": "Your Prediction",
+      "enterValue": "Enter value",
+      "betAmount": "Bet Amount (Points)",
+      "balance": "Balance: {amount}",
+      "min": "Min: {amount}",
+      "max": "Max: {amount}",
+      "placeBet": "Place Bet",
+      "success": "Bet placed successfully!",
+      "error": "Failed to place bet"
+    },
+    "resolveForm": {
+      "title": "Resolve Market",
+      "desc": "Select the correct outcome to distribute points.",
+      "winningOption": "Winning Option",
+      "selectWinner": "Select winner",
+      "winningValue": "Winning Value",
+      "enterExactValue": "Enter exact value",
+      "evidence": "Evidence Screenshot (Optional)",
+      "uploading": "Uploading...",
+      "evidenceAttached": "Evidence attached",
+      "finalize": "Finalize & Payout"
+    }
+  },
+  "Leaderboard": {
+    "title": "Arena Leaderboard",
+    "subtitle": "Who is leading the prediction race in this arena?",
+    "table": {
+      "rank": "Rank",
+      "user": "User",
+      "points": "Points",
+      "you": "You"
+    }
+  },
+  "Members": {
+    "title": "Members",
+    "invite": "Invite Member",
+    "table": {
+      "member": "Member",
+      "role": "Role",
+      "joined": "Joined",
+      "actions": "Actions"
+    },
+    "actions": {
+      "remove": "Remove",
+      "promote": "Promote to Admin",
+      "demote": "Demote to Member"
+    },
+    "addForm": {
+      "title": "Add New Member",
+      "email": "Email Address",
+      "emailPlaceholder": "colleague@company.com",
+      "role": "Role",
+      "member": "Member",
+      "admin": "Admin",
+      "submit": "Add Member",
+      "adding": "Adding...",
+      "success": "Member added successfully!",
+      "error": "Failed to add member"
+    }
+  },
+  "Profile": {
+    "title": "Player Profile",
+    "joined": "Joined {date}",
+    "currentPoints": "Current Points",
+    "winRate": "Win Rate",
+    "wins": "{wins} wins / {total} bets",
+    "history": {
+      "title": "Betting History",
+      "market": "Market",
+      "prediction": "Prediction",
+      "amount": "Amount",
+      "result": "Result",
+      "date": "Date",
+      "pending": "Pending",
+      "win": "Win",
+      "loss": "Loss",
+      "resolved": "Resolved",
+      "noBets": "No bets placed yet."
+    }
+  },
+  "Admin": {
+    "dashboard": "Dashboard",
+    "totalUsers": "Total Users",
+    "totalArenas": "Total Arenas",
+    "activeMarkets": "Active Markets",
+    "totalBets": "Total Bets",
+    "volume": "{amount} pts volume",
+    "nav": {
+      "overview": "Overview",
+      "users": "Users",
+      "arenas": "Arenas",
+      "settings": "Settings"
+    },
+    "users": {
+      "title": "Users",
+      "table": {
+        "avatar": "Avatar",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "stats": "Stats",
+        "joined": "Joined"
+      },
+      "stats": {
+        "markets": "{count} markets",
+        "bets": "{count} bets"
+      }
+    },
+    "arenas": {
+      "title": "Arenas",
+      "create": "Create Arena",
+      "table": {
+        "name": "Name",
+        "slug": "Slug",
+        "members": "Members",
+        "markets": "Markets",
+        "created": "Created"
+      }
+    }
+  }
+}

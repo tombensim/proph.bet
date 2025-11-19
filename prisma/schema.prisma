@@ -34,6 +34,8 @@ model User {
   hiddenFromMarkets Market[] @relation("HiddenMarketUsers")
   hiddenBetsFromMarkets Market[] @relation("HiddenBetsUsers")
 
+  sentInvitations Invitation[] @relation("SentInvitations")
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -88,6 +90,7 @@ model Arena {
   members     ArenaMembership[]
   markets     Market[]
   transactions Transaction[]
+  invitations Invitation[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -241,6 +244,7 @@ model Comment {
 enum Role {
   USER
   ADMIN
+  GLOBAL_ADMIN
 }
 
 enum ArenaRole {
@@ -281,4 +285,32 @@ enum AssetType {
   IMAGE
   LINK
   FILE
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  
+  arenaId   String
+  arena     Arena    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  
+  inviterId String
+  inviter   User     @relation("SentInvitations", fields: [inviterId], references: [id], onDelete: Cascade)
+  
+  role      ArenaRole @default(MEMBER)
+  status    InvitationStatus @default(PENDING)
+  
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, arenaId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  DECLINED
 }

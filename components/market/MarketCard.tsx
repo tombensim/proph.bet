@@ -1,7 +1,7 @@
 import { Market, User, Bet, Option, MarketAsset } from "@prisma/client"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
+import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { Coins } from "lucide-react"
 
@@ -82,9 +82,9 @@ export function MarketCard({ market }: { market: MarketWithDetails }) {
                {market.userBets!.map(bet => (
                  <Badge key={bet.id} variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 flex items-center gap-1 text-xs">
                    <Coins className="h-3 w-3" />
-                   {bet.option?.text || bet.numericValue || "Bet"}
-                   <span className="ml-1 opacity-70">({bet.amount})</span>
-                 </Badge>
+                  {bet.option?.text || bet.numericValue || "Bet"}
+                  <span className="ms-1 opacity-70">({bet.amount})</span>
+                </Badge>
                ))}
              </div>
            )}

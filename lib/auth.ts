@@ -3,6 +3,7 @@ import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
+import { Role } from "@prisma/client"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   debug: true,
@@ -69,7 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       console.log("Session Callback", { sessionUser: session?.user?.email, tokenId: token?.id })
       if (session.user && token.id) {
         session.user.id = token.id as string
-        session.user.role = token.role as "USER" | "ADMIN"
+        session.user.role = token.role as Role
         
         // For dev mode, ensure user exists in DB
         if (process.env.NODE_ENV === "development" && session.user.email) {

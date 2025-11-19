@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/lib/navigation"
 import { Arena, ArenaMembership } from "@prisma/client"
 
 type MembershipWithArena = ArenaMembership & { arena: Arena }
@@ -36,9 +36,9 @@ export function ArenaSwitcher({ memberships, currentArenaId }: ArenaSwitcherProp
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" aria-expanded={open} className="w-[200px] justify-between mr-6">
-                    {currentArena ? currentArena.name : "Select Arena"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                <Button variant="outline" role="combobox" aria-expanded={open} className="w-[140px] md:w-[200px] justify-between me-2 md:me-6 px-2 md:px-4">
+                    <span className="truncate">{currentArena ? currentArena.name : "Select Arena"}</span>
+                    <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0">
@@ -58,7 +58,7 @@ export function ArenaSwitcher({ memberships, currentArenaId }: ArenaSwitcherProp
                                 >
                                     <Check
                                         className={cn(
-                                            "mr-2 h-4 w-4",
+                                            "me-2 h-4 w-4",
                                             currentArenaId === membership.arena.id ? "opacity-100" : "opacity-0"
                                         )}
                                     />

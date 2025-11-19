@@ -1,0 +1,212 @@
+{
+  "Navbar": {
+    "markets": "שווקים",
+    "leaderboard": "טבלת מובילים",
+    "members": "חברים",
+    "signIn": "התחבר",
+    "points": "נק׳"
+  },
+  "Common": {
+    "language": "שפה",
+    "switchLanguage": "החלף שפה",
+    "loading": "טוען...",
+    "cancel": "ביטול",
+    "save": "שמור",
+    "delete": "מחק",
+    "edit": "ערוך",
+    "close": "סגור",
+    "open": "פתוח",
+    "resolved": "נפתר",
+    "previous": "הקודם",
+    "next": "הבא",
+    "page": "עמוד {current} מתוך {total}",
+    "view": "צפה"
+  },
+  "CreateMarket": {
+    "title": "צור שוק חדש",
+    "subtitle": "הגדר שוק חיזוי חדש עבור העמיתים שלך.",
+    "form": {
+      "marketTitle": "כותרת השוק",
+      "marketTitlePlaceholder": "האם המכירות יעלו על מיליון דולר ברבעון הרביעי?",
+      "marketTitleDesc": "שאלה ברורה ותמציתית.",
+      "description": "תיאור",
+      "descriptionPlaceholder": "ספק הקשר נוסף עבור השוק...",
+      "attachments": "קבצים מצורפים וראיות",
+      "addLink": "הוסף קישור",
+      "addImage": "הוסף תמונה",
+      "attachmentsDesc": "הוסף קישורים או תמונות כדי לעזור למשתמשים לחקור את השוק הזה.",
+      "marketType": "סוג השוק",
+      "marketTypePlaceholder": "בחר סוג שוק",
+      "binary": "בינארי (כן/לא)",
+      "multipleChoice": "רב ברירה",
+      "numericRange": "טווח מספרי",
+      "resolutionDate": "תאריך סיום",
+      "pickDate": "בחר תאריך",
+      "options": "אפשרויות",
+      "addOption": "הוסף אפשרות",
+      "minBet": "הימור מינימלי",
+      "maxBet": "הימור מקסימלי (אופציונלי)",
+      "visibility": "הגדרות נראות (אופציונלי)",
+      "hideMarket": "הסתר את כל השוק מ-",
+      "hideMarketPlaceholder": "בחר משתמשים שלא יכולים לראות את השוק הזה...",
+      "hideMarketDesc": "משתמשים אלה יראו שוק נעול ולא יוכלו לגשת לפרטים.",
+      "hideBets": "הסתר פעילות הימורים מ-",
+      "hideBetsPlaceholder": "בחר משתמשים שלא יכולים לראות הימורים של אחרים...",
+      "hideBetsDesc": "משתמשים אלה יכולים להמר, אך לא יכולים לראות מי עוד הימר או על מה.",
+      "submit": "צור שוק",
+      "submitting": "יוצר..."
+    }
+  },
+  "MarketDetail": {
+    "hiddenMarket": "שוק זה מוסתר ממך",
+    "hiddenMarketDesc": "אינך יכול לצפות בפרטים או להמר על שוק זה.",
+    "open": "פתוח",
+    "closed": "סגור",
+    "betsHidden": "הימורים מוסתרים",
+    "resources": "משאבים וראיות",
+    "imageAttachment": "קובץ תמונה מצורף",
+    "externalLink": "קישור חיצוני",
+    "placeBet": "בצע הימור",
+    "totalPool": "סך כל הקופה",
+    "resolvesOn": "נסגר ב:",
+    "probability": "הסתברות לאורך זמן",
+    "resolutionEvidence": "ראיות לסגירה",
+    "adminReview": "בדיקת מנהל",
+    "viewScreenshot": "צפה בצילום מסך",
+    "recentActivity": "פעילות אחרונה",
+    "hiddenActivity": "הפעילות מוסתרת עבורך.",
+    "noBets": "עדיין לא בוצעו הימורים.",
+    "betOn": "הימר על \"{option}\"",
+    "predicted": "חזה {value}",
+    "placedBet": "ביצע הימור",
+    "comments": "תגובות",
+    "shareThoughts": "שתף את מחשבותיך...",
+    "postComment": "פרסם תגובה",
+    "posting": "מפרסם...",
+    "noComments": "אין תגובות עדיין. היה הראשון לשתף את מחשבותיך!",
+    "edited": "(נערך)",
+    "betForm": {
+      "chooseOutcome": "בחר תוצאה",
+      "selectOption": "בחר אפשרות",
+      "selectOutcome": "בחר תוצאה",
+      "yourPrediction": "התחזית שלך",
+      "enterValue": "הזן ערך",
+      "betAmount": "סכום ההימור (נקודות)",
+      "balance": "יתרה: {amount}",
+      "min": "מינימום: {amount}",
+      "max": "מקסימום: {amount}",
+      "placeBet": "בצע הימור",
+      "success": "ההימור בוצע בהצלחה!",
+      "error": "נכשל ביצוע ההימור"
+    },
+    "resolveForm": {
+      "title": "סגירת שוק",
+      "desc": "בחר את התוצאה הנכונה לחלוקת הנקודות.",
+      "winningOption": "אפשרות זוכה",
+      "selectWinner": "בחר מנצח",
+      "winningValue": "ערך זוכה",
+      "enterExactValue": "הזן ערך מדויק",
+      "evidence": "צילום מסך ראיה (אופציונלי)",
+      "uploading": "מעלה...",
+      "evidenceAttached": "ראיה צורפה",
+      "finalize": "סגור וחלק נקודות"
+    }
+  },
+  "Leaderboard": {
+    "title": "טבלת המובילים",
+    "subtitle": "מי מוביל במירוץ החיזוי בזירה זו?",
+    "table": {
+      "rank": "דירוג",
+      "user": "משתמש",
+      "points": "נקודות",
+      "you": "אתה"
+    }
+  },
+  "Members": {
+    "title": "חברים",
+    "invite": "הזמן חבר",
+    "table": {
+      "member": "חבר",
+      "role": "תפקיד",
+      "joined": "הצטרף",
+      "actions": "פעולות"
+    },
+    "actions": {
+      "remove": "הסר",
+      "promote": "מנה למנהל",
+      "demote": "הורד לדרגת חבר"
+    },
+    "addForm": {
+      "title": "הוסף חבר חדש",
+      "email": "כתובת אימייל",
+      "emailPlaceholder": "colleague@company.com",
+      "role": "תפקיד",
+      "member": "חבר",
+      "admin": "מנהל",
+      "submit": "הוסף חבר",
+      "adding": "מוסיף...",
+      "success": "חבר נוסף בהצלחה!",
+      "error": "נכשל הוספת חבר"
+    }
+  },
+  "Profile": {
+    "title": "פרופיל שחקן",
+    "joined": "הצטרף ב {date}",
+    "currentPoints": "נקודות נוכחיות",
+    "winRate": "אחוז ניצחון",
+    "wins": "{wins} נצחונות / {total} הימורים",
+    "history": {
+      "title": "היסטוריית הימורים",
+      "market": "שוק",
+      "prediction": "תחזית",
+      "amount": "סכום",
+      "result": "תוצאה",
+      "date": "תאריך",
+      "pending": "ממתין",
+      "win": "ניצחון",
+      "loss": "הפסד",
+      "resolved": "נפתר",
+      "noBets": "עדיין לא בוצעו הימורים."
+    }
+  },
+  "Admin": {
+    "dashboard": "לוח בקרה",
+    "totalUsers": "סה״כ משתמשים",
+    "totalArenas": "סה״כ זירות",
+    "activeMarkets": "שווקים פעילים",
+    "totalBets": "סה״כ הימורים",
+    "volume": "נפח {amount} נק׳",
+    "nav": {
+      "overview": "סקירה כללית",
+      "users": "משתמשים",
+      "arenas": "זירות",
+      "settings": "הגדרות"
+    },
+    "users": {
+      "title": "משתמשים",
+      "table": {
+        "avatar": "תמונה",
+        "name": "שם",
+        "email": "אימייל",
+        "role": "תפקיד",
+        "stats": "נתונים",
+        "joined": "הצטרף"
+      },
+      "stats": {
+        "markets": "{count} שווקים",
+        "bets": "{count} הימורים"
+      }
+    },
+    "arenas": {
+      "title": "זירות",
+      "create": "צור זירה",
+      "table": {
+        "name": "שם",
+        "slug": "מזהה",
+        "members": "חברים",
+        "markets": "שווקים",
+        "created": "נוצר"
+      }
+    }
+  }
+}

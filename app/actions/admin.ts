@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { Role } from "@prisma/client"
-import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 
 // Helper to ensure admin access
 async function requireAdmin() {
@@ -101,5 +101,16 @@ export async function getAllArenas(page = 1, limit = 20) {
   ])
 
   return { arenas, total, pages: Math.ceil(total / limit) }
+}
+
+export async function updateUserRole(userId: string, role: Role) {
+  await requireAdmin()
+  
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role }
+  })
+  
+  revalidatePath("/admin/users")
 }
 

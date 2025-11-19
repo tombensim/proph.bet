@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "@/lib/navigation"
+import { useSearchParams } from "next/navigation"
 
 export function MarketFilter() {
   const router = useRouter()
@@ -24,7 +25,7 @@ export function MarketFilter() {
     >
       My Positions
       {currentFilter === "my-positions" && (
-        <span className="ml-1 h-2 w-2 rounded-full bg-primary-foreground animate-pulse" />
+        <span className="ms-1 h-2 w-2 rounded-full bg-primary-foreground animate-pulse" />
       )}
     </Button>
   )

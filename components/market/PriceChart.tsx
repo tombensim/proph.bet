@@ -55,7 +55,7 @@ export function PriceChart({ data, options }: PriceChartProps) {
               if (active && payload && payload.length) {
                 return (
                   <div className="bg-background border rounded p-2 shadow-md text-xs">
-                    <p className="font-semibold mb-1">{format(new Date(label), 'MMM d, HH:mm')}</p>
+                    <p className="font-semibold mb-1">{label ? format(new Date(label), 'MMM d, HH:mm') : ''}</p>
                     {payload.map((entry: any) => (
                       <div key={entry.name} className="flex items-center gap-2" style={{ color: entry.color }}>
                         <span>{entry.name}:</span>
