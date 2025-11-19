@@ -3,6 +3,7 @@ import { NotificationType } from "@prisma/client"
 import { resend } from "@/lib/resend"
 import { BetResolvedEmail } from "@/components/emails/bet-resolved"
 import { MarketResolvedEmail } from "@/components/emails/market-resolved"
+import { generateUnsubscribeLink } from "@/app/actions/unsubscribe"
 
 export type NotificationMetadata = {
   marketId?: string
@@ -47,26 +48,58 @@ export async function createNotification({
     },
   })
 
-  // 2. Check Settings
-  let settings = await prisma.notificationSettings.findUnique({
+  // 2. Check Global Settings
+  let globalSettings = await prisma.notificationSettings.findUnique({
     where: { userId },
   })
 
-  if (!settings) {
-    settings = await prisma.notificationSettings.create({
+  if (!globalSettings) {
+    globalSettings = await prisma.notificationSettings.create({
       data: { userId },
     })
+  }
+
+  // 3. Check Arena Overrides
+  let arenaSettings = null
+  if (arenaId) {
+    // Find membership
+    const membership = await prisma.arenaMembership.findUnique({
+        where: { userId_arenaId: { userId, arenaId } },
+        include: { notificationSettings: true }
+    })
+    if (membership?.notificationSettings) {
+        arenaSettings = membership.notificationSettings
+    }
+  }
+
+  // Helper to resolve setting (Arena Override > Global Default)
+  const getSetting = (key: keyof typeof globalSettings) => {
+    // If arena muted, return false for everything
+    if (arenaSettings?.muted) {
+        return false
+    }
+
+    // The schema for global is Boolean, for Arena is Boolean?
+    // We need to cast keys because TypeScript doesn't know they match perfectly yet
+    if (arenaSettings) {
+        const arenaVal = (arenaSettings as any)[key]
+        if (arenaVal !== null && arenaVal !== undefined) {
+            return arenaVal
+        }
+    }
+    return (globalSettings as any)[key]
   }
 
   // Map notification type to settings field
   const emailEnabled = (() => {
     switch (type) {
-      case "BET_RESOLVED": return settings.email_BET_RESOLVED
-      case "MARKET_RESOLVED": return settings.email_MARKET_RESOLVED
-      case "WIN_PAYOUT": return settings.email_WIN_PAYOUT
-      case "MARKET_CREATED": return settings.email_MARKET_CREATED
-      case "MONTHLY_WINNER": return settings.email_MONTHLY_WINNER
-      case "POINTS_RESET": return settings.email_POINTS_RESET
+      case "BET_RESOLVED": return getSetting("email_BET_RESOLVED")
+      case "MARKET_RESOLVED": return getSetting("email_MARKET_RESOLVED")
+      case "WIN_PAYOUT": return getSetting("email_WIN_PAYOUT")
+      case "MARKET_CREATED": return getSetting("email_MARKET_CREATED")
+      case "MONTHLY_WINNER": return getSetting("email_MONTHLY_WINNER")
+      case "POINTS_RESET": return getSetting("email_POINTS_RESET")
+      case "MARKET_DISPUTED": return getSetting("email_MARKET_DISPUTED")
       default: return false
     }
   })()
@@ -82,6 +115,8 @@ export async function createNotification({
       const marketLink = emailData.arenaId && emailData.marketId 
         ? `${baseUrl}/arenas/${emailData.arenaId}/markets/${emailData.marketId}`
         : baseUrl
+      
+      const unsubscribeLink = await generateUnsubscribeLink(userId)
 
       try {
         if (type === "BET_RESOLVED" && emailData.marketTitle && emailData.outcome) {
@@ -96,7 +131,10 @@ export async function createNotification({
               profit: emailData.profit,
               marketLink,
               baseUrl
-            })
+            }),
+            headers: {
+                "List-Unsubscribe": `<${unsubscribeLink}>`
+            }
           })
         } else if (type === "MARKET_RESOLVED" && emailData.marketTitle && emailData.winningOption) {
           await resend.emails.send({
@@ -109,7 +147,29 @@ export async function createNotification({
               winningOption: emailData.winningOption,
               marketLink,
               baseUrl
-            })
+            }),
+            headers: {
+                "List-Unsubscribe": `<${unsubscribeLink}>`
+            }
+          })
+        } else if (type === "MARKET_DISPUTED" && emailData.marketTitle) {
+             await resend.emails.send({
+            from: 'Proph.bet <noreply@proph.bet>',
+            to: user.email,
+            subject: `Dispute Filed: ${emailData.marketTitle}`,
+            html: `
+              <div style="font-family: sans-serif; color: #333;">
+                <h1>Market Disputed</h1>
+                <p>The market "<strong>${emailData.marketTitle}</strong>" has been disputed.</p>
+                <p><a href="${marketLink}" style="color: #0070f3; text-decoration: none;">View Market</a></p>
+                <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                    <a href="${unsubscribeLink}" style="color: #666; text-decoration: underline;">Unsubscribe</a>
+                </p>
+              </div>
+            `,
+            headers: {
+                "List-Unsubscribe": `<${unsubscribeLink}>`
+            }
           })
         }
       } catch (error) {

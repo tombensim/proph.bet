@@ -6,20 +6,21 @@ import {
   Trophy, 
   Coins, 
   Scale, 
-  Calendar, 
   RefreshCw, 
   PlusCircle,
   Info 
 } from "lucide-react"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 interface ActivityListProps {
   notifications: (Notification & {
     arena?: { id: string, name: string } | null
   })[]
+  onLinkClick?: () => void
 }
 
-export function ActivityList({ notifications }: ActivityListProps) {
+export function ActivityList({ notifications, onLinkClick }: ActivityListProps) {
   if (notifications.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground">
@@ -31,19 +32,22 @@ export function ActivityList({ notifications }: ActivityListProps) {
   return (
     <div className="space-y-4">
       {notifications.map((notification) => (
-        <ActivityItem key={notification.id} notification={notification} />
+        <ActivityItem key={notification.id} notification={notification} onLinkClick={onLinkClick} />
       ))}
     </div>
   )
 }
 
-function ActivityItem({ notification }: { notification: Notification & { arena?: { id: string, name: string } | null } }) {
+function ActivityItem({ notification, onLinkClick }: { notification: Notification & { arena?: { id: string, name: string } | null }, onLinkClick?: () => void }) {
   const Icon = getIcon(notification.type)
   const metadata = notification.metadata as any
   const link = getLink(notification, metadata)
-
-  return (
-    <div className="flex items-start space-x-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+  
+  const content = (
+    <div className={cn(
+        "flex items-start space-x-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm transition-colors",
+        link && "hover:bg-muted/50 cursor-pointer"
+    )}>
       <div className="mt-1 bg-muted p-2 rounded-full">
         <Icon className="h-5 w-5 text-primary" />
       </div>
@@ -64,16 +68,19 @@ function ActivityItem({ notification }: { notification: Notification & { arena?:
            )}
            <span className="text-xs opacity-80">{notification.content}</span>
         </div>
-        {link && (
-          <div className="pt-2">
-             <Link href={link} className="text-sm font-medium text-blue-600 hover:underline">
-               View Details
-             </Link>
-          </div>
-        )}
       </div>
     </div>
   )
+
+  if (link) {
+      return (
+          <Link href={link} onClick={onLinkClick} className="block">
+              {content}
+          </Link>
+      )
+  }
+
+  return content
 }
 
 function getIcon(type: string) {
@@ -91,6 +98,12 @@ function getIcon(type: string) {
 function getLink(notification: Notification, metadata: any) {
   if (metadata?.marketId && notification.arenaId) {
     return `/arenas/${notification.arenaId}/markets/${metadata.marketId}`
+  }
+  if (notification.type === "MONTHLY_WINNER" && notification.arenaId) {
+      return `/arenas/${notification.arenaId}/leaderboard`
+  }
+  if (notification.type === "POINTS_RESET" && notification.arenaId) {
+      return `/arenas/${notification.arenaId}/markets`
   }
   if (notification.arenaId) {
     return `/arenas/${notification.arenaId}/markets`
@@ -112,8 +125,9 @@ function getRefinedContent(notification: Notification, metadata: any) {
       return "Monthly Winner Announced"
     case "POINTS_RESET":
       return "Points Reset"
+    case "MARKET_DISPUTED":
+      return "Market Disputed"
     default:
       return "Notification"
   }
 }
-

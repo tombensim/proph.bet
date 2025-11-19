@@ -30,6 +30,7 @@ model User {
   notifications  Notification[]
   notificationSettings NotificationSettings?
   comments       Comment[]
+  disputes       Dispute[]
   
   // Visibility Relations
   hiddenFromMarkets Market[] @relation("HiddenMarketUsers")
@@ -166,12 +167,50 @@ model ArenaMembership {
   
   role      ArenaRole @default(MEMBER)
   points    Int       @default(1000)
+
+  notificationSettings ArenaNotificationSettings?
   
   joinedAt  DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   @@unique([userId, arenaId])
 }
+
+model ArenaNotificationSettings {
+  id        String   @id @default(cuid())
+  
+  membershipId String @unique
+  membership   ArenaMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  // Mute this arena completely
+  muted Boolean @default(false)
+
+  // Settings (Email, Web) - Null means inherit from global
+  email_BET_RESOLVED   Boolean?
+  web_BET_RESOLVED     Boolean?
+  
+  email_MARKET_RESOLVED Boolean?
+  web_MARKET_RESOLVED   Boolean?
+  
+  email_WIN_PAYOUT     Boolean?
+  web_WIN_PAYOUT       Boolean?
+  
+  email_MARKET_CREATED Boolean?
+  web_MARKET_CREATED   Boolean?
+  
+  email_MONTHLY_WINNER Boolean?
+  web_MONTHLY_WINNER   Boolean?
+  
+  email_POINTS_RESET   Boolean?
+  web_POINTS_RESET     Boolean?
+
+  email_MARKET_DISPUTED Boolean?
+  web_MARKET_DISPUTED   Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 
 model Market {
   id          String    @id @default(cuid())
@@ -194,6 +233,7 @@ model Market {
   priceHistory PriceHistory[]
   transactions Transaction[] // Payouts linked to this market
   assets      MarketAsset[] // New relation
+  disputes    Dispute[]
   
   approved    Boolean   @default(true)
   language    String    @default("en")
@@ -323,6 +363,9 @@ model NotificationSettings {
   email_POINTS_RESET   Boolean @default(true)
   web_POINTS_RESET     Boolean @default(true)
 
+  email_MARKET_DISPUTED Boolean @default(true)
+  web_MARKET_DISPUTED   Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -376,6 +419,25 @@ enum NotificationType {
   MARKET_CREATED
   MONTHLY_WINNER
   POINTS_RESET
+  MARKET_DISPUTED
+}
+
+model Dispute {
+  id        String   @id @default(cuid())
+  reason    String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  marketId  String
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  status    DisputeStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  REJECTED
 }
 
 enum AssetType {

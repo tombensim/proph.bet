@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { ActivityList } from "./activity-list"
+import { ActivityList } from "@/components/activity/activity-list"
 import { ArenaFilter } from "./arena-filter"
 
 interface ActivityPageProps {

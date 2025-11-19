@@ -28,6 +28,24 @@ export default async function SettingsPage() {
   if (!user) return redirect("/api/auth/signin")
 
   const notificationSettings = await getNotificationSettings()
+  
+  // Add muted: false to global settings since it's not in the DB model for global
+  // but required by the form type
+  const formattedSettings = notificationSettings ? {
+    ...notificationSettings,
+    muted: false
+  } : null
+  
+  // Fetch user's arenas
+  const memberships = await prisma.arenaMembership.findMany({
+    where: { userId: session.user.id },
+    include: { arena: true }
+  })
+  
+  const arenas = memberships.map(m => ({
+    id: m.arena.id,
+    name: m.arena.name
+  }))
 
   return (
     <div className="container max-w-2xl py-10">
@@ -81,7 +99,10 @@ export default async function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <NotificationsForm defaultValues={notificationSettings} />
+              <NotificationsForm 
+                defaultValues={formattedSettings} 
+                arenas={arenas}
+              />
             </CardContent>
           </Card>
         </TabsContent>

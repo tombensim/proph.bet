@@ -13,6 +13,8 @@ import { Link } from "@/lib/navigation"
 import { ExternalLink, ImageIcon, LinkIcon } from "lucide-react"
 import { getTranslations } from 'next-intl/server';
 import { EditMarketCover } from "./edit-market-cover"
+import { DisputeDialog } from "./dispute-dialog"
+import { AlertTriangle } from "lucide-react"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -56,6 +58,10 @@ export default async function MarketPage(props: PageProps) {
           }
         },
         orderBy: { createdAt: 'desc' }
+      },
+      disputes: {
+        where: { userId: session.user.id },
+        select: { id: true }
       }
     }
   })
@@ -130,6 +136,20 @@ export default async function MarketPage(props: PageProps) {
             )}
             {hideBets && <Badge variant="secondary" className="ms-auto">{t('betsHidden')}</Badge>}
         </div>
+
+        {market.status === "RESOLVED" && (
+            <div className="mb-4">
+            {market.disputes.length > 0 ? (
+                <div className="flex items-center gap-2 p-3 bg-yellow-500/10 text-yellow-600 rounded-md border border-yellow-500/20 text-sm">
+                    <AlertTriangle className="h-4 w-4" />
+                    You have disputed this resolution.
+                </div>
+            ) : (
+                <DisputeDialog marketId={market.id} marketTitle={market.title} />
+            )}
+            </div>
+        )}
+
         <h1 className="text-3xl font-bold mb-2">{market.title}</h1>
         <div className="text-muted-foreground whitespace-pre-wrap mb-4">
           {market.description}
