@@ -1,5 +1,11 @@
 import { z } from "zod"
-import { MarketType } from "@prisma/client"
+import { MarketType, AssetType } from "@prisma/client"
+
+const marketAssetSchema = z.object({
+  type: z.nativeEnum(AssetType),
+  url: z.string().url("Must be a valid URL"),
+  label: z.string().optional(),
+})
 
 export const createMarketSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -14,6 +20,7 @@ export const createMarketSchema = z.object({
   hiddenFromUserIds: z.array(z.string()).optional(),
   hideBetsFromUserIds: z.array(z.string()).optional(),
   arenaId: z.string().min(1, "Arena ID is required"),
+  assets: z.array(marketAssetSchema).optional(),
 }).refine((data) => {
   if (data.type === MarketType.MULTIPLE_CHOICE) {
     return data.options && data.options.length >= 2
@@ -25,3 +32,4 @@ export const createMarketSchema = z.object({
 })
 
 export type CreateMarketValues = z.infer<typeof createMarketSchema>
+export type MarketAssetValues = z.infer<typeof marketAssetSchema>

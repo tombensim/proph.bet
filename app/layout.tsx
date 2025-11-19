@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Office Prediction Market",
+  title: "proph.bet",
   description: "Internal prediction market",
 };
 

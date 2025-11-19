@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
-import { CalendarIcon, Trash2, Plus, Link as LinkIcon, ImageIcon, X, Loader2 } from "lucide-react"
+import { CalendarIcon, Trash2, Plus } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -32,14 +32,11 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { createMarketAction } from "@/app/actions/create-market"
 import { CreateMarketValues, createMarketSchema } from "@/lib/schemas"
-import { useTransition, useState } from "react"
+import { useTransition } from "react"
 import { MultiUserSelector } from "@/components/ui/multi-user-selector"
-import { getUploadUrlAction } from "@/app/actions/storage"
-import { AssetType } from "@prisma/client"
 
-export function CreateMarketForm({ arenaId }: { arenaId: string }) {
+export function CreateMarketForm() {
   const [isPending, startTransition] = useTransition()
-  const [isUploading, setIsUploading] = useState(false)
 
   const form = useForm<CreateMarketValues>({
     resolver: zodResolver(createMarketSchema),
@@ -50,19 +47,12 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
       minBet: 10,
       hiddenFromUserIds: [],
       hideBetsFromUserIds: [],
-      arenaId: arenaId,
-      assets: [],
     },
   })
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "options",
-  })
-
-  const { fields: assetFields, append: appendAsset, remove: removeAsset } = useFieldArray({
-    control: form.control,
-    name: "assets",
   })
 
   const marketType = form.watch("type")
@@ -75,36 +65,6 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
         console.error(error)
       }
     })
-  }
-
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      const { uploadUrl, publicUrl } = await getUploadUrlAction(file.type, "market-assets")
-      
-      const res = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type }
-      })
-
-      if (!res.ok) throw new Error("Upload failed")
-
-      appendAsset({
-        type: AssetType.IMAGE,
-        url: publicUrl,
-        label: file.name
-      })
-    } catch (error) {
-      console.error("Upload failed:", error)
-      alert("Failed to upload image")
-    } finally {
-      setIsUploading(false)
-      e.target.value = ""
-    }
   }
 
   return (
@@ -144,121 +104,6 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
             </FormItem>
           )}
         />
-
-        <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
-          <div className="flex items-center justify-between">
-            <FormLabel className="text-base">Attachments & Evidence</FormLabel>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendAsset({ type: AssetType.LINK, url: "", label: "" })}
-              >
-                <LinkIcon className="h-4 w-4 mr-2" /> Add Link
-              </Button>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <ImageIcon className="h-4 w-4 mr-2" />
-                  )}
-                  Add Image
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {assetFields.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Add links or images to help users research this market.
-            </p>
-          )}
-
-          <div className="space-y-3">
-            {assetFields.map((field, index) => (
-              <div key={field.id} className="flex items-start gap-3 p-3 bg-background rounded border">
-                <div className="mt-2">
-                  {field.type === "LINK" ? (
-                    <LinkIcon className="h-5 w-5 text-blue-500" />
-                  ) : (
-                    <ImageIcon className="h-5 w-5 text-green-500" />
-                  )}
-                </div>
-                
-                <div className="flex-1 space-y-3">
-                  <FormField
-                    control={form.control}
-                    name={`assets.${index}.label`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <Input placeholder="Label (e.g., Q4 Report)" {...field} className="h-8 text-sm" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {field.type === "LINK" ? (
-                    <FormField
-                      control={form.control}
-                      name={`assets.${index}.url`}
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input placeholder="https://example.com/..." {...field} className="h-8 text-sm font-mono" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : (
-                    <div className="relative group w-fit">
-                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={field.url} 
-                        alt="Preview" 
-                        className="h-20 w-auto object-cover rounded border" 
-                      />
-                      <a 
-                        href={field.url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="text-xs text-muted-foreground hover:underline block mt-1"
-                      >
-                        View Full Size
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => removeAsset(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField

@@ -29,7 +29,8 @@ export async function createMarketAction(data: CreateMarketValues) {
     maxBet,
     hiddenFromUserIds,
     hideBetsFromUserIds,
-    arenaId
+    arenaId,
+    assets
   } = validated.data
 
   // 1. DEFINE SEED AMOUNT
@@ -100,6 +101,13 @@ export async function createMarketAction(data: CreateMarketValues) {
         } : undefined,
         hideBetsFromUsers: hideBetsFromUserIds && hideBetsFromUserIds.length > 0 ? {
           connect: hideBetsFromUserIds.map(id => ({ id }))
+        } : undefined,
+        assets: assets && assets.length > 0 ? {
+          create: assets.map(a => ({
+            type: a.type,
+            url: a.url,
+            label: a.label
+          }))
         } : undefined
       },
       include: { options: true }

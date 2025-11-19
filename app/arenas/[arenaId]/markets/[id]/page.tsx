@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { CommentsSection } from "./comments-section"
 import { PriceChart } from "@/components/market/PriceChart"
 import Link from "next/link"
-import { ExternalLink } from "lucide-react"
+import { ExternalLink, ImageIcon, LinkIcon } from "lucide-react"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -28,6 +28,7 @@ export default async function MarketPage(props: PageProps) {
     include: {
       creator: true,
       options: true,
+      assets: true,
       bets: {
         include: { user: true, option: true },
         orderBy: { createdAt: 'desc' }
@@ -119,6 +120,44 @@ export default async function MarketPage(props: PageProps) {
           <div className="text-muted-foreground whitespace-pre-wrap mb-4">
             {market.description}
           </div>
+
+          {/* Assets / Evidence Section */}
+          {market.assets.length > 0 && (
+            <div className="mb-6 space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Resources & Evidence</h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {market.assets.map((asset) => (
+                  <a 
+                    href={asset.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    key={asset.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all group"
+                  >
+                    {asset.type === "IMAGE" ? (
+                        <div className="relative w-10 h-10 flex-shrink-0 rounded-md overflow-hidden bg-muted border">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={asset.url} alt="" className="object-cover w-full h-full" />
+                        </div>
+                    ) : (
+                        <div className="flex-shrink-0 p-2 bg-muted rounded-md group-hover:bg-background transition-colors">
+                           <LinkIcon className="h-4 w-4 text-blue-500" />
+                        </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                        {asset.label || (asset.type === "IMAGE" ? "Image Attachment" : "External Link")}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate opacity-70 group-hover:opacity-100">
+                        {new URL(asset.url).hostname}
+                      </p>
+                    </div>
+                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-50 transition-opacity" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Price Chart */}
           {(market.type === "BINARY" || market.type === "MULTIPLE_CHOICE") && (

@@ -2,11 +2,11 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: frmarket-postgres
+    container_name: prophbet-postgres
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: frmarket
+      POSTGRES_DB: prophbet
     ports:
       - "5432:5432"
     volumes:
@@ -14,7 +14,7 @@ services:
 
   minio:
     image: minio/minio
-    container_name: frmarket-minio
+    container_name: prophbet-minio
     ports:
       - "9000:9000"
       - "9001:9001"

@@ -10,5 +10,5 @@ export const s3Client = new S3Client({
   },
 })
 
-export const BUCKET_NAME = process.env.S3_BUCKET_NAME || "frmarket-evidence"
+export const BUCKET_NAME = process.env.S3_BUCKET_NAME || "prophbet-evidence"
 

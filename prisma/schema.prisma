@@ -129,6 +129,7 @@ model Market {
   comments    Comment[]
   priceHistory PriceHistory[]
   transactions Transaction[] // Payouts linked to this market
+  assets      MarketAsset[] // New relation
   
   // Visibility Relations
   hiddenUsers       User[]    @relation("HiddenMarketUsers")
@@ -143,6 +144,17 @@ model Market {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model MarketAsset {
+  id        String    @id @default(cuid())
+  marketId  String
+  market    Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  type      AssetType
+  url       String
+  label     String?
+  
+  createdAt DateTime  @default(now())
 }
 
 model Option {
@@ -263,4 +275,10 @@ enum NotificationType {
   MARKET_CREATED
   MONTHLY_WINNER
   POINTS_RESET
+}
+
+enum AssetType {
+  IMAGE
+  LINK
+  FILE
 }

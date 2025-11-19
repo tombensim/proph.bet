@@ -1,4 +1,4 @@
-# Internal Office Prediction Market
+# proph.bet
 
 ## Getting Started
 
@@ -17,7 +17,7 @@
 2. Set up Environment Variables:
    Copy `.env.example` to `.env` (or create it) and fill in:
    ```env
-   DATABASE_URL="postgresql://user:password@localhost:5432/frmarket"
+   DATABASE_URL="postgresql://user:password@localhost:5432/prophbet"
    AUTH_SECRET="generated_secret_here"
    AUTH_GOOGLE_ID="your_google_client_id"
    AUTH_GOOGLE_SECRET="your_google_client_secret"
