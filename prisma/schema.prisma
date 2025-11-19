@@ -87,6 +87,7 @@ model Arena {
   id          String   @id @default(cuid())
   name        String
   description String?
+  about       String? // Rich text / Markdown content
   coverImage  String?
   slug        String   @unique // For friendly URLs if needed, or just use ID
   
@@ -99,6 +100,7 @@ model Arena {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  archivedAt  DateTime?
 }
 
 model ArenaSettings {
@@ -223,7 +225,7 @@ model Market {
   creator     User      @relation("CreatedMarkets", fields: [creatorId], references: [id])
   
   arenaId     String?   // Optional during migration, made required later
-  arena       Arena?    @relation(fields: [arenaId], references: [id])
+  arena       Arena?    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
   
   resolutionDate DateTime
   
@@ -294,7 +296,7 @@ model Bet {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   marketId  String
-  market    Market   @relation(fields: [marketId], references: [id])
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
   
   optionId  String?
   option    Option?  @relation(fields: [optionId], references: [id])
@@ -316,10 +318,10 @@ model Transaction {
   toUser     User?   @relation("Receiver", fields: [toUserId], references: [id])
 
   marketId   String?
-  market     Market? @relation(fields: [marketId], references: [id])
+  market     Market? @relation(fields: [marketId], references: [id], onDelete: Cascade)
 
   arenaId    String?
-  arena      Arena?  @relation(fields: [arenaId], references: [id])
+  arena      Arena?  @relation(fields: [arenaId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }
@@ -333,7 +335,7 @@ model Notification {
   read      Boolean  @default(false)
   
   arenaId   String?
-  arena     Arena?    @relation(fields: [arenaId], references: [id])
+  arena     Arena?    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
   metadata  Json?
 
   createdAt DateTime @default(now())

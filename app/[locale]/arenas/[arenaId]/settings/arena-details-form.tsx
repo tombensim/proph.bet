@@ -6,19 +6,21 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Arena } from "@prisma/client"
 import { updateArenaDetailsAction } from "@/app/actions/arena-settings"
+import { generateArenaAboutAction } from "@/app/actions/generate-description"
 import { getUploadUrlAction } from "@/app/actions/storage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { Loader2, Upload, X } from "lucide-react"
+import { Loader2, Upload, X, Sparkles } from "lucide-react"
 import Image from "next/image"
 
 const arenaDetailsSchema = z.object({
   id: z.string(),
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
+  about: z.string().optional().nullable(),
   coverImage: z.string().optional().nullable(),
 })
 
@@ -26,6 +28,7 @@ type ArenaDetailsValues = z.infer<typeof arenaDetailsSchema>
 
 export function ArenaDetailsForm({ arena }: { arena: Arena }) {
   const [isPending, startTransition] = useTransition()
+  const [isGenerating, setIsGenerating] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
 
   const form = useForm<ArenaDetailsValues>({
@@ -34,6 +37,7 @@ export function ArenaDetailsForm({ arena }: { arena: Arena }) {
       id: arena.id,
       name: arena.name,
       description: arena.description || "",
+      about: arena.about || "",
       coverImage: arena.coverImage
     }
   })
@@ -76,6 +80,35 @@ export function ArenaDetailsForm({ arena }: { arena: Arena }) {
     }
   }
 
+  async function generateAbout() {
+    const name = form.getValues("name")
+    const description = form.getValues("description")
+    
+    setIsGenerating(true)
+    try {
+      const result = await generateArenaAboutAction({
+        arenaId: arena.id,
+        name,
+        description
+      })
+
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
+
+      if (result.about) {
+        form.setValue("about", result.about, { shouldDirty: true })
+        toast.success("Content generated successfully")
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to generate content")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   function onSubmit(data: ArenaDetailsValues) {
     startTransition(async () => {
       try {
@@ -104,11 +137,44 @@ export function ArenaDetailsForm({ arena }: { arena: Arena }) {
 
             <FormField control={form.control} name="description" render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Short Description</FormLabel>
                     <FormControl>
-                        <Textarea {...field} />
+                        <Textarea {...field} rows={3} />
                     </FormControl>
-                    <FormDescription>Describe your arena to potential members.</FormDescription>
+                    <FormDescription>A brief summary shown on cards.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )} />
+
+            <FormField control={form.control} name="about" render={({ field }) => (
+                <FormItem>
+                    <div className="flex items-center justify-between">
+                        <FormLabel>About Page Content (Markdown)</FormLabel>
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 gap-2 text-muted-foreground"
+                            onClick={generateAbout}
+                            disabled={isGenerating}
+                        >
+                            {isGenerating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4" />
+                            )}
+                            Generate with AI
+                        </Button>
+                    </div>
+                    <FormControl>
+                        <Textarea 
+                            {...field} 
+                            value={field.value || ""} 
+                            rows={10} 
+                            className="font-mono text-sm" 
+                        />
+                    </FormControl>
+                    <FormDescription>Rich text content for your arena's About page.</FormDescription>
                     <FormMessage />
                 </FormItem>
             )} />
@@ -178,4 +244,3 @@ export function ArenaDetailsForm({ arena }: { arena: Arena }) {
     </Form>
   )
 }
-

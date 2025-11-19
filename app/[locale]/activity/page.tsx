@@ -22,7 +22,10 @@ export default async function ActivityPage({
 
   // Fetch user memberships to populate the filter
   const memberships = await prisma.arenaMembership.findMany({
-    where: { userId: session.user.id },
+    where: { 
+      userId: session.user.id,
+      arena: { archivedAt: null }
+    },
     include: { arena: true }
   })
 

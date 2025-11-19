@@ -1,6 +1,7 @@
 import { getArenaSettingsAction, getArenaDetailsAction } from "@/app/actions/arena-settings"
 import { ArenaSettingsForm } from "./settings-form"
 import { ArenaDetailsForm } from "./arena-details-form"
+import { DangerZone } from "@/components/arenas/settings/danger-zone"
 import { notFound } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -29,6 +30,7 @@ export default async function ArenaSettingsPage(props: PageProps) {
             <TabsList className="mb-6">
               <TabsTrigger value="general">General Details</TabsTrigger>
               <TabsTrigger value="rules">Game Rules</TabsTrigger>
+              <TabsTrigger value="danger" className="text-destructive data-[state=active]:text-destructive">Danger Zone</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
@@ -45,6 +47,10 @@ export default async function ArenaSettingsPage(props: PageProps) {
 
             <TabsContent value="rules">
                <ArenaSettingsForm settings={settings} />
+            </TabsContent>
+
+            <TabsContent value="danger">
+               <DangerZone arena={arena} />
             </TabsContent>
           </Tabs>
         </div>

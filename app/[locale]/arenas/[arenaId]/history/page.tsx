@@ -11,8 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { DisputeDialog } from "../markets/[id]/dispute-dialog"
+import { AlertTriangle } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface PageProps {
   params: Promise<{ arenaId: string }>
@@ -109,12 +112,13 @@ export default async function HistoryPage(props: PageProps) {
               <TableHead className="text-end">Invested</TableHead>
               <TableHead className="text-end">Payout</TableHead>
               <TableHead className="text-end">P/L</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {closedMarkets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">
+                <TableCell colSpan={7} className="text-center h-24">
                   No closed positions found.
                 </TableCell>
               </TableRow>
@@ -164,6 +168,17 @@ export default async function HistoryPage(props: PageProps) {
                     </TableCell>
                     <TableCell className={`text-end font-bold ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {pnl > 0 ? '+' : ''}{pnl}
+                    </TableCell>
+                    <TableCell>
+                      <DisputeDialog 
+                        marketId={market.id} 
+                        marketTitle={market.title}
+                        trigger={
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                            </Button>
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 )

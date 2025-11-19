@@ -88,6 +88,7 @@ const updateArenaSchema = z.object({
   id: z.string(),
   name: z.string().min(3),
   description: z.string().optional(),
+  about: z.string().optional().nullable(),
   coverImage: z.string().optional().nullable(),
 })
 
@@ -114,10 +115,46 @@ export async function updateArenaDetailsAction(data: UpdateArenaValues) {
     data: {
       name: validated.name,
       description: validated.description,
+      about: validated.about,
       coverImage: validated.coverImage
     }
   })
 
   revalidatePath(`/arenas/${data.id}/settings`)
+  return { success: true }
+}
+
+export async function archiveArenaAction(arenaId: string) {
+  await requireArenaAdmin(arenaId)
+
+  await prisma.arena.update({
+    where: { id: arenaId },
+    data: { archivedAt: new Date() }
+  })
+
+  revalidatePath(`/arenas/${arenaId}/settings`)
+  return { success: true }
+}
+
+export async function unarchiveArenaAction(arenaId: string) {
+  await requireArenaAdmin(arenaId)
+
+  await prisma.arena.update({
+    where: { id: arenaId },
+    data: { archivedAt: null }
+  })
+
+  revalidatePath(`/arenas/${arenaId}/settings`)
+  return { success: true }
+}
+
+export async function deleteArenaAction(arenaId: string) {
+  await requireArenaAdmin(arenaId)
+
+  // Transactions, Markets, Memberships, Settings should cascade
+  await prisma.arena.delete({
+    where: { id: arenaId }
+  })
+
   return { success: true }
 }

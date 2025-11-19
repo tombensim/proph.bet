@@ -3,6 +3,7 @@ import { NotificationType } from "@prisma/client"
 import { resend } from "@/lib/resend"
 import { BetResolvedEmail } from "@/components/emails/bet-resolved"
 import { MarketResolvedEmail } from "@/components/emails/market-resolved"
+import { MarketDisputedEmail } from "@/components/emails/market-disputed"
 import { generateUnsubscribeLink } from "@/app/actions/unsubscribe"
 
 export type NotificationMetadata = {
@@ -26,6 +27,7 @@ interface CreateNotificationParams {
     winningOption?: string
     outcome?: "WON" | "LOST"
     profit?: number
+    reason?: string
   }
 }
 
@@ -157,16 +159,13 @@ export async function createNotification({
             from: 'Proph.bet <noreply@proph.bet>',
             to: user.email,
             subject: `Dispute Filed: ${emailData.marketTitle}`,
-            html: `
-              <div style="font-family: sans-serif; color: #333;">
-                <h1>Market Disputed</h1>
-                <p>The market "<strong>${emailData.marketTitle}</strong>" has been disputed.</p>
-                <p><a href="${marketLink}" style="color: #0070f3; text-decoration: none;">View Market</a></p>
-                <p style="font-size: 12px; color: #666; margin-top: 20px;">
-                    <a href="${unsubscribeLink}" style="color: #666; text-decoration: underline;">Unsubscribe</a>
-                </p>
-              </div>
-            `,
+            react: MarketDisputedEmail({
+                userName: user.name || "User",
+                marketTitle: emailData.marketTitle,
+                reason: emailData.reason,
+                marketLink,
+                baseUrl
+            }),
             headers: {
                 "List-Unsubscribe": `<${unsubscribeLink}>`
             }

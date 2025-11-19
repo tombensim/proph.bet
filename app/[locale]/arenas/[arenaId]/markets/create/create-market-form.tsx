@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
-import { CalendarIcon, Trash2, Plus, Link as LinkIcon, ImageIcon, X, Loader2, Sparkles } from "lucide-react"
+import { CalendarIcon, Trash2, Plus, Link as LinkIcon, ImageIcon, X, Loader2, Sparkles, Info, AlertTriangle } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -32,14 +32,14 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { createMarketAction } from "@/app/actions/create-market"
 import { CreateMarketValues, createMarketSchema } from "@/lib/schemas"
-import { useTransition, useState } from "react"
+import { useTransition, useState, useMemo } from "react"
 import { MultiUserSelector } from "@/components/ui/multi-user-selector"
 import { getUploadUrlAction } from "@/app/actions/storage"
 import { AssetType } from "@prisma/client"
 import { useTranslations } from 'next-intl';
 import { generateDescriptionAction } from "@/app/actions/generate-description"
 
-export function CreateMarketForm({ arenaId }: { arenaId: string }) {
+export function CreateMarketForm({ arenaId, seedLiquidity = 100 }: { arenaId: string, seedLiquidity?: number }) {
   const t = useTranslations('CreateMarket.form');
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
@@ -71,6 +71,12 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
   })
 
   const marketType = form.watch("type")
+
+  const totalCost = useMemo(() => {
+    if (marketType === "BINARY") return seedLiquidity * 2;
+    if (marketType === "MULTIPLE_CHOICE") return seedLiquidity * (fields.length || 0);
+    return 0;
+  }, [marketType, fields, seedLiquidity]);
 
   function onSubmit(data: CreateMarketValues) {
     startTransition(async () => {
@@ -118,7 +124,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-
+    
     setIsUploading(true)
     try {
       const { uploadUrl, publicUrl } = await getUploadUrlAction(file.type, "market-assets")
@@ -503,6 +509,32 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
             )}
           />
         </div>
+
+        {totalCost > 0 && (
+          <div className="border rounded-lg p-4 bg-blue-50/50 border-blue-200 space-y-3">
+             <div className="flex items-center gap-2 text-blue-800 font-medium">
+                <Info className="h-5 w-5" />
+                <h3>{t('liquidityInfo')}</h3>
+             </div>
+             <p className="text-sm text-blue-700">
+                {t('liquidityDesc')}
+             </p>
+             
+             <div className="bg-white/50 p-3 rounded border border-blue-100 space-y-2 text-sm">
+                <div className="font-semibold">
+                   {t('totalCost', { amount: totalCost })}
+                </div>
+                <div className="flex gap-2 items-start text-muted-foreground">
+                   <span className="text-green-600 font-medium whitespace-nowrap">{t('incentive').split(":")[0]}:</span>
+                   <span>{t('incentive').split(":")[1]}</span>
+                </div>
+                <div className="flex gap-2 items-start text-muted-foreground">
+                   <span className="text-orange-600 font-medium whitespace-nowrap">{t('risk').split(":")[0]}:</span>
+                   <span>{t('risk').split(":")[1]}</span>
+                </div>
+             </div>
+          </div>
+        )}
 
         <Button type="submit" disabled={isPending}>
           {isPending ? t('submitting') : t('submit')}

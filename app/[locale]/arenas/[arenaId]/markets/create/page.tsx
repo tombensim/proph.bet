@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getTranslations } from 'next-intl/server';
 import Image from "next/image"
+import { prisma } from "@/lib/prisma"
 
 interface PageProps {
     params: Promise<{ arenaId: string }>
@@ -17,6 +18,12 @@ export default async function CreateMarketPage(props: PageProps) {
   }
 
   const { arenaId } = await props.params
+
+  const arenaSettings = await prisma.arenaSettings.findUnique({
+    where: { arenaId }
+  })
+
+  const seedLiquidity = arenaSettings?.seedLiquidity ?? 100
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -37,7 +44,7 @@ export default async function CreateMarketPage(props: PageProps) {
         </div>
       </div>
       <div className="bg-card p-6 rounded-lg border shadow-sm">
-         <CreateMarketForm arenaId={arenaId} />
+         <CreateMarketForm arenaId={arenaId} seedLiquidity={seedLiquidity} />
       </div>
     </div>
   )

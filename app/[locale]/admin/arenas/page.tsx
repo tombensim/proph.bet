@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { Button } from "@/components/ui/button"
 import { getTranslations } from 'next-intl/server';
+import { formatBytes } from "@/lib/utils"
 
 export default async function ArenasPage({
   searchParams,
@@ -40,6 +41,7 @@ export default async function ArenasPage({
               <TableHead>{t('table.slug')}</TableHead>
               <TableHead className="text-end">{t('table.members')}</TableHead>
               <TableHead className="text-end">{t('table.markets')}</TableHead>
+              <TableHead className="text-end">{t('table.storage')}</TableHead>
               <TableHead className="text-end">{t('table.created')}</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
@@ -55,6 +57,12 @@ export default async function ArenasPage({
                 <TableCell className="font-mono text-xs text-muted-foreground">{arena.slug}</TableCell>
                 <TableCell className="text-end">{arena._count.members}</TableCell>
                 <TableCell className="text-end">{arena._count.markets}</TableCell>
+                <TableCell className="text-end">
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm font-medium">{formatBytes(arena.storage.size)}</span>
+                    <span className="text-xs text-muted-foreground">{arena.storage.count} files</span>
+                  </div>
+                </TableCell>
                 <TableCell className="text-end text-muted-foreground">
                   {new Date(arena.createdAt).toLocaleDateString()}
                 </TableCell>

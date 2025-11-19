@@ -1,7 +1,9 @@
 "use server";
 
-import { generateMarketDescription } from "@/lib/gemini";
+import { generateMarketDescription, generateArenaAbout } from "@/lib/gemini";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { ArenaRole, Role } from "@prisma/client";
 
 export async function generateDescriptionAction({
   title,
@@ -38,3 +40,46 @@ export async function generateDescriptionAction({
   }
 }
 
+export async function generateArenaAboutAction({
+  arenaId,
+  name,
+  description,
+}: {
+  arenaId: string;
+  name: string;
+  description?: string;
+}): Promise<{ about?: string; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  // Verify Admin Access
+  const isAdmin = session.user.role === Role.ADMIN || session.user.role === Role.GLOBAL_ADMIN;
+  
+  if (!isAdmin) {
+    const membership = await prisma.arenaMembership.findUnique({
+      where: {
+        userId_arenaId: {
+          userId: session.user.id,
+          arenaId,
+        },
+      },
+    });
+
+    if (!membership || membership.role !== ArenaRole.ADMIN) {
+      return { error: "Unauthorized: Arena Admin required" };
+    }
+  }
+
+  try {
+    const about = await generateArenaAbout({
+      name,
+      description,
+    });
+    return { about };
+  } catch (error) {
+    console.error("Arena About generation failed:", error);
+    return { error: "Failed to generate content. Please try again." };
+  }
+}

@@ -19,9 +19,10 @@ import { AlertTriangle } from "lucide-react"
 interface DisputeDialogProps {
   marketId: string
   marketTitle: string
+  trigger?: React.ReactNode
 }
 
-export function DisputeDialog({ marketId, marketTitle }: DisputeDialogProps) {
+export function DisputeDialog({ marketId, marketTitle, trigger }: DisputeDialogProps) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
   const [isPending, startTransition] = useTransition()
@@ -47,10 +48,12 @@ export function DisputeDialog({ marketId, marketTitle }: DisputeDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm" className="gap-2">
-          <AlertTriangle className="h-4 w-4" />
-          Dispute Decision
-        </Button>
+        {trigger ? trigger : (
+          <Button variant="destructive" size="sm" className="gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Dispute Decision
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -85,4 +88,3 @@ export function DisputeDialog({ marketId, marketTitle }: DisputeDialogProps) {
     </Dialog>
   )
 }
-

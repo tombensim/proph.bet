@@ -5,7 +5,8 @@
     "members": "Members",
     "settings": "Settings",
     "signIn": "Sign In",
-    "points": "pts"
+    "points": "pts",
+    "about": "About"
   },
   "Common": {
     "language": "Language",
@@ -29,6 +30,7 @@
     "title": "Active Markets",
     "createMarket": "Create Market",
     "myPositions": "My Positions",
+    "resolved": "Resolved",
     "pendingApproval": "Pending Approval",
     "noPositions": "You don't have any open positions yet.",
     "noPending": "No pending markets found.",
@@ -78,7 +80,12 @@
       "hideBetsPlaceholder": "Select users who cannot see others' bets...",
       "hideBetsDesc": "These users can bet, but cannot see who else bet or what they bet on.",
       "submit": "Create Market",
-      "submitting": "Creating..."
+      "submitting": "Creating...",
+      "liquidityInfo": "Liquidity Provider Info",
+      "liquidityDesc": "You are providing the initial liquidity for this market. This enables others to bet immediately.",
+      "totalCost": "Total Initial Cost: {amount} pts",
+      "incentive": "Incentive: You earn trading fees from every bet placed.",
+      "risk": "Risk: You are taking a position on ALL outcomes. You may lose your provided liquidity if the market moves against you."
     }
   },
   "MarketDetail": {
@@ -122,7 +129,12 @@
       "max": "Max: {amount}",
       "placeBet": "Place Bet",
       "success": "Bet placed successfully!",
-      "error": "Failed to place bet"
+      "error": "Failed to place bet",
+      "potentialPayout": "Potential Payout: ~{amount} pts",
+      "potentialProfit": "Potential Profit: +{percent}%",
+      "maxLoss": "Max Loss: {amount} pts",
+      "estDisclaimer": "Estimates based on current odds. Large bets may cause slippage.",
+      "parimutuelInfo": "Payouts are parimutuel. Winners split the total pool based on their prediction accuracy."
     },
     "resolveForm": {
       "title": "Resolve Market",
@@ -230,8 +242,17 @@
         "slug": "Slug",
         "members": "Members",
         "markets": "Markets",
+        "storage": "Storage",
         "created": "Created"
       }
     }
+  },
+  "About": {
+    "title": "About {name}",
+    "generate": "Generate with AI",
+    "placeholder": "Describe your arena...",
+    "generating": "Generating...",
+    "generated": "Content generated successfully",
+    "error": "Failed to generate content"
   }
 }

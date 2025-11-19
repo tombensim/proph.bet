@@ -24,19 +24,30 @@ export function MarketFilter({ isAdmin }: { isAdmin?: boolean }) {
   return (
     <div className="flex gap-2">
       <Button 
-        variant={currentFilter === "my-positions" ? "default" : "outline"}
+        variant={currentFilter === "my-positions" ? "secondary" : "outline"}
         onClick={() => setFilter(currentFilter === "my-positions" ? null : "my-positions")}
         className="gap-2"
       >
         {t('myPositions')}
         {currentFilter === "my-positions" && (
-          <span className="ms-1 h-2 w-2 rounded-full bg-primary-foreground animate-pulse" />
+          <span className="ms-1 h-2 w-2 rounded-full bg-foreground/20" />
         )}
       </Button>
       
+      <Button 
+        variant={currentFilter === "resolved" ? "secondary" : "outline"}
+        onClick={() => setFilter(currentFilter === "resolved" ? null : "resolved")}
+        className="gap-2"
+      >
+        {t('resolved')}
+        {currentFilter === "resolved" && (
+          <span className="ms-1 h-2 w-2 rounded-full bg-foreground/20" />
+        )}
+      </Button>
+
       {isAdmin && (
         <Button 
-          variant={currentFilter === "pending" ? "default" : "outline"}
+          variant={currentFilter === "pending" ? "secondary" : "outline"}
           onClick={() => setFilter(currentFilter === "pending" ? null : "pending")}
           className="gap-2 border-yellow-500/50 hover:bg-yellow-500/10 data-[state=active]:bg-yellow-500"
         >

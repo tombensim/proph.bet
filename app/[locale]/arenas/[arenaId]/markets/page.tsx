@@ -38,7 +38,7 @@ export default async function MarketsPage(props: PageProps) {
         id: session.user.id
       }
     },
-    status: {
+    status: filter === "resolved" ? "RESOLVED" : {
       in: ["OPEN", "PENDING_RESOLUTION"]
     },
     bets: filter === "my-positions" ? {

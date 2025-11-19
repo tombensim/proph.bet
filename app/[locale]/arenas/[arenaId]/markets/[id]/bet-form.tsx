@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { Market, Option, MarketType } from "@prisma/client"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,13 +12,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { placeBetAction } from "@/app/actions/place-bet"
-import { Loader2 } from "lucide-react"
-import { useTranslations } from 'next-intl';
+import { Loader2, Info } from "lucide-react"
 import Image from "next/image"
 
 interface BetFormProps {
   market: Market & { options: Option[] }
   userPoints: number
+  totalPool?: number
+  feePercent?: number
+  translations: Record<string, string>
 }
 
 const betSchema = z.object({
@@ -30,8 +32,23 @@ const betSchema = z.object({
     return true
 })
 
-export function BetForm({ market, userPoints }: BetFormProps) {
-  const t = useTranslations('MarketDetail.betForm');
+type PotentialReturn = 
+  | { type: "NUMERIC"; totalPool: number }
+  | { type: "AMM"; payout: number; profit: number; percent: number; fee: number }
+  | null;
+
+export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, translations }: BetFormProps) {
+  // Helper to replace placeholders
+  const t = (key: string, params?: Record<string, string | number>) => {
+     let text = translations[key] || key;
+     if (params) {
+       Object.entries(params).forEach(([k, v]) => {
+         text = text.replace(`{${k}}`, String(v));
+       });
+     }
+     return text;
+  }
+
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -52,6 +69,33 @@ export function BetForm({ market, userPoints }: BetFormProps) {
   }
 
   const currentOptionId = form.watch("optionId")
+  const betAmount = form.watch("amount")
+
+  const potentialReturn = useMemo<PotentialReturn>(() => {
+    if (!betAmount || betAmount <= 0) return null
+
+    if (market.type === "NUMERIC_RANGE") {
+       return { type: "NUMERIC", totalPool: (totalPool || 0) + betAmount }
+    }
+
+    if (currentOptionId && market.options) {
+       const option = market.options.find(o => o.id === currentOptionId)
+       if (option) {
+          const inverseSum = market.options.reduce((sum, o) => sum + (1 / (o.liquidity || 100)), 0)
+          const prob = inverseSum === 0 ? 0 : (1 / (option.liquidity || 100)) / inverseSum
+          
+          if (prob > 0) {
+            const fee = Math.floor(betAmount * feePercent)
+            const netInvestment = betAmount - fee
+            const payout = Math.floor(netInvestment / prob)
+            const profit = payout - betAmount
+            const percent = Math.round((profit / betAmount) * 100)
+            return { type: "AMM", payout, profit, percent, fee }
+          }
+       }
+    }
+    return null
+  }, [betAmount, currentOptionId, market.type, market.options, totalPool, feePercent])
 
   function onSubmit(data: z.infer<typeof betSchema>) {
     setError(null)
@@ -212,12 +256,12 @@ export function BetForm({ market, userPoints }: BetFormProps) {
           name="amount"
           render={({ field }) => (
             <FormItem>
-               <div className="flex items-center justify-between mb-2">
-                 <FormLabel>{t('betAmount')}</FormLabel>
-                 <span className="text-sm text-muted-foreground">
-                   {t('balance', { amount: userPoints })}
-                 </span>
-               </div>
+              <div className="flex items-center justify-between mb-2">
+                <FormLabel>{t('betAmount')}</FormLabel>
+                <span className="text-sm text-muted-foreground">
+                  {t('balance', { amount: userPoints })}
+                </span>
+              </div>
               <FormControl>
                 <Input 
                   type="number" 
@@ -233,6 +277,44 @@ export function BetForm({ market, userPoints }: BetFormProps) {
             </FormItem>
           )}
         />
+
+        {potentialReturn && (
+           <div className="bg-muted/50 rounded-lg p-4 text-sm border border-dashed">
+              {potentialReturn.type === "AMM" ? (
+                 <div className="grid grid-cols-2 gap-y-2">
+                    <div className="text-muted-foreground">{t('potentialPayout').split(":")[0]}:</div>
+                    <div className="text-right font-semibold">~{potentialReturn.payout} pts</div>
+                    
+                    <div className="text-muted-foreground">{t('potentialProfit').split(":")[0]}:</div>
+                    <div className="text-right font-semibold text-green-600">
+                        +{potentialReturn.profit} pts ({potentialReturn.percent > 0 ? "+" : ""}{potentialReturn.percent}%)
+                    </div>
+                    
+                    <div className="text-muted-foreground">{t('maxLoss').split(":")[0]}:</div>
+                    <div className="text-right font-semibold text-destructive">
+                        -{betAmount} pts
+                    </div>
+
+                    {potentialReturn.fee > 0 && (
+                        <>
+                            <div className="text-muted-foreground text-xs mt-1 pt-1 border-t">Network Fee:</div>
+                            <div className="text-right text-xs text-muted-foreground mt-1 pt-1 border-t">
+                                {potentialReturn.fee} pts
+                            </div>
+                        </>
+                    )}
+                 </div>
+              ) : (
+                 <div className="space-y-1">
+                    <div className="font-medium">{t('totalPool')} (Estimated): {potentialReturn.totalPool} pts</div>
+                    <div className="text-xs text-muted-foreground flex gap-1">
+                       <Info className="h-3 w-3 mt-0.5" />
+                       <span>{t('parimutuelInfo')}</span>
+                    </div>
+                 </div>
+              )}
+           </div>
+        )}
 
         {error && (
           <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">

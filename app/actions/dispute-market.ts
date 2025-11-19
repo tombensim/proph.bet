@@ -48,6 +48,7 @@ export async function disputeMarketAction(data: z.infer<typeof disputeSchema>) {
             marketTitle: market.title,
             marketId: market.id,
             arenaId: market.arenaId || undefined,
+            reason
         }
       })
   }
@@ -62,10 +63,21 @@ export async function disputeMarketAction(data: z.infer<typeof disputeSchema>) {
           select: { userId: true }
       })
       
+      // Notify Market Leader (Highest Points)
+      const marketLeader = await prisma.arenaMembership.findFirst({
+          where: { arenaId: market.arenaId },
+          orderBy: { points: 'desc' },
+          select: { userId: true }
+      })
+
+      const notifiedUsers = new Set<string>()
+      notifiedUsers.add(market.creatorId)
+      notifiedUsers.add(session.user.id) // Don't notify self
+
+      // Notify Admins
       for (const admin of admins) {
-          // Avoid double notifying if creator is admin
-          if (admin.userId === market.creatorId) continue;
-          if (admin.userId === session.user.id) continue; // Don't notify self
+          if (notifiedUsers.has(admin.userId)) continue;
+          notifiedUsers.add(admin.userId)
 
           await createNotification({
             userId: admin.userId,
@@ -80,6 +92,27 @@ export async function disputeMarketAction(data: z.infer<typeof disputeSchema>) {
                 marketTitle: market.title,
                 marketId: market.id,
                 arenaId: market.arenaId,
+                reason
+            }
+          })
+      }
+
+      // Notify Leader (if not already notified)
+      if (marketLeader && !notifiedUsers.has(marketLeader.userId)) {
+          await createNotification({
+            userId: marketLeader.userId,
+            type: "MARKET_DISPUTED",
+            content: `Market "${market.title}" has been disputed. As the arena leader, you are being notified.`,
+            arenaId: market.arenaId,
+            metadata: {
+                marketId: market.id,
+                reason
+            },
+            emailData: {
+                marketTitle: market.title,
+                marketId: market.id,
+                arenaId: market.arenaId,
+                reason
             }
           })
       }
@@ -87,4 +120,3 @@ export async function disputeMarketAction(data: z.infer<typeof disputeSchema>) {
 
   revalidatePath(`/arenas/${market.arenaId}/markets/${marketId}`)
 }
-

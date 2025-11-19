@@ -11,7 +11,7 @@ import { CommentsSection } from "./comments-section"
 import { PriceChart } from "@/components/market/PriceChart"
 import { Link } from "@/lib/navigation"
 import { ExternalLink, ImageIcon, LinkIcon } from "lucide-react"
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, getMessages } from 'next-intl/server';
 import { EditMarketCover } from "./edit-market-cover"
 import { DisputeDialog } from "./dispute-dialog"
 import { AlertTriangle } from "lucide-react"
@@ -24,6 +24,9 @@ export default async function MarketPage(props: PageProps) {
   const params = await props.params;
   const { arenaId, id } = params
   const t = await getTranslations('MarketDetail');
+  const messages = await getMessages();
+  // @ts-ignore
+  const betFormTranslations = messages.MarketDetail.betForm;
   
   const session = await auth()
   if (!session?.user?.id) return redirect("/api/auth/signin")
@@ -93,6 +96,11 @@ export default async function MarketPage(props: PageProps) {
         } 
     },
     select: { points: true }
+  })
+
+  const arenaSettings = await prisma.arenaSettings.findUnique({
+    where: { arenaId },
+    select: { tradingFeePercent: true }
   })
   
   const isCreator = market.creatorId === session.user.id
@@ -214,7 +222,13 @@ export default async function MarketPage(props: PageProps) {
               </div>
 
               {market.status === "OPEN" && (
-                  <BetForm market={market} userPoints={membership?.points || 0} />
+                  <BetForm 
+                    market={market} 
+                    userPoints={membership?.points || 0} 
+                    totalPool={totalPool} 
+                    feePercent={(arenaSettings?.tradingFeePercent || 0) / 100}
+                    translations={betFormTranslations}
+                  />
               )}
             </CardContent>
           </Card>

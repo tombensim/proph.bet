@@ -54,7 +54,10 @@ export async function Navbar({ arenaId }: NavbarProps) {
 
     // Fetch all memberships for switcher
     allMemberships = await prisma.arenaMembership.findMany({
-        where: { userId: session.user.id },
+        where: { 
+            userId: session.user.id,
+            // arena: { archivedAt: null }
+        },
         include: { arena: true }
     })
   }
@@ -87,6 +90,10 @@ export async function Navbar({ arenaId }: NavbarProps) {
                 <Link href={`${baseUrl}/leaderboard`} className="text-sm font-medium transition-colors hover:text-primary">
                 {t('leaderboard')}
                 </Link>
+                {/* Add Arena About link here */}
+                <Link href={`${baseUrl}/about`} className="text-sm font-medium transition-colors hover:text-primary">
+                    {t('about')}
+                </Link>
                 {isAdmin && (
                     <>
                         <Link href={`${baseUrl}/members`} className="text-sm font-medium transition-colors hover:text-primary">
@@ -109,20 +116,30 @@ export async function Navbar({ arenaId }: NavbarProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem asChild>
-                      <Link href={`${baseUrl}/markets`}>{t('markets')}</Link>
+                      <Link href="/about">{t('about')}</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`${baseUrl}/leaderboard`}>{t('leaderboard')}</Link>
-                    </DropdownMenuItem>
-                    {isAdmin && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href={`${baseUrl}/members`}>{t('members')}</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`${baseUrl}/settings`}>{t('settings')}</Link>
-                        </DropdownMenuItem>
-                      </>
+                    {arenaId && (
+                        <>
+                            <DropdownMenuItem asChild>
+                            <Link href={`${baseUrl}/markets`}>{t('markets')}</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                            <Link href={`${baseUrl}/leaderboard`}>{t('leaderboard')}</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                            <Link href={`${baseUrl}/about`}>{t('about')}</Link>
+                            </DropdownMenuItem>
+                            {isAdmin && (
+                            <>
+                                <DropdownMenuItem asChild>
+                                <Link href={`${baseUrl}/members`}>{t('members')}</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                <Link href={`${baseUrl}/settings`}>{t('settings')}</Link>
+                                </DropdownMenuItem>
+                            </>
+                            )}
+                        </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -131,6 +148,13 @@ export async function Navbar({ arenaId }: NavbarProps) {
         )}
 
         <div className="ms-auto flex items-center gap-4">
+            {/* About Link - Desktop (Moved to right side) */}
+            <div className="hidden md:flex items-center">
+                <Link href="/about" className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground">
+                    {t('about')}
+                </Link>
+            </div>
+
             <LocaleSwitcher />
            {session?.user ? (
              <div className="flex items-center gap-2 md:gap-4">
