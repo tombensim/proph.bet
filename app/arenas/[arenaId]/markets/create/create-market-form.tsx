@@ -42,6 +42,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
   const [isUploading, setIsUploading] = useState(false)
 
   const form = useForm<CreateMarketValues>({
+    // @ts-ignore
     resolver: zodResolver(createMarketSchema),
     defaultValues: {
       title: "",
@@ -109,9 +110,10 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
 
   return (
     <Form {...form}>
+      {/* @ts-ignore */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
-          control={form.control}
+          control={form.control as any}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -128,7 +130,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
         />
         
         <FormField
-          control={form.control}
+          control={form.control as any}
           name="description"
           render={({ field }) => (
             <FormItem>
@@ -201,7 +203,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
                 
                 <div className="flex-1 space-y-3">
                   <FormField
-                    control={form.control}
+                    control={form.control as any}
                     name={`assets.${index}.label`}
                     render={({ field }) => (
                       <FormItem className="flex-1">
@@ -215,7 +217,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
                   
                   {field.type === "LINK" ? (
                     <FormField
-                      control={form.control}
+                      control={form.control as any}
                       name={`assets.${index}.url`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
@@ -262,7 +264,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
-            control={form.control}
+            control={form.control as any}
             name="type"
             render={({ field }) => (
               <FormItem>
@@ -285,7 +287,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
           />
 
           <FormField
-            control={form.control}
+            control={form.control as any}
             name="resolutionDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
@@ -343,7 +345,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
              {fields.map((field, index) => (
                <FormField
                  key={field.id}
-                 control={form.control}
+                 control={form.control as any}
                  name={`options.${index}.value`}
                  render={({ field }) => (
                    <FormItem>
@@ -376,7 +378,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
 
         <div className="grid grid-cols-2 gap-6">
           <FormField
-            control={form.control}
+            control={form.control as any}
             name="minBet"
             render={({ field }) => (
               <FormItem>
@@ -389,7 +391,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
             )}
           />
            <FormField
-            control={form.control}
+            control={form.control as any}
             name="maxBet"
             render={({ field }) => (
               <FormItem>
@@ -407,7 +409,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
           <h3 className="font-medium">Visibility Settings (Optional)</h3>
           
           <FormField
-            control={form.control}
+            control={form.control as any}
             name="hiddenFromUserIds"
             render={({ field }) => (
               <FormItem>
@@ -428,7 +430,7 @@ export function CreateMarketForm({ arenaId }: { arenaId: string }) {
           />
 
           <FormField
-            control={form.control}
+            control={form.control as any}
             name="hideBetsFromUserIds"
             render={({ field }) => (
               <FormItem>

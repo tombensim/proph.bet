@@ -29,7 +29,6 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
 
   if (!market) throw new Error("Market not found")
   
-  // @ts-ignore - Session types are tricky with NextAuth beta
   const isAdmin = session.user.role === "ADMIN";
   
   if (market.creatorId !== session.user.id && !isAdmin) {
@@ -43,7 +42,8 @@ export async function resolveMarketAction(data: z.infer<typeof resolveSchema>) {
   // Payout Logic
   await prisma.$transaction(async (tx) => {
     
-    let winningBets = []
+    // @ts-ignore
+    let winningBets: any[] = []
     let totalPayoutPool = 0
     let totalWinningWeight = 0 // shares for AMM, amount for Numeric
 

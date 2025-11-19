@@ -12,7 +12,7 @@ export const createMarketSchema = z.object({
   description: z.string().optional(),
   type: z.nativeEnum(MarketType),
   resolutionDate: z.date({
-    required_error: "A resolution date is required.",
+    message: "A resolution date is required.",
   }),
   options: z.array(z.object({ value: z.string() })).optional(),
   minBet: z.coerce.number().optional(),

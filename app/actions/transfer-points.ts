@@ -34,6 +34,7 @@ export async function transferPointsAction(data: TransferValues) {
 
   await prisma.$transaction(async (tx) => {
     // 1. Check Sender Membership & Balance
+    if (!session?.user?.id) throw new Error("Unauthorized")
     const senderMembership = await tx.arenaMembership.findUnique({
       where: { 
         userId_arenaId: { 
