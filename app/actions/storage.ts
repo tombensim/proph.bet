@@ -58,7 +58,13 @@ export async function getUploadUrlAction(contentType: string, folder: string = "
   // Return the URL to upload to, and the public URL (or key) to store in DB
   // For MinIO/S3, the public URL depends on configuration. 
   // Locally: http://localhost:9000/bucket/key
-  const publicUrl = `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL || "http://localhost:9000"}/${BUCKET_NAME}/${fileKey}`
+  // R2/Prod: https://pub-xxx.r2.dev/key (if S3_APPEND_BUCKET_TO_URL is false)
+  const baseUrl = process.env.NEXT_PUBLIC_S3_PUBLIC_URL || "http://localhost:9000"
+  const appendBucket = process.env.S3_APPEND_BUCKET_TO_URL !== "false" && (process.env.S3_ENDPOINT?.includes("localhost") || baseUrl.includes("localhost"))
+  
+  const publicUrl = appendBucket 
+    ? `${baseUrl}/${BUCKET_NAME}/${fileKey}`
+    : `${baseUrl}/${fileKey}`
 
   return { uploadUrl: url, publicUrl, fileKey }
 }
