@@ -48,6 +48,6 @@ export async function createArenaAction(data: CreateArenaValues) {
     }
   })
 
-  redirect(`/arenas/${arena.id}/setup`)
+  redirect(`/en/arenas/${arena.id}/setup`)
 }
 
