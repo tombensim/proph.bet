@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import Image from "next/image"
 
 export async function NewsTicker({ arenaId }: { arenaId: string }) {
   const news = await prisma.arenaNews.findFirst({
@@ -13,7 +14,14 @@ export async function NewsTicker({ arenaId }: { arenaId: string }) {
     <div className="flex items-center gap-12 px-6 shrink-0">
       {news.headlines.map((headline, i) => (
         <span key={i} className="flex items-center font-medium text-sm uppercase tracking-wide">
-          <span className="mr-3 text-primary-foreground/50">◆</span>
+          <div className="mr-3 relative w-6 h-6 opacity-80 grayscale">
+            <Image 
+              src="/chami.png" 
+              alt="sep"
+              fill
+              className="object-contain"
+            />
+          </div>
           {headline}
         </span>
       ))}

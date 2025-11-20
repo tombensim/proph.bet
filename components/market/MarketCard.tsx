@@ -80,7 +80,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
       )}
 
       {/* Content Section - Pointer events passed through to Link unless caught */}
-      <div className="flex flex-col h-full pointer-events-none"> 
+      <div className="flex flex-col flex-1 pointer-events-none min-h-0"> 
         {coverImage ? (
           <div className="relative h-32 w-full overflow-hidden bg-muted">
             {/* eslint-disable-next-line @next/next/no-img-element */}
