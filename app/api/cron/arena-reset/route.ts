@@ -81,12 +81,19 @@ export async function GET(req: Request) {
         }
 
         // D. Update Next Reset Date
-        let nextDate = new Date(now)
+        // Use the scheduled date as base to prevent drift, falling back to now if missing
+        const baseDate = settings.nextResetDate ? new Date(settings.nextResetDate) : new Date(now)
+        let nextDate = new Date(baseDate)
+
         if (settings.resetFrequency === ResetFrequency.MONTHLY) {
+            // Ensure we move to the 1st of the next month relative to the scheduled date
+            // Current logic: setMonth + 1, setDate(1). 
+            // This snaps to the 1st, which is good.
             nextDate.setMonth(nextDate.getMonth() + 1)
             nextDate.setDate(1) // 1st of next month
             nextDate.setHours(0, 0, 0, 0)
         } else if (settings.resetFrequency === ResetFrequency.WEEKLY) {
+            // Add 7 days to the scheduled date
             nextDate.setDate(nextDate.getDate() + 7)
         } else {
             // For MANUAL or CUSTOM, we clear the date so it doesn't loop until set again
@@ -123,4 +130,3 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ success: true, results })
 }
-
