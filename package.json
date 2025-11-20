@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "translations:validate": "npx tsx scripts/validate-translations.ts",
+    "translations:generate": "npx tsx scripts/generate-translation-types.ts",
+    "translations:check": "npx tsx scripts/validate-translations.ts --fix"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
