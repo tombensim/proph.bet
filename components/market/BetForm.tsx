@@ -15,6 +15,7 @@ import { placeBetAction } from "@/app/actions/place-bet"
 import { Loader2, Info } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface BetFormProps {
   market: Market & { options: Option[] }
@@ -81,7 +82,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
   const potentialReturn = useMemo<PotentialReturn>(() => {
     if (!betAmount || betAmount <= 0) return null
 
-    if (market.type === "NUMERIC_RANGE") {
+    if (market.type === "NUMERIC_RANGE" && (!market.options || market.options.length === 0)) {
        return { type: "NUMERIC", totalPool: (totalPool || 0) + betAmount }
     }
 
@@ -104,16 +105,44 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
     return null
   }, [betAmount, currentOptionId, market.type, market.options, totalPool, feePercent])
 
+  const numericData = useMemo(() => {
+    if (market.type !== "NUMERIC_RANGE" || !market.options) return [];
+    
+    // Sort options by min value
+    const sorted = [...market.options].sort((a, b) => {
+        const minA = parseFloat(a.text.split(" - ")[0])
+        const minB = parseFloat(b.text.split(" - ")[0])
+        return minA - minB
+    })
+
+    return sorted.map(opt => {
+        const prob = getProbability(opt.liquidity)
+        return {
+            id: opt.id,
+            range: opt.text,
+            probability: prob,
+            percent: Math.round(prob * 100)
+        }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [market.options, market.type])
+
   function onSubmit(data: z.infer<typeof betSchema>) {
     setError(null)
     setSuccess(false)
 
+    const isNumericAMM = market.type === "NUMERIC_RANGE" && market.options && market.options.length > 0;
+
     // Client-side validation for market type specifics
-    if (market.type !== "NUMERIC_RANGE" && !data.optionId) {
+    if (!isNumericAMM && market.type !== "NUMERIC_RANGE" && !data.optionId) {
         form.setError("optionId", { type: "manual", message: "Please select an option" })
         return
     }
-    if (market.type === "NUMERIC_RANGE" && data.numericValue === undefined) {
+    if (isNumericAMM && !data.optionId) {
+        form.setError("optionId", { type: "manual", message: "Please select a range" })
+        return
+    }
+    if (!isNumericAMM && market.type === "NUMERIC_RANGE" && data.numericValue === undefined) {
         form.setError("numericValue", { type: "manual", message: "Please enter a value" })
         return
     }
@@ -223,6 +252,68 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
           />
         )
       case "NUMERIC_RANGE":
+        if (market.options && market.options.length > 0) {
+             return (
+                 <FormField
+                   // @ts-ignore
+                   control={form.control}
+                   name="optionId"
+                   render={({ field }) => (
+                     <FormItem className="space-y-4">
+                       <FormLabel>{t('chooseOutcome')}</FormLabel>
+                       
+                       {/* Histogram */}
+                       <div className="h-[200px] w-full border rounded-lg p-2 bg-muted/10">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={numericData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                               <XAxis 
+                                    dataKey="range" 
+                                    fontSize={10} 
+                                    tickLine={false} 
+                                    interval={0} 
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={50}
+                               />
+                               <YAxis hide />
+                               <Tooltip 
+                                  formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "Probability"]}
+                                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }}
+                                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                               />
+                               <Bar dataKey="probability" onClick={(data) => field.onChange(data.id)} cursor="pointer" radius={[4, 4, 0, 0]}>
+                                  {numericData.map((entry, index) => (
+                                     <Cell 
+                                       key={`cell-${index}`} 
+                                       fill={field.value === entry.id ? "hsl(var(--primary))" : "hsl(var(--primary))"} 
+                                       opacity={field.value === entry.id ? 1 : 0.5}
+                                     />
+                                  ))}
+                               </Bar>
+                            </BarChart>
+                         </ResponsiveContainer>
+                       </div>
+
+                       <FormControl>
+                         <Select onValueChange={field.onChange} value={field.value}>
+                           <SelectTrigger>
+                             <SelectValue placeholder={t('selectOutcome')} />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {numericData.map((item) => (
+                               <SelectItem key={item.id} value={item.id}>
+                                 {item.range} ({item.percent}%)
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                       </FormControl>
+                       <FormMessage />
+                     </FormItem>
+                   )}
+                 />
+             )
+        }
         return (
           <FormField
             // @ts-ignore

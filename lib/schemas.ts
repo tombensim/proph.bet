@@ -17,6 +17,10 @@ export const createMarketSchema = z.object({
   options: z.array(z.object({ value: z.string() })).optional(),
   minBet: z.coerce.number().optional(),
   maxBet: z.coerce.number().optional(),
+  // Numeric Range Generation Helpers
+  rangeMin: z.coerce.number().optional(),
+  rangeMax: z.coerce.number().optional(),
+  rangeBins: z.coerce.number().optional(),
   hiddenFromUserIds: z.array(z.string()).optional(),
   hideBetsFromUserIds: z.array(z.string()).optional(),
   arenaId: z.string().min(1, "Arena ID is required"),

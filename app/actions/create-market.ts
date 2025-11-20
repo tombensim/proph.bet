@@ -63,7 +63,7 @@ export async function createMarketAction(data: CreateMarketValues) {
   let totalCost = 0;
   if (type === MarketType.BINARY) {
     totalCost = SEED_AMOUNT * 2;
-  } else if (type === MarketType.MULTIPLE_CHOICE && options) {
+  } else if ((type === MarketType.MULTIPLE_CHOICE || type === MarketType.NUMERIC_RANGE) && options) {
     totalCost = SEED_AMOUNT * options.length;
   }
 
@@ -106,7 +106,7 @@ export async function createMarketAction(data: CreateMarketValues) {
         arenaId,
         minBet: minBet || null,
         maxBet: maxBet || null,
-        options: type === MarketType.MULTIPLE_CHOICE && options ? {
+        options: (type === MarketType.MULTIPLE_CHOICE || type === MarketType.NUMERIC_RANGE) && options ? {
           create: options.map(o => ({ 
             text: o.value,
             liquidity: SEED_AMOUNT // Initialize with seed amount

@@ -44,7 +44,9 @@ export async function placeBetAction(data: PlaceBetValues) {
   if (market.maxBet && amount > market.maxBet) throw new Error(`Maximum bet is ${market.maxBet}`)
 
   // AMM Logic requires Options
-  if (market.type === MarketType.NUMERIC_RANGE) {
+  if (market.type === MarketType.NUMERIC_RANGE && market.options.length > 0) {
+     if (!optionId) throw new Error("Please select a range")
+  } else if (market.type === MarketType.NUMERIC_RANGE) {
      if (numericValue === undefined) throw new Error("Please provide a numeric value")
   } else {
      if (!optionId) throw new Error("Please select an option")
@@ -119,7 +121,7 @@ export async function placeBetAction(data: PlaceBetValues) {
     let shares = 0;
     let finalOptionId = optionId;
 
-    if ((market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE) && optionId && market.options.length > 0) {
+    if ((market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE || (market.type === MarketType.NUMERIC_RANGE && market.options.length > 0)) && optionId && market.options.length > 0) {
         const options = await tx.option.findMany({
             where: { marketId: market.id }
         })
