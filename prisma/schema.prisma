@@ -38,6 +38,7 @@ model User {
   hiddenBetsFromMarkets Market[] @relation("HiddenBetsUsers")
 
   sentInvitations Invitation[] @relation("SentInvitations")
+  acceptedInvitations InvitationUsage[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -147,7 +148,7 @@ model ArenaSettings {
   seedLiquidity     Int     @default(50)
 
   // Bet Restrictions
-  limitMultipleBets Boolean @default(false)
+  limitMultipleBets Boolean @default(true)
   multiBetThreshold Int     @default(3)
 
   createdAt DateTime @default(now())
@@ -484,11 +485,28 @@ model Invitation {
   role      ArenaRole @default(MEMBER)
   status    InvitationStatus @default(PENDING)
   
+  usageLimit Int?
+  usageCount Int      @default(0)
+  usages     InvitationUsage[]
+
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([email, arenaId])
+}
+
+model InvitationUsage {
+  id           String     @id @default(cuid())
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  usedAt       DateTime   @default(now())
+
+  @@index([invitationId])
 }
 
 enum InvitationStatus {

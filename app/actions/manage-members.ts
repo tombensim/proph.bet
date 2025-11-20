@@ -84,7 +84,9 @@ export async function addMemberAction(email: string, arenaId: string) {
         data: { 
           token, 
           expiresAt,
-          status: 'PENDING'
+          status: 'PENDING',
+          usageLimit: 1,
+          usageCount: 0
         }
       })
     } else {
@@ -95,7 +97,8 @@ export async function addMemberAction(email: string, arenaId: string) {
           arenaId,
           inviterId: session.user.id,
           token,
-          expiresAt
+          expiresAt,
+          usageLimit: 1
         }
       })
     }
@@ -148,7 +151,8 @@ export async function createPublicInviteAction(arenaId: string, expiresInHours: 
               token,
               expiresAt,
               email: null, // Public invite
-              status: 'PENDING'
+              status: 'PENDING',
+              usageLimit: null
           }
       })
       

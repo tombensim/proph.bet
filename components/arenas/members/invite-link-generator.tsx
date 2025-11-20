@@ -6,13 +6,19 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createPublicInviteAction, revokeInvitationAction } from "@/app/actions/manage-members"
 import { toast } from "sonner"
-import { Copy, Trash2, Link as LinkIcon, Loader2 } from "lucide-react"
-import { Invitation } from "@prisma/client"
+import { Copy, Trash2, Link as LinkIcon, Loader2, Users } from "lucide-react"
+import { Invitation, InvitationUsage, User } from "@prisma/client"
 import { format } from "date-fns"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
+type ExtendedInvitation = Invitation & {
+  usages: (InvitationUsage & { user: User })[]
+}
 
 interface InviteLinkGeneratorProps {
   arenaId: string
-  activeLinks: Invitation[]
+  activeLinks: ExtendedInvitation[]
 }
 
 export function InviteLinkGenerator({ arenaId, activeLinks }: InviteLinkGeneratorProps) {
@@ -93,6 +99,38 @@ export function InviteLinkGenerator({ arenaId, activeLinks }: InviteLinkGenerato
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" size="sm" className="h-8 text-xs gap-2">
+                                            <Users className="w-3 h-3" />
+                                            {link.usageCount} {link.usageLimit ? `/ ${link.usageLimit}` : "uses"}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-60 p-0" align="end">
+                                        <div className="p-2 border-b font-medium text-xs">
+                                            Used by {link.usages.length} people
+                                        </div>
+                                        <div className="max-h-[200px] overflow-y-auto p-1">
+                                            {link.usages.length === 0 ? (
+                                                <div className="text-xs text-muted-foreground p-2 text-center">No uses yet</div>
+                                            ) : (
+                                                link.usages.map(usage => (
+                                                    <div key={usage.id} className="flex items-center gap-2 p-2 hover:bg-muted rounded text-xs">
+                                                        <Avatar className="w-6 h-6">
+                                                            <AvatarImage src={usage.user.image || ""} />
+                                                            <AvatarFallback>{usage.user.name?.[0] || "U"}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="overflow-hidden">
+                                                            <p className="truncate font-medium">{usage.user.name || "User"}</p>
+                                                            <p className="truncate text-[10px] text-muted-foreground">{format(usage.usedAt, "PP")}</p>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+
                                 <Button size="icon" variant="ghost" onClick={() => copyLink(link.token)}>
                                     <Copy className="w-4 h-4" />
                                 </Button>

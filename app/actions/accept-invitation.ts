@@ -21,7 +21,13 @@ export async function acceptInvitationAction(token: string) {
 
   if (!invitation) throw new Error("Invalid invitation")
   if (invitation.expiresAt < new Date()) throw new Error("Invitation expired")
-  if (invitation.status !== 'PENDING') throw new Error("Invitation already used")
+  
+  // Check usage limit
+  const isUnlimited = invitation.usageLimit === null
+  const hasRemainingUses = isUnlimited || (invitation.usageCount < invitation.usageLimit!)
+
+  if (!hasRemainingUses) throw new Error("Invitation limit reached")
+  if (invitation.status === 'EXPIRED' || invitation.status === 'DECLINED') throw new Error("Invitation is no longer valid")
 
   // Check if user matches the email (only if email is specified)
   if (invitation.email && invitation.email.toLowerCase() !== session.user.email?.toLowerCase()) {
@@ -48,11 +54,25 @@ export async function acceptInvitationAction(token: string) {
       })
   }
 
-  // Update invitation status
-  await prisma.invitation.update({
-      where: { id: invitation.id },
-      data: { status: 'ACCEPTED' }
-  })
+  // Update invitation usage
+  const newUsageCount = invitation.usageCount + 1
+  const shouldClose = !isUnlimited && newUsageCount >= invitation.usageLimit!
+
+  await prisma.$transaction([
+    prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { 
+            usageCount: newUsageCount,
+            status: shouldClose ? 'ACCEPTED' : invitation.status 
+        }
+    }),
+    prisma.invitationUsage.create({
+        data: {
+            invitationId: invitation.id,
+            userId: session.user.id
+        }
+    })
+  ])
 
   redirect(`/arenas/${invitation.arenaId}/markets`)
 }

@@ -46,6 +46,12 @@ export default async function MembersPage(props: PageProps) {
             arenaId,
             status: 'PENDING'
         },
+        include: {
+            usages: {
+                include: { user: true },
+                orderBy: { usedAt: 'desc' }
+            }
+        },
         orderBy: { createdAt: 'desc' }
     })
     

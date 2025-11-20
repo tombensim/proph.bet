@@ -38,14 +38,21 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
     )
   }
 
-  if (invitation.status !== 'PENDING' || invitation.expiresAt < new Date()) {
+  const isUnlimited = invitation.usageLimit === null
+  const isLimitReached = !isUnlimited && invitation.usageCount >= invitation.usageLimit!
+  const isExpired = invitation.expiresAt < new Date()
+  const isInvalidStatus = invitation.status !== 'PENDING'
+
+  if (isInvalidStatus || isExpired || isLimitReached) {
      return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
                     <XCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
                     <CardTitle>Invitation Expired</CardTitle>
-                    <CardDescription>This invitation is no longer valid.</CardDescription>
+                    <CardDescription>
+                        {isLimitReached ? "This invitation has reached its usage limit." : "This invitation is no longer valid."}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center">
                     <Button asChild>

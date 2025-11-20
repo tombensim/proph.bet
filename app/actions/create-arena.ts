@@ -44,6 +44,12 @@ export async function createArenaAction(data: CreateArenaValues) {
           role: ArenaRole.ADMIN,
           points: 1000 // Initial points for creator in new arena
         }
+      },
+      settings: {
+        create: {
+          limitMultipleBets: true,
+          multiBetThreshold: 3
+        }
       }
     }
   })

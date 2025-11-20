@@ -34,7 +34,13 @@ export async function resendInvitationAction(invitationId: string) {
 
   await prisma.invitation.update({
     where: { id: invitationId },
-    data: { token, expiresAt }
+    data: { 
+        token, 
+        expiresAt,
+        status: 'PENDING',
+        usageCount: 0,
+        usageLimit: 1
+    }
   })
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://proph.bet";
