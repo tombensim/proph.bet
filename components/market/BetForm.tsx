@@ -16,6 +16,7 @@ import { Loader2, Info } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { v4 as uuidv4 } from 'uuid';
 
 interface BetFormProps {
   market: Market & { options: Option[] }
@@ -60,6 +61,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [idempotencyKey, setIdempotencyKey] = useState(uuidv4())
 
   const form = useForm<z.infer<typeof betSchema>>({
     // @ts-ignore
@@ -153,9 +155,11 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
           marketId: market.id,
           amount: data.amount,
           optionId: data.optionId,
-          numericValue: data.numericValue
+          numericValue: data.numericValue,
+          idempotencyKey
         })
         setSuccess(true)
+        setIdempotencyKey(uuidv4())
         form.reset({
              amount: market.minBet || 10,
              optionId: undefined,

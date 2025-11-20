@@ -47,7 +47,11 @@ const updateSettingsSchema = z.object({
   // AMM
   ammType: z.nativeEnum(AMMType),
   tradingFeePercent: z.number().min(0).max(100),
-  seedLiquidity: z.number().min(0)
+  seedLiquidity: z.number().min(0),
+
+  // Bet Restrictions
+  limitMultipleBets: z.boolean(),
+  multiBetThreshold: z.number().min(1)
 })
 
 export type UpdateSettingsValues = z.infer<typeof updateSettingsSchema>

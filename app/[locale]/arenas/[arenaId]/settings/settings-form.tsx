@@ -33,7 +33,9 @@ const settingsFormSchema = z.object({
   defaultLanguage: z.string().min(2),
   ammType: z.nativeEnum(AMMType),
   tradingFeePercent: z.coerce.number().min(0).max(100),
-  seedLiquidity: z.coerce.number().min(0)
+  seedLiquidity: z.coerce.number().min(0),
+  limitMultipleBets: z.boolean(),
+  multiBetThreshold: z.coerce.number().min(1)
 })
 
 type SettingsFormValues = z.infer<typeof settingsFormSchema>
@@ -58,7 +60,9 @@ export function ArenaSettingsForm({ settings }: { settings: ArenaSettings }) {
       defaultLanguage: settings.defaultLanguage,
       ammType: settings.ammType,
       tradingFeePercent: settings.tradingFeePercent,
-      seedLiquidity: settings.seedLiquidity
+      seedLiquidity: settings.seedLiquidity,
+      limitMultipleBets: settings.limitMultipleBets,
+      multiBetThreshold: settings.multiBetThreshold
     }
   })
 
@@ -244,6 +248,32 @@ export function ArenaSettingsForm({ settings }: { settings: ArenaSettings }) {
                             <FormDescription>Select the default language for this arena.</FormDescription>
                         </FormItem>
                     )} />
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="limitMultipleBets" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">Limit Multiple Bets</FormLabel>
+                                <FormDescription>Restrict users from placing additional bets until others participate.</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                        </FormItem>
+                    )} />
+
+                    {form.watch("limitMultipleBets") && (
+                        <FormField control={form.control} name="multiBetThreshold" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Unique Bettors Threshold</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} value={field.value as number} />
+                                </FormControl>
+                                <FormDescription>Number of other unique bettors required before a user can bet again.</FormDescription>
+                            </FormItem>
+                        )} />
+                    )}
                  </div>
               </CardContent>
             </Card>
