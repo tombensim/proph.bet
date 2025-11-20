@@ -4,7 +4,7 @@ import { UserNav } from "@/components/layout/UserNav"
 import { Button } from "@/components/ui/button"
 import { ArenaSwitcher } from "./ArenaSwitcher"
 import { ActivitySidebar } from "@/components/activity/activity-sidebar"
-import { Menu } from "lucide-react"
+import { Menu, Home } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -108,7 +108,15 @@ export async function Navbar({ arenaId }: NavbarProps) {
             </nav>
 
              {/* Mobile Nav */}
-             <div className="md:hidden ms-2">
+             <div className="md:hidden ms-2 flex items-center gap-1">
+                {arenaId && (
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link href={`${baseUrl}/markets`}>
+                      <Home className="h-5 w-5" />
+                      <span className="sr-only">{t('markets')}</span>
+                    </Link>
+                  </Button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
