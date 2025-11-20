@@ -29,7 +29,11 @@ export function ShareMarketButton({
         shareUrl = `${window.location.origin}${shareUrl}`
     }
     
-    if (navigator.share) {
+    // Simple mobile detection
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+    // Only use native share on mobile devices
+    if (isMobile && navigator.share) {
       try {
         await navigator.share({
           title: marketTitle,
