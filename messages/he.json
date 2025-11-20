@@ -156,6 +156,10 @@
       "potentialPayout": "תשלום פוטנציאלי: ~{amount} נק׳",
       "potentialProfit": "רווח פוטנציאלי: +{percent}%",
       "maxLoss": "הפסד מקסימלי: {amount} נק׳",
+      "potentialPayoutLabel": "תשלום פוטנציאלי",
+      "potentialProfitLabel": "רווח פוטנציאלי",
+      "maxLossLabel": "הפסד מקסימלי",
+      "networkFeeLabel": "עמלת רשת",
       "estDisclaimer": "הערכות מבוססות על סיכויים נוכחיים. הימורים גדולים עלולים לגרום להחלקה.",
       "parimutuelInfo": "תשלומים הם פארימוטואליים. המנצחים מחלקים את הקופה הכוללת על סמך דיוק התחזית שלהם."
     },

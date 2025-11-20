@@ -3,10 +3,11 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { ArenaRole } from "@prisma/client"
+import { ArenaRole, Role } from "@prisma/client"
 import { resend } from "@/lib/resend"
 import { ArenaInvitationEmail } from "@/components/emails/arena-invitation"
 import { v4 as uuidv4 } from "uuid"
+import { isSystemAdmin } from "@/lib/roles"
 
 export async function addMemberAction(email: string, arenaId: string) {
   const session = await auth()
@@ -184,4 +185,58 @@ export async function revokeInvitationAction(invitationId: string) {
       })
       
       revalidatePath(`/arenas/${invitation.arenaId}/members`)
+}
+
+export async function toggleMemberVisibilityAction(arenaId: string, userId: string) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const requesterMembership = await prisma.arenaMembership.findUnique({
+    where: { userId_arenaId: { userId: session.user.id, arenaId } }
+  })
+
+  const isArenaAdmin = requesterMembership?.role === ArenaRole.ADMIN
+  const isGlobalAdmin = session.user.role === Role.GLOBAL_ADMIN || session.user.role === Role.ADMIN
+  const isSysAdmin = isSystemAdmin(session.user.email)
+
+  if (!isArenaAdmin && !isGlobalAdmin && !isSysAdmin) {
+    throw new Error("Unauthorized")
+  }
+
+  const targetMembership = await prisma.arenaMembership.findUnique({
+    where: { userId_arenaId: { userId, arenaId } }
+  })
+
+  if (!targetMembership) throw new Error("Member not found")
+
+  await prisma.arenaMembership.update({
+    where: { id: targetMembership.id },
+    data: { hidden: !targetMembership.hidden }
+  })
+
+  revalidatePath(`/arenas/${arenaId}/members`)
+}
+
+export async function updateMemberRoleAction(arenaId: string, userId: string, role: ArenaRole) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const requesterMembership = await prisma.arenaMembership.findUnique({
+    where: { userId_arenaId: { userId: session.user.id, arenaId } }
+  })
+
+  const isArenaAdmin = requesterMembership?.role === ArenaRole.ADMIN
+  const isGlobalAdmin = session.user.role === Role.GLOBAL_ADMIN || session.user.role === Role.ADMIN
+  const isSysAdmin = isSystemAdmin(session.user.email)
+
+  if (!isArenaAdmin && !isGlobalAdmin && !isSysAdmin) {
+    throw new Error("Unauthorized")
+  }
+
+  await prisma.arenaMembership.update({
+    where: { userId_arenaId: { userId, arenaId } },
+    data: { role }
+  })
+
+  revalidatePath(`/arenas/${arenaId}/members`)
 }

@@ -390,27 +390,31 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
         {potentialReturn && (
            <div className="bg-muted/50 rounded-lg p-4 text-sm border border-dashed">
               {potentialReturn.type === "AMM" ? (
-                 <div className="grid grid-cols-2 gap-y-2">
-                    <div className="text-muted-foreground">{t('potentialPayout').split(":")[0]}:</div>
-                    <div className="text-right font-semibold">~{potentialReturn.payout} pts</div>
-                    
-                    <div className="text-muted-foreground">{t('potentialProfit').split(":")[0]}:</div>
-                    <div className="text-right font-semibold text-green-600">
-                        +{potentialReturn.profit} pts ({potentialReturn.percent > 0 ? "+" : ""}{potentialReturn.percent}%)
+                 <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">{t('potentialPayoutLabel')}:</span>
+                      <span className="font-semibold">~{potentialReturn.payout} pts</span>
                     </div>
                     
-                    <div className="text-muted-foreground">{t('maxLoss').split(":")[0]}:</div>
-                    <div className="text-right font-semibold text-destructive">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">{t('potentialProfitLabel')}:</span>
+                      <span className="font-semibold text-green-600">
+                        +{potentialReturn.profit} pts ({potentialReturn.percent > 0 ? "+" : ""}{potentialReturn.percent}%)
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">{t('maxLossLabel')}:</span>
+                      <span className="font-semibold text-destructive">
                         -{betAmount} pts
+                      </span>
                     </div>
 
                     {potentialReturn.fee > 0 && (
-                        <>
-                            <div className="text-muted-foreground text-xs mt-1 pt-1 border-t">Network Fee:</div>
-                            <div className="text-right text-xs text-muted-foreground mt-1 pt-1 border-t">
-                                {potentialReturn.fee} pts
-                            </div>
-                        </>
+                        <div className="flex justify-between items-center text-xs pt-2 border-t">
+                          <span className="text-muted-foreground">{t('networkFeeLabel')}:</span>
+                          <span className="text-muted-foreground">{potentialReturn.fee} pts</span>
+                        </div>
                     )}
                  </div>
               ) : (

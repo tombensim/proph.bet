@@ -34,6 +34,7 @@ export default async function LeaderboardPage(props: PageProps) {
     include: {
         settings: true,
         members: {
+            where: { hidden: false },
             include: { 
                 user: {
                     include: {

@@ -1,11 +1,11 @@
 "use client"
 
-import { Market, User, Bet, Option, MarketAsset } from "@prisma/client"
+import { Market, User, Bet, Option, MarketAsset, AnalystSentiment } from "@prisma/client"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
-import { Coins, AlertTriangle, Zap } from "lucide-react"
+import { Coins, AlertTriangle, Zap, Bot, TrendingUp, TrendingDown } from "lucide-react"
 import { ApproveMarketButton } from "./ApproveMarketButton"
 import { useTranslations } from 'next-intl';
 import { generateGradient } from "@/lib/utils"
@@ -23,6 +23,7 @@ interface MarketWithDetails extends Market {
   }
   userBets?: (Bet & { option: Option | null })[]
   assets?: MarketAsset[]
+  analystSentiments?: AnalystSentiment[]
 }
 
 interface MarketCardProps {
@@ -60,6 +61,11 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
     }
   }
 
+  // Determine dominant sentiment
+  const latestSentiment = market.analystSentiments && market.analystSentiments.length > 0 
+    ? market.analystSentiments[0] // Assuming sorted or just taking first
+    : null;
+
   const href = market.arenaId 
     ? `/arenas/${market.arenaId}/markets/${market.id}`
     : `/markets/${market.id}`
@@ -77,6 +83,16 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
                   <AlertTriangle className="w-3 h-3" /> {t('pendingApproval')}
               </Badge>
           </div>
+      )}
+      
+      {/* Analyst Badge Overlay */}
+      {latestSentiment && (
+        <div className="absolute top-2 left-2 z-10">
+             <Badge variant="secondary" className="gap-1 bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200 shadow-sm">
+                <Bot className="w-3 h-3" /> 
+                {latestSentiment.rating.replace("_", " ")}
+            </Badge>
+        </div>
       )}
 
       {/* Content Section - Pointer events passed through to Link unless caught */}

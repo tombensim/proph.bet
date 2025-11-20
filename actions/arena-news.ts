@@ -19,6 +19,7 @@ export async function refreshArenaNews(arenaId: string) {
     where: {
       arenaId,
       status: "OPEN",
+      hiddenUsers: { none: {} }
     },
     orderBy: {
       bets: {
@@ -38,7 +39,10 @@ export async function refreshArenaNews(arenaId: string) {
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const recentBets = await prisma.bet.findMany({
     where: {
-      market: { arenaId },
+      market: { 
+        arenaId,
+        hiddenUsers: { none: {} }
+      },
       createdAt: { gte: yesterday }
     },
     orderBy: {
@@ -56,7 +60,8 @@ export async function refreshArenaNews(arenaId: string) {
     where: {
       arenaId,
       status: "RESOLVED",
-      updatedAt: { gte: yesterday }
+      updatedAt: { gte: yesterday },
+      hiddenUsers: { none: {} }
     },
     take: 3,
     select: {

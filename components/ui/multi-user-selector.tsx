@@ -32,9 +32,10 @@ interface MultiUserSelectorProps {
   value?: string[]
   onChange: (value: string[]) => void
   placeholder?: string
+  arenaId?: string
 }
 
-export function MultiUserSelector({ value = [], onChange, placeholder = "Select users..." }: MultiUserSelectorProps) {
+export function MultiUserSelector({ value = [], onChange, placeholder = "Select users...", arenaId }: MultiUserSelectorProps) {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [options, setOptions] = React.useState<UserOption[]>([])
@@ -44,11 +45,11 @@ export function MultiUserSelector({ value = [], onChange, placeholder = "Select 
   // Fetch users on search
   React.useEffect(() => {
     let active = true
-    getUsersAction(debouncedQuery).then((users) => {
+    getUsersAction(debouncedQuery, arenaId).then((users) => {
       if (active) setOptions(users)
     })
     return () => { active = false }
-  }, [debouncedQuery])
+  }, [debouncedQuery, arenaId])
 
   // Fetch details for selected users if they are not in options
   React.useEffect(() => {

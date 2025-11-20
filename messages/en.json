@@ -156,6 +156,10 @@
       "potentialPayout": "Potential Payout: ~{amount} pts",
       "potentialProfit": "Potential Profit: +{percent}%",
       "maxLoss": "Max Loss: {amount} pts",
+      "potentialPayoutLabel": "Potential Payout",
+      "potentialProfitLabel": "Potential Profit",
+      "maxLossLabel": "Max Loss",
+      "networkFeeLabel": "Network Fee",
       "estDisclaimer": "Estimates based on current odds. Large bets may cause slippage.",
       "parimutuelInfo": "Payouts are parimutuel. Winners split the total pool based on their prediction accuracy."
     },

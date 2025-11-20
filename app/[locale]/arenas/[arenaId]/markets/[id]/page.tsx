@@ -16,6 +16,7 @@ import { EditMarketCover } from "./edit-market-cover"
 import { DisputeDialog } from "./dispute-dialog"
 import { AlertTriangle } from "lucide-react"
 import { ShareMarketButton } from "@/components/market/ShareMarketButton"
+import { AnalystSentimentDisplay } from "@/components/market/AnalystSentimentDisplay"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -63,7 +64,8 @@ export default async function MarketPage(props: PageProps) {
       disputes: {
         where: { userId: session.user.id },
         select: { id: true }
-      }
+      },
+      analystSentiments: true
     }
   })
 
@@ -279,6 +281,8 @@ export default async function MarketPage(props: PageProps) {
                 <ResolveMarketForm market={market} />
               </div>
           )}
+
+          <AnalystSentimentDisplay sentiments={market.analystSentiments} />
 
           <Separator />
 

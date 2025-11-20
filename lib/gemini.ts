@@ -243,3 +243,93 @@ Requirements:
     ];
   }
 }
+
+export interface AnalystPersona {
+  name: string;
+  prompt: string;
+  // Avatar URL or path would be handled in frontend, but good to keep in mind
+}
+
+export interface AnalystSentimentResult {
+  sentiment: string;
+  rating: string;
+}
+
+export async function generateAnalystSentiment({
+  marketTitle,
+  marketDescription,
+  currentProbability,
+  recentActivity,
+  analyst,
+  context,
+}: {
+  marketTitle: string;
+  marketDescription: string;
+  currentProbability?: string; // e.g., "60% Yes"
+  recentActivity: string; // Description of the trigger event (e.g., "User X bet 500 on Yes", "User Y commented: ...")
+  analyst: AnalystPersona;
+  context?: TrackingContext;
+}): Promise<AnalystSentimentResult> {
+  if (!ai) {
+    throw new Error("GEMINI_KEY is not configured");
+  }
+
+  let prompt = `You are acting as an analyst named "${analyst.name}" for a prediction market.
+  
+Your Persona/Instructions:
+"${analyst.prompt}"
+
+The Market:
+Title: "${marketTitle}"
+Description: "${marketDescription}"
+${currentProbability ? `Current Probability: ${currentProbability}` : ""}
+
+Recent Activity (Trigger):
+${recentActivity}
+
+Based on this activity and the market state, provide your reaction and updated sentiment.
+
+Requirements:
+- Return ONLY a JSON object.
+- Format: { "sentiment": "Your short commentary (max 2 sentences)", "rating": "RATING_ENUM" }
+- Ratings allowed: "STRONG_BUY", "BUY", "HOLD", "SELL", "STRONG_SELL", "NEUTRAL"
+- Keep the sentiment consistent with your persona.
+`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    if (!response.text) {
+      throw new Error("No text in response");
+    }
+
+    // Track usage
+    if (context) {
+      const tokens = response.usageMetadata?.totalTokenCount;
+      await trackLLMUsage(
+        "generateAnalystSentiment",
+        LLMUsageType.USER_TRIGGERED,
+        context,
+        tokens
+      );
+    }
+
+    const result = JSON.parse(response.text);
+    return {
+      sentiment: result.sentiment || "Interesting movement...",
+      rating: result.rating || "NEUTRAL",
+    };
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    return {
+      sentiment: "Market is moving.",
+      rating: "NEUTRAL",
+    };
+  }
+}

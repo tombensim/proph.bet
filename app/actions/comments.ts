@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { analyzeMarketSentiment } from "./analyze-sentiment"
 
 export async function createComment(marketId: string, content: string) {
   const session = await auth()
@@ -45,6 +46,14 @@ export async function createComment(marketId: string, content: string) {
           }
         }
       }
+    })
+
+    // Trigger Analyst Sentiment (fire and forget - non-blocking)
+    analyzeMarketSentiment({
+        marketId: market.id,
+        triggerEvent: `User commented: "${content.trim().substring(0, 100)}${content.length > 100 ? '...' : ''}"`
+    }).catch(err => {
+        console.error("Failed to trigger analyst sentiment in background:", err)
     })
 
     revalidatePath(`/markets/${marketId}`)
@@ -173,4 +182,3 @@ export async function getComments(marketId: string) {
     return { error: "Failed to fetch comments" }
   }
 }
-

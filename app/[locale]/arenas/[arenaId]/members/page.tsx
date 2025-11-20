@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ResendButton } from "./resend-button"
 import { getTranslations } from 'next-intl/server';
+import { isSystemAdmin } from "@/lib/roles"
+import { MemberActions } from "./member-actions"
 
 interface PageProps {
     params: Promise<{ arenaId: string }>
@@ -25,8 +27,13 @@ export default async function MembersPage(props: PageProps) {
     const membership = await prisma.arenaMembership.findUnique({
         where: { userId_arenaId: { userId: session.user.id, arenaId } }
     })
+
+    const isGlobalOrSystemAdmin = 
+        session.user.role === "ADMIN" || 
+        session.user.role === "GLOBAL_ADMIN" || 
+        isSystemAdmin(session.user.email)
     
-    if (membership?.role !== "ADMIN") {
+    if (membership?.role !== "ADMIN" && !isGlobalOrSystemAdmin) {
         return (
             <div className="container mx-auto py-12 text-center">
                 <h1 className="text-2xl font-bold text-destructive">Unauthorized</h1>
@@ -90,7 +97,12 @@ export default async function MembersPage(props: PageProps) {
                                 <AvatarFallback>{m.user.name?.[0] || "U"}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="font-medium">{m.user.name || "Unknown"}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-medium">{m.user.name || "Unknown"}</p>
+                                    {m.hidden && (
+                                        <Badge variant="outline" className="text-xs h-5">Hidden</Badge>
+                                    )}
+                                </div>
                                 <p className="text-sm text-muted-foreground">{m.user.email}</p>
                             </div>
                         </div>
@@ -101,6 +113,13 @@ export default async function MembersPage(props: PageProps) {
                             <Badge variant={m.role === "ADMIN" ? "default" : "secondary"}>
                                 {m.role}
                             </Badge>
+                            <MemberActions 
+                                arenaId={arenaId}
+                                userId={m.userId}
+                                currentRole={m.role}
+                                isHidden={m.hidden}
+                                isSelf={m.userId === session.user.id}
+                            />
                         </div>
                      </div>
                  ))}

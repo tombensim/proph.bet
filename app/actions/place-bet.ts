@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { Prisma, TransactionType, MarketType } from "@prisma/client"
+import { analyzeMarketSentiment } from "./analyze-sentiment"
 
 const placeBetSchema = z.object({
   marketId: z.string(),
@@ -76,6 +77,38 @@ export async function placeBetAction(data: PlaceBetValues) {
         if (!membership) {
           throw new Error("You are not a member of this arena")
         }
+
+        // --- CHECK RESTRICTIONS ---
+        const arenaSettings = await tx.arenaSettings.findUnique({ where: { arenaId } })
+
+        // Check limitMultipleBets restriction
+        if (arenaSettings?.limitMultipleBets) {
+          // Check if user has already placed a "real" bet (recorded as a Transaction)
+          // We use Transaction instead of Bet because market creators get initial "bets" 
+          // for liquidity, but those don't have a BET_PLACED transaction.
+          const existingBet = await tx.transaction.findFirst({
+            where: {
+              marketId: market.id,
+              fromUserId: session.user.id,
+              type: TransactionType.BET_PLACED
+            }
+          })
+
+          if (existingBet) {
+            const uniqueBettors = await tx.bet.groupBy({
+              by: ['userId'],
+              where: {
+                marketId: market.id,
+                userId: { not: session.user.id }
+              }
+            })
+
+            const threshold = arenaSettings.multiBetThreshold ?? 3
+            if (uniqueBettors.length < threshold) {
+               throw new Error(`You can only place additional bets after at least ${threshold} other members have bet on this market. Currently: ${uniqueBettors.length}`)
+            }
+          }
+        }
     
         if (membership.points < amount) {
           throw new Error(`Insufficient points. You have ${membership.points}.`)
@@ -98,40 +131,8 @@ export async function placeBetAction(data: PlaceBetValues) {
           }
         })
     
-
-    // --- FEE LOGIC ---
-    const arenaSettings = await tx.arenaSettings.findUnique({ where: { arenaId } })
-
-    // Check limitMultipleBets restriction
-    if (arenaSettings?.limitMultipleBets) {
-      // Check if user has already placed a "real" bet (recorded as a Transaction)
-      // We use Transaction instead of Bet because market creators get initial "bets" 
-      // for liquidity, but those don't have a BET_PLACED transaction.
-      const existingBet = await tx.transaction.findFirst({
-        where: {
-          marketId: market.id,
-          fromUserId: session.user.id,
-          type: TransactionType.BET_PLACED
-        }
-      })
-
-      if (existingBet) {
-        const uniqueBettors = await tx.bet.groupBy({
-          by: ['userId'],
-          where: {
-            marketId: market.id,
-            userId: { not: session.user.id }
-          }
-        })
-
-        const threshold = arenaSettings.multiBetThreshold ?? 3
-        if (uniqueBettors.length < threshold) {
-           throw new Error(`You can only place additional bets after at least ${threshold} other members have bet on this market. Currently: ${uniqueBettors.length}`)
-        }
-      }
-    }
-
-    const FEE_PERCENT = (arenaSettings?.tradingFeePercent ?? 0) / 100
+        // --- FEE LOGIC ---
+        const FEE_PERCENT = (arenaSettings?.tradingFeePercent ?? 0) / 100
         const fee = Math.floor(amount * FEE_PERCENT)
         const netBetAmount = amount - fee
     
@@ -245,6 +246,18 @@ export async function placeBetAction(data: PlaceBetValues) {
       }
       throw error;
   }
+
+  // Trigger Analyst Sentiment (fire and forget - non-blocking)
+  const optionText = optionId ? market.options.find(o => o.id === optionId)?.text : numericValue;
+  const triggerText = `User placed a bet of ${amount} on "${optionText || 'Unknown'}"`
+  
+  // Do NOT await this call
+  analyzeMarketSentiment({
+      marketId: market.id,
+      triggerEvent: triggerText
+  }).catch(err => {
+      console.error("Failed to trigger analyst sentiment in background:", err)
+  })
 
   revalidatePath(`/arenas/${arenaId}/markets/${marketId}`)
   revalidatePath(`/arenas/${arenaId}/markets`)

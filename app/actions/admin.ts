@@ -6,11 +6,21 @@ import { Role } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { s3Client, BUCKET_NAME } from "@/lib/s3"
 import { HeadObjectCommand } from "@aws-sdk/client-s3"
+import { isSystemAdmin } from "@/lib/roles"
 
 // Helper to ensure admin access
 async function requireAdmin() {
   const session = await auth()
-  if (!session?.user || session.user.role !== Role.ADMIN) {
+  if (!session?.user) {
+    throw new Error("Unauthorized")
+  }
+
+  // Allow system admin regardless of role
+  if (isSystemAdmin(session.user.email)) {
+    return
+  }
+
+  if (session.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized")
   }
 }

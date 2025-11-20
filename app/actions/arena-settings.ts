@@ -2,19 +2,17 @@
 
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { ArenaRole, ResetFrequency, WinnerRule, MarketCreationPolicy, AMMType, MarketType, Role } from "@prisma/client"
-import { z } from "zod"
+import { ArenaRole, Role } from "@prisma/client"
 import { revalidatePath } from "next/cache"
+import { z } from "zod"
+import { redirect } from "next/navigation"
 
-// Helper to ensure admin access
 async function requireArenaAdmin(arenaId: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
-  // Global admins can manage any arena
   if (session.user.role === Role.ADMIN || session.user.role === Role.GLOBAL_ADMIN) return
 
-  // Check arena role
   const membership = await prisma.arenaMembership.findUnique({
     where: { userId_arenaId: { userId: session.user.id, arenaId } }
   })
@@ -24,107 +22,30 @@ async function requireArenaAdmin(arenaId: string) {
   }
 }
 
-const updateSettingsSchema = z.object({
-  arenaId: z.string(),
-  
-  // Cycle
-  resetFrequency: z.nativeEnum(ResetFrequency),
-  winnerRule: z.nativeEnum(WinnerRule),
-  
-  // Points
-  monthlyAllocation: z.number().min(0),
-  allowCarryover: z.boolean(),
-  allowTransfers: z.boolean(),
-  transferLimit: z.number().optional().nullable(),
-  
-  // Markets
-  creationPolicy: z.nativeEnum(MarketCreationPolicy),
-  allowedTypes: z.array(z.nativeEnum(MarketType)),
-  defaultExpirationHours: z.number().min(1),
-  requireApproval: z.boolean(),
-  defaultLanguage: z.string().min(2).max(10),
-  
-  // AMM
-  ammType: z.nativeEnum(AMMType),
-  tradingFeePercent: z.number().min(0).max(100),
-  seedLiquidity: z.number().min(0),
-
-  // Bet Restrictions
-  limitMultipleBets: z.boolean(),
-  multiBetThreshold: z.number().min(1)
+const analystSchema = z.object({
+  name: z.string().min(2),
+  prompt: z.string().min(10),
+  avatar: z.string().optional(),
 })
 
-export type UpdateSettingsValues = z.infer<typeof updateSettingsSchema>
+const updateAnalystsSchema = z.object({
+  arenaId: z.string(),
+  analysts: z.array(analystSchema)
+})
 
-export async function getArenaSettingsAction(arenaId: string) {
-  await requireArenaAdmin(arenaId)
-  
-  let settings = await prisma.arenaSettings.findUnique({
-    where: { arenaId }
-  })
-
-  if (!settings) {
-    // Create default settings if not exists
-    settings = await prisma.arenaSettings.create({
-      data: { arenaId }
-    })
-  }
-
-  return settings
-}
-
-export async function updateArenaSettingsAction(data: UpdateSettingsValues) {
+export async function updateArenaAnalystsAction(data: { arenaId: string; analysts: any[] }) {
   await requireArenaAdmin(data.arenaId)
 
-  const validated = updateSettingsSchema.parse(data)
+  const validated = updateAnalystsSchema.parse(data)
 
-  await prisma.arenaSettings.upsert({
+  await prisma.arenaSettings.update({
     where: { arenaId: data.arenaId },
-    create: validated,
-    update: validated
-  })
-
-  revalidatePath(`/arenas/${data.arenaId}/settings`)
-  return { success: true }
-}
-
-const updateArenaSchema = z.object({
-  id: z.string(),
-  name: z.string().min(3),
-  description: z.string().optional(),
-  about: z.string().optional().nullable(),
-  coverImage: z.string().optional().nullable(),
-})
-
-export type UpdateArenaValues = z.infer<typeof updateArenaSchema>
-
-export async function getArenaDetailsAction(arenaId: string) {
-  await requireArenaAdmin(arenaId)
-  
-  const arena = await prisma.arena.findUnique({
-    where: { id: arenaId }
-  })
-
-  if (!arena) throw new Error("Arena not found")
-  return arena
-}
-
-export async function updateArenaDetailsAction(data: UpdateArenaValues) {
-  await requireArenaAdmin(data.id)
-  
-  const validated = updateArenaSchema.parse(data)
-  
-  await prisma.arena.update({
-    where: { id: data.id },
     data: {
-      name: validated.name,
-      description: validated.description,
-      about: validated.about,
-      coverImage: validated.coverImage
+      analysts: validated.analysts as any // Prisma handles JSON
     }
   })
 
-  revalidatePath(`/arenas/${data.id}/settings`)
+  revalidatePath(`/arenas/${data.arenaId}/settings`)
   return { success: true }
 }
 
@@ -136,6 +57,7 @@ export async function archiveArenaAction(arenaId: string) {
     data: { archivedAt: new Date() }
   })
 
+  revalidatePath(`/arenas/${arenaId}`)
   revalidatePath(`/arenas/${arenaId}/settings`)
   return { success: true }
 }
@@ -148,6 +70,7 @@ export async function unarchiveArenaAction(arenaId: string) {
     data: { archivedAt: null }
   })
 
+  revalidatePath(`/arenas/${arenaId}`)
   revalidatePath(`/arenas/${arenaId}/settings`)
   return { success: true }
 }
@@ -155,10 +78,118 @@ export async function unarchiveArenaAction(arenaId: string) {
 export async function deleteArenaAction(arenaId: string) {
   await requireArenaAdmin(arenaId)
 
-  // Transactions, Markets, Memberships, Settings should cascade
   await prisma.arena.delete({
     where: { id: arenaId }
   })
 
+  // No revalidatePath needed since the arena is deleted
+  // The component will redirect to home
+  return { success: true }
+}
+
+// Get arena settings
+export async function getArenaSettingsAction(arenaId: string) {
+  await requireArenaAdmin(arenaId)
+
+  const settings = await prisma.arenaSettings.findUnique({
+    where: { arenaId }
+  })
+
+  if (!settings) throw new Error("Settings not found")
+  
+  return settings
+}
+
+// Get arena details
+export async function getArenaDetailsAction(arenaId: string) {
+  await requireArenaAdmin(arenaId)
+
+  const arena = await prisma.arena.findUnique({
+    where: { id: arenaId }
+  })
+
+  if (!arena) throw new Error("Arena not found")
+  
+  return arena
+}
+
+// Update arena details (name, description, about, coverImage)
+const arenaDetailsSchema = z.object({
+  id: z.string(),
+  name: z.string().min(3, "Name must be at least 3 characters"),
+  description: z.string().optional(),
+  about: z.string().optional().nullable(),
+  coverImage: z.string().optional().nullable(),
+})
+
+export async function updateArenaDetailsAction(data: z.infer<typeof arenaDetailsSchema>) {
+  await requireArenaAdmin(data.id)
+
+  const validated = arenaDetailsSchema.parse(data)
+
+  await prisma.arena.update({
+    where: { id: validated.id },
+    data: {
+      name: validated.name,
+      description: validated.description,
+      about: validated.about,
+      coverImage: validated.coverImage,
+    }
+  })
+
+  revalidatePath(`/arenas/${data.id}`)
+  revalidatePath(`/arenas/${data.id}/settings`)
+  return { success: true }
+}
+
+// Update arena settings
+const settingsSchema = z.object({
+  arenaId: z.string(),
+  resetFrequency: z.string(),
+  winnerRule: z.string(),
+  monthlyAllocation: z.number().min(0),
+  allowCarryover: z.boolean(),
+  allowTransfers: z.boolean(),
+  transferLimit: z.number().optional().nullable(),
+  creationPolicy: z.string(),
+  allowedTypes: z.array(z.string()),
+  defaultExpirationHours: z.number().min(1),
+  requireApproval: z.boolean(),
+  defaultLanguage: z.string().min(2),
+  ammType: z.string(),
+  tradingFeePercent: z.number().min(0).max(100),
+  seedLiquidity: z.number().min(0),
+  limitMultipleBets: z.boolean(),
+  multiBetThreshold: z.number().min(1)
+})
+
+export async function updateArenaSettingsAction(data: any) {
+  await requireArenaAdmin(data.arenaId)
+
+  const validated = settingsSchema.parse(data)
+
+  await prisma.arenaSettings.update({
+    where: { arenaId: data.arenaId },
+    data: {
+      resetFrequency: validated.resetFrequency as any,
+      winnerRule: validated.winnerRule as any,
+      monthlyAllocation: validated.monthlyAllocation,
+      allowCarryover: validated.allowCarryover,
+      allowTransfers: validated.allowTransfers,
+      transferLimit: validated.transferLimit,
+      creationPolicy: validated.creationPolicy as any,
+      allowedTypes: validated.allowedTypes as any,
+      defaultExpirationHours: validated.defaultExpirationHours,
+      requireApproval: validated.requireApproval,
+      defaultLanguage: validated.defaultLanguage,
+      ammType: validated.ammType as any,
+      tradingFeePercent: validated.tradingFeePercent,
+      seedLiquidity: validated.seedLiquidity,
+      limitMultipleBets: validated.limitMultipleBets,
+      multiBetThreshold: validated.multiBetThreshold
+    }
+  })
+
+  revalidatePath(`/arenas/${data.arenaId}/settings`)
   return { success: true }
 }

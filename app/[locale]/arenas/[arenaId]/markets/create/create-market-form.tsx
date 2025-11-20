@@ -575,6 +575,7 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
                     value={field.value} 
                     onChange={field.onChange}
                     placeholder={t('hideMarketPlaceholder')}
+                    arenaId={arenaId}
                   />
                 </FormControl>
                 <FormDescription>
@@ -596,6 +597,7 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
                     value={field.value} 
                     onChange={field.onChange}
                     placeholder={t('hideBetsPlaceholder')}
+                    arenaId={arenaId}
                   />
                 </FormControl>
                 <FormDescription>
