@@ -31,6 +31,7 @@ model User {
   notificationSettings NotificationSettings?
   comments       Comment[]
   disputes       Dispute[]
+  llmUsage       LLMUsage[]
   
   // Visibility Relations
   hiddenFromMarkets Market[] @relation("HiddenMarketUsers")
@@ -98,6 +99,7 @@ model Arena {
   settings    ArenaSettings?
   notifications Notification[]
   news          ArenaNews[]
+  llmUsage      LLMUsage[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -249,6 +251,7 @@ model Market {
   transactions Transaction[] // Payouts linked to this market
   assets      MarketAsset[] // New relation
   disputes    Dispute[]
+  llmUsage    LLMUsage[]
   
   approved    Boolean   @default(true)
   language    String    @default("en")
@@ -487,4 +490,27 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   DECLINED
+}
+
+model LLMUsage {
+  id        String   @id @default(cuid())
+  arenaId   String?
+  marketId  String?
+  userId    String?
+  type      LLMUsageType
+  operation String
+  tokens    Int?
+  createdAt DateTime @default(now())
+  
+  arena     Arena?   @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  market    Market?  @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([arenaId])
+  @@index([type])
+}
+
+enum LLMUsageType {
+  CRON
+  USER_TRIGGERED
 }

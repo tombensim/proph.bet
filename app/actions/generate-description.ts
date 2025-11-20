@@ -10,11 +10,13 @@ export async function generateDescriptionAction({
   type,
   options,
   resolutionDate,
+  arenaId,
 }: {
   title: string;
   type: "BINARY" | "MULTIPLE_CHOICE" | "NUMERIC_RANGE";
   options?: string[];
   resolutionDate?: Date;
+  arenaId?: string;
 }): Promise<{ description?: string; error?: string }> {
   // Check if user is authenticated
   const session = await auth();
@@ -32,6 +34,10 @@ export async function generateDescriptionAction({
       type,
       options,
       resolutionDate,
+      context: {
+        userId: session.user.id,
+        arenaId,
+      },
     });
     return { description };
   } catch (error) {
@@ -76,6 +82,10 @@ export async function generateArenaAboutAction({
     const about = await generateArenaAbout({
       name,
       description,
+      context: {
+        userId: session.user.id,
+        arenaId,
+      },
     });
     return { about };
   } catch (error) {

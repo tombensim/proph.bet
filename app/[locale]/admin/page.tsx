@@ -1,6 +1,6 @@
 import { getSystemStats, getAnalyticsData } from "@/app/actions/admin"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Trophy, Coins, Activity, LayoutGrid } from "lucide-react"
+import { Users, Trophy, Coins, Activity, LayoutGrid, Brain } from "lucide-react"
 import { getTranslations } from 'next-intl/server';
 import {
   Table,
@@ -79,8 +79,7 @@ export default async function AdminDashboard() {
                   <TableHead>{t('analytics.table.arena')}</TableHead>
                   <TableHead className="text-right">{t('analytics.table.bets')}</TableHead>
                   <TableHead className="text-right">{t('analytics.table.volume')}</TableHead>
-                  <TableHead className="text-right">{t('analytics.table.activeMarkets')}</TableHead>
-                  <TableHead className="text-right">{t('analytics.table.members')}</TableHead>
+                  <TableHead className="text-right">AI Usage (User/Cron)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -89,8 +88,12 @@ export default async function AdminDashboard() {
                     <TableCell className="font-medium">{arena.name}</TableCell>
                     <TableCell className="text-right">{arena.totalBets}</TableCell>
                     <TableCell className="text-right">{arena.totalVolume.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{arena.activeMarkets}</TableCell>
-                    <TableCell className="text-right">{arena.totalMembers}</TableCell>
+                    <TableCell className="text-right">
+                        <div className="flex flex-col items-end text-xs">
+                            <span title="User Triggered">{arena.llm.user.count} req / {arena.llm.user.tokens} tok</span>
+                            <span className="text-muted-foreground" title="Cron Automated">{arena.llm.cron.count} req / {arena.llm.cron.tokens} tok</span>
+                        </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

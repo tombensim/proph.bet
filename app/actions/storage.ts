@@ -102,7 +102,19 @@ export async function getUploadUrlAction(contentType: string, folder: string = "
   // Locally: http://localhost:9000/bucket/key
   // R2/Prod: https://pub-xxx.r2.dev/key (if S3_APPEND_BUCKET_TO_URL is false)
   const baseUrl = process.env.NEXT_PUBLIC_S3_PUBLIC_URL || "http://localhost:9000"
-  const appendBucket = process.env.S3_APPEND_BUCKET_TO_URL !== "false" && (process.env.S3_ENDPOINT?.includes("localhost") || baseUrl.includes("localhost"))
+  
+  // Logic: 
+  // 1. If using localhost (MinIO), we usually need the bucket name in the path.
+  // 2. If using R2 public URL (pub-xxx.r2.dev), the bucket is already "implied" by the subdomain, BUT...
+  //    The user's example shows the public URL INCLUDES the bucket name:
+  //    Broken: .../market-assets/...
+  //    Working: .../proph-bet/market-assets/...
+  //    So for this specific R2 setup, we MUST include the bucket name.
+  
+  // Check if we should append the bucket. 
+  // Default to TRUE if not specified, unless explicitly set to "false".
+  // This overrides the previous logic that tried to be smart about localhost vs prod.
+  const appendBucket = process.env.S3_APPEND_BUCKET_TO_URL !== "false"
   
   const publicUrl = appendBucket 
     ? `${baseUrl}/${BUCKET_NAME}/${fileKey}`

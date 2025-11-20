@@ -152,6 +152,21 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
     prisma.arena.count({ where })
   ])
 
+  // Fetch LLM Usage for these arenas
+  const arenaIds = arenas.map(a => a.id)
+  const llmUsage = await prisma.lLMUsage.groupBy({
+    by: ['arenaId'],
+    where: {
+      arenaId: { in: arenaIds }
+    },
+    _sum: {
+      tokens: true
+    },
+    _count: {
+      _all: true
+    }
+  })
+
   const arenasWithStorage = await Promise.all(arenas.map(async (arena) => {
     const files: string[] = []
     // @ts-ignore - coverImage exists in schema but client might be stale
@@ -167,6 +182,9 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
     const sizes = await Promise.all(files.map(url => getObjectSize(url)))
     const totalSize = sizes.reduce((acc, size) => acc + size, 0)
 
+    // Get LLM stats for this arena
+    const usage = llmUsage.find(u => u.arenaId === arena.id)
+
     // Remove huge markets object from result to keep payload small
     const { markets, ...arenaData } = arena
 
@@ -175,6 +193,10 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
       storage: {
         count: files.length,
         size: totalSize
+      },
+      llm: {
+        requests: usage?._count._all || 0,
+        tokens: usage?._sum.tokens || 0
       }
     }
   }))
@@ -229,10 +251,28 @@ export async function getAnalyticsData() {
     }
   })
 
+  // Aggregate LLM usage by arena and type
+  const llmUsage = await prisma.lLMUsage.groupBy({
+    by: ['arenaId', 'type'],
+    where: {
+      arenaId: { not: null }
+    },
+    _count: {
+      _all: true
+    },
+    _sum: {
+      tokens: true
+    }
+  })
+
   const arenaStats = arenas.map(arena => {
     const txStats = arenaTransactions.find(tx => tx.arenaId === arena.id)
     const activeMarkets = arena.markets.filter(m => m.status === 'OPEN').length
     
+    // LLM Stats
+    const cronUsage = llmUsage.find(u => u.arenaId === arena.id && u.type === 'CRON')
+    const userUsage = llmUsage.find(u => u.arenaId === arena.id && u.type === 'USER_TRIGGERED')
+
     return {
       id: arena.id,
       name: arena.name,
@@ -240,7 +280,17 @@ export async function getAnalyticsData() {
       totalMarkets: arena._count.markets,
       activeMarkets,
       totalBets: txStats?._count._all || 0,
-      totalVolume: txStats?._sum.amount || 0
+      totalVolume: txStats?._sum.amount || 0,
+      llm: {
+        cron: {
+          count: cronUsage?._count._all || 0,
+          tokens: cronUsage?._sum.tokens || 0
+        },
+        user: {
+          count: userUsage?._count._all || 0,
+          tokens: userUsage?._sum.tokens || 0
+        }
+      }
     }
   }).sort((a, b) => b.totalVolume - a.totalVolume)
 

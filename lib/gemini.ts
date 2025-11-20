@@ -1,4 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
+import { prisma } from "@/lib/prisma";
+import { LLMUsageType } from "@prisma/client";
 
 // Initialize the client
 // The SDK automatically looks for GEMINI_API_KEY or GOOGLE_API_KEY
@@ -15,16 +17,47 @@ if (!geminiKey) {
 
 const ai = geminiKey ? new GoogleGenAI({ apiKey: geminiKey }) : null;
 
+type TrackingContext = {
+  arenaId?: string;
+  marketId?: string;
+  userId?: string;
+};
+
+async function trackLLMUsage(
+  operation: string,
+  type: LLMUsageType,
+  context: TrackingContext,
+  tokens?: number
+) {
+  try {
+    await prisma.lLMUsage.create({
+      data: {
+        operation,
+        type,
+        tokens,
+        arenaId: context.arenaId,
+        marketId: context.marketId,
+        userId: context.userId,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to track LLM usage:", error);
+    // Don't fail the main operation if tracking fails
+  }
+}
+
 export async function generateMarketDescription({
   title,
   type,
   options,
   resolutionDate,
+  context,
 }: {
   title: string;
   type: "BINARY" | "MULTIPLE_CHOICE" | "NUMERIC_RANGE";
   options?: string[];
   resolutionDate?: Date;
+  context?: TrackingContext;
 }): Promise<string> {
   if (!ai) {
     throw new Error("GEMINI_KEY is not configured");
@@ -59,6 +92,17 @@ Type: ${type}`;
     if (!response.text) {
        throw new Error("No text in response");
     }
+
+    // Track usage
+    if (context) {
+      const tokens = response.usageMetadata?.totalTokenCount;
+      await trackLLMUsage(
+        "generateMarketDescription",
+        LLMUsageType.USER_TRIGGERED,
+        context,
+        tokens
+      );
+    }
     
     return response.text.trim();
   } catch (error) {
@@ -70,9 +114,11 @@ Type: ${type}`;
 export async function generateArenaAbout({
   name,
   description,
+  context,
 }: {
   name: string;
   description?: string;
+  context?: TrackingContext;
 }): Promise<string> {
   if (!ai) {
     throw new Error("GEMINI_KEY is not configured");
@@ -104,6 +150,17 @@ Arena Name: "${name}"`;
     if (!response.text) {
        throw new Error("No text in response");
     }
+
+    // Track usage
+    if (context) {
+      const tokens = response.usageMetadata?.totalTokenCount;
+      await trackLLMUsage(
+        "generateArenaAbout",
+        LLMUsageType.USER_TRIGGERED,
+        context,
+        tokens
+      );
+    }
     
     return response.text.trim();
   } catch (error) {
@@ -117,11 +174,13 @@ export async function generateArenaNews({
   activeMarkets,
   recentBets,
   resolvedMarkets,
+  context,
 }: {
   arenaName: string;
   activeMarkets: { title: string; volume: number }[];
   recentBets: { marketTitle: string; amount: number; option?: string }[];
   resolvedMarkets: { title: string; outcome: string }[];
+  context?: TrackingContext;
 }): Promise<string[]> {
   if (!ai) {
     throw new Error("GEMINI_KEY is not configured");
@@ -156,6 +215,17 @@ Requirements:
 
     if (!response.text) {
       throw new Error("No text in response");
+    }
+
+    // Track usage
+    if (context) {
+      const tokens = response.usageMetadata?.totalTokenCount;
+      await trackLLMUsage(
+        "generateArenaNews",
+        LLMUsageType.CRON,
+        context,
+        tokens
+      );
     }
 
     const headlines = JSON.parse(response.text);

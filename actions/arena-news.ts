@@ -99,7 +99,10 @@ export async function refreshArenaNews(arenaId: string) {
     arenaName: arena.name,
     activeMarkets: activeMarketsData,
     recentBets: recentBetsData,
-    resolvedMarkets: resolvedMarketsData
+    resolvedMarkets: resolvedMarketsData,
+    context: {
+        arenaId,
+    }
   })
 
   // Save to Database
@@ -133,4 +136,3 @@ export async function refreshArenaNews(arenaId: string) {
   revalidatePath(`/arenas/${arenaId}`)
   return headlines
 }
-

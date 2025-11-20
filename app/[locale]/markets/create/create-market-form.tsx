@@ -32,11 +32,14 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { createMarketAction } from "@/app/actions/create-market"
 import { CreateMarketValues, createMarketSchema } from "@/lib/schemas"
-import { useTransition } from "react"
+import { useTransition, useState } from "react"
 import { MultiUserSelector } from "@/components/ui/multi-user-selector"
+import { generateDescriptionAction } from "@/app/actions/generate-description"
+import { Loader2, Sparkles } from "lucide-react"
 
 export function CreateMarketForm() {
   const [isPending, startTransition] = useTransition()
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const form = useForm<CreateMarketValues>({
     // @ts-ignore
@@ -68,6 +71,40 @@ export function CreateMarketForm() {
     })
   }
 
+  async function handleGenerateDescription() {
+    const title = form.getValues("title")
+    const type = form.getValues("type")
+    const options = form.getValues("options")
+    const resolutionDate = form.getValues("resolutionDate")
+
+    if (!title || title.trim().length < 10) {
+      alert("Please enter a title (at least 10 characters) before generating a description")
+      return
+    }
+
+    setIsGenerating(true)
+    try {
+      const result = await generateDescriptionAction({
+        title,
+        type,
+        options: options?.map(o => o.value).filter(Boolean),
+        resolutionDate,
+        // No arenaId here as this is global create
+      })
+
+      if (result.error) {
+        alert(result.error)
+      } else if (result.description) {
+        form.setValue("description", result.description)
+      }
+    } catch (error) {
+      console.error("Failed to generate description:", error)
+      alert("Failed to generate description. Please try again.")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   return (
     <Form {...form}>
       {/* @ts-ignore */}
@@ -94,7 +131,23 @@ export function CreateMarketForm() {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Description</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateDescription}
+                  disabled={isGenerating || !form.watch("title")}
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  {isGenerating ? "Generating..." : "Generate with AI"}
+                </Button>
+              </div>
               <FormControl>
                 <Textarea 
                   placeholder="Provide additional context for the market..." 

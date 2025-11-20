@@ -106,6 +106,7 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
         type,
         options: options?.map(o => o.value).filter(Boolean),
         resolutionDate,
+        arenaId,
       })
 
       if (result.error) {
