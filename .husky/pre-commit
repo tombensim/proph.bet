@@ -1,1 +1,5 @@
+# Validate translations are in sync before building
+npm run translations:check || { echo "❌ Translation validation failed. Run 'npm run translations:validate' to see what's missing."; exit 1; }
+
+# Run full build
 npm run build
