@@ -146,6 +146,10 @@ model ArenaSettings {
   tradingFeePercent Float   @default(0)
   seedLiquidity     Int     @default(50)
 
+  // Bet Restrictions
+  limitMultipleBets Boolean @default(false)
+  multiBetThreshold Int     @default(3)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -318,6 +322,8 @@ model Bet {
   option    Option?  @relation(fields: [optionId], references: [id])
   
   numericValue Float?
+
+  idempotencyKey String? @unique
 
   createdAt DateTime @default(now())
 }
