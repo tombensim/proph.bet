@@ -15,6 +15,7 @@ import { getTranslations, getMessages } from 'next-intl/server';
 import { EditMarketCover } from "./edit-market-cover"
 import { DisputeDialog } from "./dispute-dialog"
 import { AlertTriangle } from "lucide-react"
+import { ShareMarketButton } from "@/components/market/ShareMarketButton"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -142,7 +143,12 @@ export default async function MarketPage(props: PageProps) {
             ) : (
               <Badge variant="destructive">{t('closed')}</Badge>
             )}
-            {hideBets && <Badge variant="secondary" className="ms-auto">{t('betsHidden')}</Badge>}
+            {hideBets && <Badge variant="secondary">{t('betsHidden')}</Badge>}
+            
+            <ShareMarketButton 
+              marketTitle={market.title} 
+              className="ms-auto"
+            />
         </div>
 
         {market.status === "RESOLVED" && (
