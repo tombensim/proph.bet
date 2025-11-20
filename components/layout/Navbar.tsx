@@ -117,7 +117,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
                     </Link>
                   </Button>
                 )}
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
                       <Menu className="h-5 w-5" />
