@@ -116,24 +116,24 @@ export async function Navbar({ arenaId }: NavbarProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuItem asChild>
-                      <Link href="/about">{t('about')}</Link>
+                    <DropdownMenuItem>
+                      <Link href="/about" className="w-full h-full flex items-center">{t('about')}</Link>
                     </DropdownMenuItem>
                     {arenaId && (
                         <>
-                            <DropdownMenuItem asChild>
-                            <Link href={`${baseUrl}/markets`}>{t('markets')}</Link>
+                            <DropdownMenuItem>
+                              <Link href={`${baseUrl}/markets`} className="w-full h-full flex items-center">{t('markets')}</Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                            <Link href={`${baseUrl}/leaderboard`}>{t('leaderboard')}</Link>
+                            <DropdownMenuItem>
+                              <Link href={`${baseUrl}/leaderboard`} className="w-full h-full flex items-center">{t('leaderboard')}</Link>
                             </DropdownMenuItem>
                             {isAdmin && (
                             <>
-                                <DropdownMenuItem asChild>
-                                <Link href={`${baseUrl}/members`}>{t('members')}</Link>
+                                <DropdownMenuItem>
+                                  <Link href={`${baseUrl}/members`} className="w-full h-full flex items-center">{t('members')}</Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                <Link href={`${baseUrl}/settings`}>{t('settings')}</Link>
+                                <DropdownMenuItem>
+                                  <Link href={`${baseUrl}/settings`} className="w-full h-full flex items-center">{t('settings')}</Link>
                                 </DropdownMenuItem>
                             </>
                             )}

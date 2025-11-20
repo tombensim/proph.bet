@@ -44,25 +44,25 @@ export function UserNav({ user, arenaId }: { user: any, arenaId?: string }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/settings" className="cursor-pointer">{t('profile')}</Link>
+          <DropdownMenuItem>
+            <Link href="/settings" className="cursor-pointer w-full h-full flex items-center">{t('profile')}</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-             <Link href="/settings" className="cursor-pointer">{t('settings')}</Link>
+          <DropdownMenuItem>
+             <Link href="/settings" className="cursor-pointer w-full h-full flex items-center">{t('settings')}</Link>
           </DropdownMenuItem>
           {user.role === "ADMIN" && (
-             <DropdownMenuItem asChild>
-                <Link href="/admin" className="cursor-pointer">{t('adminPanel')}</Link>
+             <DropdownMenuItem>
+                <Link href="/admin" className="cursor-pointer w-full h-full flex items-center">{t('adminPanel')}</Link>
              </DropdownMenuItem>
           )}
           {arenaId && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`${baseUrl}/transfer`} className="cursor-pointer">{t('transferPoints')}</Link>
+              <DropdownMenuItem>
+                <Link href={`${baseUrl}/transfer`} className="cursor-pointer w-full h-full flex items-center">{t('transferPoints')}</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`${baseUrl}/history`} className="cursor-pointer">{t('betHistory')}</Link>
+              <DropdownMenuItem>
+                <Link href={`${baseUrl}/history`} className="cursor-pointer w-full h-full flex items-center">{t('betHistory')}</Link>
               </DropdownMenuItem>
             </>
           )}
