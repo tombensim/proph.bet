@@ -123,6 +123,8 @@ export default async function MarketPage(props: PageProps) {
   // Determine hero image (first image asset)
   const heroImage = market.assets.find(a => a.type === "IMAGE")
   const remainingAssets = market.assets.filter(a => a.id !== heroImage?.id)
+  
+  const isExpired = market.status === 'OPEN' && new Date() > market.resolutionDate
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -138,7 +140,11 @@ export default async function MarketPage(props: PageProps) {
         <div className="flex items-center gap-3 mb-2">
             <Badge>{market.type}</Badge>
             {market.status === "OPEN" ? (
-              <Badge variant="outline" className="text-green-600 border-green-600">{t('open')}</Badge>
+              isExpired ? (
+                 <Badge variant="outline" className="text-yellow-600 border-yellow-600">Expired</Badge>
+              ) : (
+                 <Badge variant="outline" className="text-green-600 border-green-600">{t('open')}</Badge>
+              )
             ) : (
               <Badge variant="destructive">{t('closed')}</Badge>
             )}
@@ -232,6 +238,7 @@ export default async function MarketPage(props: PageProps) {
                     userPoints={membership?.points || 0} 
                     totalPool={totalPool} 
                     feePercent={(arenaSettings?.tradingFeePercent || 0) / 100}
+                    isExpired={isExpired}
                   />
               )}
             </CardContent>

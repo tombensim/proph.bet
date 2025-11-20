@@ -30,10 +30,11 @@ const analystSchema = z.object({
 
 const updateAnalystsSchema = z.object({
   arenaId: z.string(),
-  analysts: z.array(analystSchema)
+  analysts: z.array(analystSchema),
+  analystsEnabled: z.boolean()
 })
 
-export async function updateArenaAnalystsAction(data: { arenaId: string; analysts: any[] }) {
+export async function updateArenaAnalystsAction(data: { arenaId: string; analysts: any[]; analystsEnabled: boolean }) {
   await requireArenaAdmin(data.arenaId)
 
   const validated = updateAnalystsSchema.parse(data)
@@ -41,7 +42,8 @@ export async function updateArenaAnalystsAction(data: { arenaId: string; analyst
   await prisma.arenaSettings.update({
     where: { arenaId: data.arenaId },
     data: {
-      analysts: validated.analysts as any // Prisma handles JSON
+      analysts: validated.analysts as any, // Prisma handles JSON
+      analystsEnabled: validated.analystsEnabled
     }
   })
 

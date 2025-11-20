@@ -131,6 +131,14 @@ export function CommentsSection({ marketId, initialComments, currentUserId, isAd
               placeholder={t('shareThoughts')}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault()
+                  if (!isPending && newComment.trim()) {
+                    e.currentTarget.form?.requestSubmit()
+                  }
+                }
+              }}
               disabled={isPending}
               rows={3}
               maxLength={2000}
@@ -213,6 +221,14 @@ export function CommentsSection({ marketId, initialComments, currentUserId, isAd
                       <Textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                            e.preventDefault()
+                            if (!isPending && editContent.trim()) {
+                              handleUpdateComment(comment.id)
+                            }
+                          }
+                        }}
                         disabled={isPending}
                         rows={3}
                         maxLength={2000}

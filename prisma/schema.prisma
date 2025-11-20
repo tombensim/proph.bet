@@ -153,6 +153,7 @@ model ArenaSettings {
 
   // Analysts
   analysts          Json?   @default("[]") // Array of AnalystConfig objects
+  analystsEnabled   Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -43,6 +43,12 @@ export async function analyzeMarketSentiment({
     }
 
     const settings = market.arena.settings
+    
+    // Check if feature is enabled
+    if (!settings.analystsEnabled) {
+        return // Feature is disabled for this arena
+    }
+
     // Safe cast the JSON
     const analysts = (settings.analysts as unknown as AnalystPersona[]) || []
 
@@ -115,4 +121,3 @@ export async function analyzeMarketSentiment({
     console.error("Error in analyzeMarketSentiment:", error)
   }
 }
-

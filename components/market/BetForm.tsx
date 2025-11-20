@@ -25,6 +25,7 @@ interface BetFormProps {
   totalPool?: number
   feePercent?: number
   translations?: any
+  isExpired?: boolean
 }
 
 const betSchema = z.object({
@@ -41,7 +42,7 @@ type PotentialReturn =
   | { type: "AMM"; payout: number; profit: number; percent: number; fee: number }
   | null;
 
-export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, translations }: BetFormProps) {
+export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, translations, isExpired }: BetFormProps) {
   const tHook = useTranslations('MarketDetail.betForm');
   
   // Fallback to provided translations or use hook
@@ -357,35 +358,44 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
       {/* @ts-ignore */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
         
-        {renderMarketInputs()}
+        {isExpired && (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 flex items-center gap-2">
+             <Info className="h-4 w-4 flex-shrink-0" />
+             <span className="font-medium text-sm">Betting Closed: Market has expired.</span>
+          </div>
+        )}
 
-        <FormField
-          // @ts-ignore
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between mb-2">
-                <FormLabel>{t('betAmount')}</FormLabel>
-                <span className="text-sm text-muted-foreground">
-                  {t('balance', { amount: userPoints })}
-                </span>
-              </div>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  {...field}
-                  onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                />
-              </FormControl>
-              <div className="flex gap-2 text-xs text-muted-foreground">
-                 {market.minBet && <span>{t('min', { amount: market.minBet })}</span>}
-                 {market.maxBet && <span>{t('max', { amount: market.maxBet })}</span>}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <fieldset disabled={isExpired} className="space-y-6 disabled:opacity-60">
+          {renderMarketInputs()}
+
+          <FormField
+            // @ts-ignore
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between mb-2">
+                  <FormLabel>{t('betAmount')}</FormLabel>
+                  <span className="text-sm text-muted-foreground">
+                    {t('balance', { amount: userPoints })}
+                  </span>
+                </div>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    {...field}
+                    onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <div className="flex gap-2 text-xs text-muted-foreground">
+                   {market.minBet && <span>{t('min', { amount: market.minBet })}</span>}
+                   {market.maxBet && <span>{t('max', { amount: market.maxBet })}</span>}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </fieldset>
 
         {potentialReturn && (
            <div className="bg-muted/50 rounded-lg p-4 text-sm border border-dashed">
@@ -452,7 +462,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" className="w-full" disabled={isPending || isExpired}>
           {isPending ? (
              <div className="flex items-center">
                <div className="relative w-6 h-6 mr-2 animate-spin">

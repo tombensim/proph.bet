@@ -32,7 +32,7 @@ export function MarketFilter({ isAdmin }: { isAdmin?: boolean }) {
     if (f === 'resolved') return ['resolved']
     if (f === 'pending') return ['pending']
     
-    return ['open']
+    return ['active', 'expired']
   }
 
   const currentStatuses = getStatuses()
@@ -50,13 +50,11 @@ export function MarketFilter({ isAdmin }: { isAdmin?: boolean }) {
     if (nextStatuses.length === 0) {
         params.set("status", "")
     } else {
-        // If it's just default open and no special view, we can clean up?
-        // No, explicit is better to avoid confusion with default fallback
         params.set("status", nextStatuses.join(','))
     }
 
-    // If we are back to default state (Open only, no My Positions), we can remove params for cleaner URL
-    if (nextStatuses.length === 1 && nextStatuses[0] === 'open' && !updates.show && !showMyPositions) {
+    // If we are back to default state (Active + Expired, no My Positions), we can remove params for cleaner URL
+    if (nextStatuses.length === 2 && nextStatuses.includes('active') && nextStatuses.includes('expired') && !updates.show && !showMyPositions) {
         params.delete("status")
         params.delete("show")
     } else {
@@ -94,10 +92,16 @@ export function MarketFilter({ isAdmin }: { isAdmin?: boolean }) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>{tCommon('status')}</DropdownMenuLabel>
         <DropdownMenuCheckboxItem
-          checked={currentStatuses.includes("open")}
-          onCheckedChange={() => toggleStatus("open")}
+          checked={currentStatuses.includes("active") || currentStatuses.includes("open")}
+          onCheckedChange={() => toggleStatus("active")}
         >
-          {tCommon('open')}
+          Active
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={currentStatuses.includes("expired")}
+          onCheckedChange={() => toggleStatus("expired")}
+        >
+          Expired
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={currentStatuses.includes("resolved")}

@@ -38,6 +38,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
   const hasPositions = market.userBets && market.userBets.length > 0
   const coverImage = market.assets?.find(a => a.type === "IMAGE")?.url
   const isPending = market.approved === false
+  const isExpired = market.status === 'OPEN' && new Date() > new Date(market.resolutionDate)
   const [isBetOpen, setIsBetOpen] = useState(false)
   
   let probabilityDisplay = null
@@ -83,6 +84,14 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
                   <AlertTriangle className="w-3 h-3" /> {t('pendingApproval')}
               </Badge>
           </div>
+      )}
+
+      {isExpired && !isPending && (
+        <div className="absolute top-2 end-2 z-10">
+             <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-800 border-orange-200 shadow-sm">
+                 Expired
+             </Badge>
+        </div>
       )}
       
       {/* Analyst Badge Overlay */}
@@ -167,24 +176,30 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
             />
 
             {market.status === "OPEN" && !isPending && (
-                <Dialog open={isBetOpen} onOpenChange={setIsBetOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="sm" variant="default" className="h-9 px-4 shadow-sm shrink-0 font-medium">
-                            <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" />
-                            Bet
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]" onClick={(e) => e.stopPropagation()}>
-                        <DialogHeader>
-                            <DialogTitle>{market.title}</DialogTitle>
-                        </DialogHeader>
-                        <BetForm 
-                            market={market}
-                            userPoints={userPoints}
-                            feePercent={feePercent}
-                        />
-                    </DialogContent>
-                </Dialog>
+                isExpired ? (
+                    <Button size="sm" variant="secondary" disabled className="h-9 px-4 shadow-sm shrink-0 font-medium opacity-70">
+                        Expired
+                    </Button>
+                ) : (
+                    <Dialog open={isBetOpen} onOpenChange={setIsBetOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm" variant="default" className="h-9 px-4 shadow-sm shrink-0 font-medium">
+                                <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" />
+                                Bet
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]" onClick={(e) => e.stopPropagation()}>
+                            <DialogHeader>
+                                <DialogTitle>{market.title}</DialogTitle>
+                            </DialogHeader>
+                            <BetForm 
+                                market={market}
+                                userPoints={userPoints}
+                                feePercent={feePercent}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                )
             )}
           </div>
       </CardFooter>

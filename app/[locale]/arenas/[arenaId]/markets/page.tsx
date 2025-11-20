@@ -57,17 +57,27 @@ export default async function MarketsPage(props: PageProps) {
   else if (typeof statusParam === 'string') statuses = statusParam.split(',')
   else if (legacyFilter === 'resolved') statuses = ['resolved']
   else if (legacyFilter === 'pending') statuses = ['pending']
-  else statuses = ['open'] // Default
+  else statuses = ['active', 'expired'] // Default
 
   const showMyPositions = showParam === 'my-positions' || legacyFilter === 'my-positions'
 
   // Build OR clause for statuses
   const OR: any[] = []
+  const now = new Date()
   
-  if (statuses.includes('open')) {
+  if (statuses.includes('active') || statuses.includes('open')) { // open for legacy support
     OR.push({ 
       approved: true, 
-      status: { in: ["OPEN", "PENDING_RESOLUTION"] } 
+      status: { in: ["OPEN", "PENDING_RESOLUTION"] },
+      resolutionDate: { gt: now }
+    })
+  }
+
+  if (statuses.includes('expired') || statuses.includes('open')) { // open for legacy support
+    OR.push({ 
+      approved: true, 
+      status: { in: ["OPEN", "PENDING_RESOLUTION"] },
+      resolutionDate: { lte: now }
     })
   }
   
@@ -146,7 +156,7 @@ export default async function MarketsPage(props: PageProps) {
   })
 
   // Fetch Trending Markets (Only if not searching and on default view)
-  const isDefaultView = !query && !showMyPositions && statuses.length === 1 && statuses[0] === 'open'
+  const isDefaultView = !query && !showMyPositions && statuses.length === 2 && statuses.includes('active') && statuses.includes('expired')
   
   let trendingMarkets: typeof markets = []
 
@@ -159,6 +169,7 @@ export default async function MarketsPage(props: PageProps) {
               arenaId,
               status: "OPEN",
               approved: true,
+              resolutionDate: { gt: new Date() }, // Only show active markets in trending
               bets: {
                   some: {
                       createdAt: { gte: recentCutoff }
