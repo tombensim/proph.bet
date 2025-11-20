@@ -98,7 +98,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
         )}
         <CardHeader className="pb-3 relative z-10">
           <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-lg leading-tight">{market.title}</CardTitle>
+            <CardTitle className="text-lg leading-tight line-clamp-2 min-h-[3rem]" title={market.title}>{market.title}</CardTitle>
             <Badge variant={market.type === "BINARY" ? "default" : "secondary"}>
               {market.type === "BINARY" ? "Yes/No" : market.type === "MULTIPLE_CHOICE" ? "Multi" : "Range"}
             </Badge>
@@ -107,7 +107,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
             {market.description}
           </div>
         </CardHeader>
-        <CardContent className="mt-auto space-y-4 relative z-10">
+        <CardContent className="space-y-4 relative z-10">
            {/* Probability for Binary Markets */}
            {probabilityDisplay && (
              <div className="bg-background/50 p-3 rounded-lg border shadow-sm">

@@ -178,6 +178,7 @@ export default async function MarketsPage(props: PageProps) {
   const feePercent = (arenaSettings?.tradingFeePercent || 0) / 100
 
   // Filter out trending markets from main list to avoid duplication
+  // Ensure unique markets
   const trendingIds = new Set(trendingMarkets.map(m => m.id))
   const displayMarkets = markets.filter(m => !trendingIds.has(m.id))
 
