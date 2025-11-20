@@ -18,7 +18,7 @@ function generateTypeFromStructure(obj: TranslationStructure, depth = 0): string
     if (typeof value === 'string') {
       result += `${indent}  "${key}": string;\n`;
     } else {
-      result += `${indent}  "${key}": ${generateTypeFromStructure(value, depth + 1)}`;
+      result += `${indent}  "${key}": ${generateTypeFromStructure(value, depth + 1)};\n`;
     }
   }
   

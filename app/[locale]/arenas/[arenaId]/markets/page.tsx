@@ -177,6 +177,10 @@ export default async function MarketsPage(props: PageProps) {
   const userPoints = membership?.points || 0
   const feePercent = (arenaSettings?.tradingFeePercent || 0) / 100
 
+  // Filter out trending markets from main list to avoid duplication
+  const trendingIds = new Set(trendingMarkets.map(m => m.id))
+  const displayMarkets = markets.filter(m => !trendingIds.has(m.id))
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -217,7 +221,7 @@ export default async function MarketsPage(props: PageProps) {
           </div>
       )}
 
-      {markets.length === 0 ? (
+      {displayMarkets.length === 0 && trendingMarkets.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           {query ? (
              <p>{t('noMarkets')}</p>
@@ -231,7 +235,7 @@ export default async function MarketsPage(props: PageProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {markets.map(market => (
+          {displayMarkets.map(market => (
             <MarketCard 
               key={market.id} 
               market={{

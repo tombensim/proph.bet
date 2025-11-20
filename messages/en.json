@@ -26,7 +26,8 @@
     "filter": "Filter",
     "status": "Status",
     "noFileChosen": "No file chosen",
-    "chooseFile": "Choose File"
+    "chooseFile": "Choose File",
+    "points": "pts"
   },
   "Markets": {
     "title": "Active Markets",

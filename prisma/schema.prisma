@@ -97,10 +97,23 @@ model Arena {
   invitations Invitation[]
   settings    ArenaSettings?
   notifications Notification[]
+  news          ArenaNews[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   archivedAt  DateTime?
+}
+
+model ArenaNews {
+  id        String   @id @default(cuid())
+  arenaId   String
+  arena     Arena    @relation(fields: [arenaId], references: [id], onDelete: Cascade)
+  
+  headlines String[]
+  
+  createdAt DateTime @default(now())
+
+  @@index([arenaId])
 }
 
 model ArenaSettings {

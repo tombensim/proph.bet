@@ -26,7 +26,8 @@
     "filter": "סינון",
     "status": "סטטוס",
     "noFileChosen": "לא נבחר קובץ",
-    "chooseFile": "בחר קובץ"
+    "chooseFile": "בחר קובץ",
+    "points": "נק׳"
   },
   "Markets": {
     "title": "שווקים פעילים",

@@ -111,3 +111,65 @@ Arena Name: "${name}"`;
     throw new Error("Failed to generate arena about content");
   }
 }
+
+export async function generateArenaNews({
+  arenaName,
+  activeMarkets,
+  recentBets,
+  resolvedMarkets,
+}: {
+  arenaName: string;
+  activeMarkets: { title: string; volume: number }[];
+  recentBets: { marketTitle: string; amount: number; option?: string }[];
+  resolvedMarkets: { title: string; outcome: string }[];
+}): Promise<string[]> {
+  if (!ai) {
+    throw new Error("GEMINI_KEY is not configured");
+  }
+
+  let prompt = `You are a sports/finance news ticker anchor for "${arenaName}". Generate 5-7 short, punchy, exciting headlines for a scrolling news ticker based on the following activity:
+
+Active Markets (Trending):
+${activeMarkets.map((m) => `- ${m.title} (${m.volume} bets)`).join("\n")}
+
+Recent Big Bets:
+${recentBets.map((b) => `- ${b.amount} on "${b.option || "outcome"}" in "${b.marketTitle}"`).join("\n")}
+
+Just Resolved:
+${resolvedMarkets.map((m) => `- "${m.title}" resolved to: ${m.outcome}`).join("\n")}
+
+Requirements:
+- Return ONLY a JSON array of strings.
+- Format: ["Headline 1", "Headline 2", ...]
+- Headlines should be short (under 10 words).
+- Be exciting and dramatic (use "BREAKING", "WHALE ALERT", "UPDATE").
+- If data is sparse, generate generic hype messages about the arena.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    if (!response.text) {
+      throw new Error("No text in response");
+    }
+
+    const headlines = JSON.parse(response.text);
+    if (!Array.isArray(headlines)) {
+        throw new Error("Response is not an array");
+    }
+    return headlines;
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    // Fallback news if generation fails
+    return [
+      `Welcome to ${arenaName}!`,
+      "Predict the future, win big.",
+      "Create your own markets today!",
+    ];
+  }
+}

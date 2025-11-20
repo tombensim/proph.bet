@@ -10,7 +10,8 @@ export type Messages = {
     "signIn": string;
     "points": string;
     "about": string;
-  }  "Common": {
+  };
+  "Common": {
     "language": string;
     "switchLanguage": string;
     "loading": string;
@@ -29,7 +30,9 @@ export type Messages = {
     "status": string;
     "noFileChosen": string;
     "chooseFile": string;
-  }  "Markets": {
+    "points": string;
+  };
+  "Markets": {
     "title": string;
     "createMarket": string;
     "myPositions": string;
@@ -44,14 +47,16 @@ export type Messages = {
     "betsCount": string;
     "endsIn": string;
     "chance": string;
-  }  "UserNav": {
+  };
+  "UserNav": {
     "profile": string;
     "settings": string;
     "adminPanel": string;
     "transferPoints": string;
     "betHistory": string;
     "logout": string;
-  }  "CreateMarket": {
+  };
+  "CreateMarket": {
     "title": string;
     "subtitle": string;
     "form": {
@@ -89,7 +94,9 @@ export type Messages = {
       "totalCost": string;
       "incentive": string;
       "risk": string;
-    }  }  "MarketDetail": {
+    };
+  };
+  "MarketDetail": {
     "hiddenMarket": string;
     "hiddenMarketDesc": string;
     "open": string;
@@ -136,7 +143,8 @@ export type Messages = {
       "maxLoss": string;
       "estDisclaimer": string;
       "parimutuelInfo": string;
-    }    "resolveForm": {
+    };
+    "resolveForm": {
       "title": string;
       "desc": string;
       "winningOption": string;
@@ -147,7 +155,9 @@ export type Messages = {
       "uploading": string;
       "evidenceAttached": string;
       "finalize": string;
-    }  }  "Leaderboard": {
+    };
+  };
+  "Leaderboard": {
     "title": string;
     "subtitle": string;
     "table": {
@@ -159,7 +169,9 @@ export type Messages = {
       "winRate": string;
       "created": string;
       "fees": string;
-    }  }  "Members": {
+    };
+  };
+  "Members": {
     "title": string;
     "invite": string;
     "table": {
@@ -167,11 +179,13 @@ export type Messages = {
       "role": string;
       "joined": string;
       "actions": string;
-    }    "actions": {
+    };
+    "actions": {
       "remove": string;
       "promote": string;
       "demote": string;
-    }    "addForm": {
+    };
+    "addForm": {
       "title": string;
       "email": string;
       "emailPlaceholder": string;
@@ -182,7 +196,9 @@ export type Messages = {
       "adding": string;
       "success": string;
       "error": string;
-    }  }  "Profile": {
+    };
+  };
+  "Profile": {
     "title": string;
     "joined": string;
     "currentPoints": string;
@@ -200,7 +216,9 @@ export type Messages = {
       "loss": string;
       "resolved": string;
       "noBets": string;
-    }  }  "Admin": {
+    };
+  };
+  "Admin": {
     "dashboard": string;
     "totalUsers": string;
     "totalArenas": string;
@@ -212,7 +230,8 @@ export type Messages = {
       "users": string;
       "arenas": string;
       "settings": string;
-    }    "users": {
+    };
+    "users": {
       "title": string;
       "table": {
         "avatar": string;
@@ -221,10 +240,13 @@ export type Messages = {
         "role": string;
         "stats": string;
         "joined": string;
-      }      "stats": {
+      };
+      "stats": {
         "markets": string;
         "bets": string;
-      }    }    "arenas": {
+      };
+    };
+    "arenas": {
       "title": string;
       "create": string;
       "table": {
@@ -234,7 +256,9 @@ export type Messages = {
         "markets": string;
         "storage": string;
         "created": string;
-      }    }    "analytics": {
+      };
+    };
+    "analytics": {
       "topArenas": string;
       "topUsers": string;
       "table": {
@@ -246,14 +270,18 @@ export type Messages = {
         "activeMarkets": string;
         "marketsCreated": string;
         "members": string;
-      }    }  }  "About": {
+      };
+    };
+  };
+  "About": {
     "title": string;
     "generate": string;
     "placeholder": string;
     "generating": string;
     "generated": string;
     "error": string;
-  }};
+  };
+};
 
 // Utility type to get all possible translation keys as a flat union type
 export type TranslationKey = 
@@ -282,6 +310,7 @@ export type TranslationKey =
   | "Common.status"
   | "Common.noFileChosen"
   | "Common.chooseFile"
+  | "Common.points"
   | "Markets.title"
   | "Markets.createMarket"
   | "Markets.myPositions"

@@ -2,6 +2,7 @@ import { Navbar } from "@/components/layout/Navbar"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { NewsTicker } from "@/components/arenas/news-ticker"
 
 interface ArenaLayoutProps {
   children: React.ReactNode
@@ -32,7 +33,10 @@ export default async function ArenaLayout({ children, params }: ArenaLayoutProps
   return (
     <>
       <Navbar arenaId={arenaId} />
-      {children}
+      <NewsTicker arenaId={arenaId} />
+      <div className="pt-8 lg:px-12 xl:px-24 2xl:px-32">
+        {children}
+      </div>
     </>
   )
 }
