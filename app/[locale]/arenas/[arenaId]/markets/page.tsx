@@ -29,10 +29,18 @@ export default async function MarketsPage(props: PageProps) {
   const { arenaId } = await props.params
   const searchParams = await props.searchParams
   
-  // Check Admin Status
+  // Check Admin Status and get points
   const membership = await prisma.arenaMembership.findUnique({
-    where: { userId_arenaId: { userId: session.user.id, arenaId } }
+    where: { userId_arenaId: { userId: session.user.id, arenaId } },
+    select: { role: true, points: true }
   })
+  
+  // Get Arena Settings
+  const arenaSettings = await prisma.arenaSettings.findUnique({
+     where: { arenaId },
+     select: { tradingFeePercent: true }
+  })
+
   // Cast to any to avoid linter error if types are outdated relative to schema
   const isAdmin = session.user.role === Role.ADMIN || 
                   (session.user.role as any) === "GLOBAL_ADMIN" || 
@@ -166,6 +174,9 @@ export default async function MarketsPage(props: PageProps) {
       })
   }
 
+  const userPoints = membership?.points || 0
+  const feePercent = (arenaSettings?.tradingFeePercent || 0) / 100
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -197,6 +208,8 @@ export default async function MarketsPage(props: PageProps) {
                         userBets: market.bets
                       }} 
                       isAdmin={isAdmin}
+                      userPoints={userPoints}
+                      feePercent={feePercent}
                     />
                   ))}
               </div>
@@ -226,6 +239,8 @@ export default async function MarketsPage(props: PageProps) {
                 userBets: market.bets
               }} 
               isAdmin={isAdmin}
+              userPoints={userPoints}
+              feePercent={feePercent}
             />
           ))}
         </div>

@@ -22,18 +22,12 @@ export function ShareMarketButton({
   className
 }: ShareMarketButtonProps) {
   const [copied, setCopied] = useState(false)
-  // We can use a generic namespace or pass translations, but for now let's assume common or hardcode slightly until we check translations file
-  // Ideally we would check messages/en.json. For now I will use hardcoded fallbacks if 'Common' namespace doesn't exist or handle it.
-  // Actually let's try to use useTranslations if possible. 
-  // Wait, I don't have the messages file content. I'll assume 'Common' or similar exists, or just use hardcoded strings for "Share" and "Copied".
-  // Best practice: check messages first.
-  
-  // Let's skip useTranslations for a second to check if I can read the messages file first or just use English/simple text.
-  // The prompt didn't specify i18n requirements but the project uses it.
-  // I'll use hardcoded English for now and wraps it later if needed, or just "Share".
   
   const handleShare = async () => {
-    const shareUrl = url || window.location.href
+    let shareUrl = url || window.location.href
+    if (shareUrl.startsWith('/')) {
+        shareUrl = `${window.location.origin}${shareUrl}`
+    }
     
     if (navigator.share) {
       try {
@@ -58,6 +52,8 @@ export function ShareMarketButton({
     }
   }
 
+  const showText = size !== "icon"
+
   return (
     <Button 
       variant={variant} 
@@ -66,12 +62,11 @@ export function ShareMarketButton({
       className={className}
     >
       {copied ? (
-        <Check className="h-4 w-4 mr-2" />
+        <Check className={`h-4 w-4 ${showText ? "mr-2" : ""}`} />
       ) : (
-        <Share2 className="h-4 w-4 mr-2" />
+        <Share2 className={`h-4 w-4 ${showText ? "mr-2" : ""}`} />
       )}
-      {copied ? "Copied" : "Share"}
+      {showText && (copied ? "Copied" : "Share")}
     </Button>
   )
 }
-

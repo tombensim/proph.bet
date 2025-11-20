@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BetForm } from "./bet-form"
+import { BetForm } from "@/components/market/BetForm"
 import { ResolveMarketForm } from "./resolve-form"
 import { Separator } from "@/components/ui/separator"
 import { CommentsSection } from "./comments-section"
@@ -25,9 +25,6 @@ export default async function MarketPage(props: PageProps) {
   const params = await props.params;
   const { arenaId, id } = params
   const t = await getTranslations('MarketDetail');
-  const messages = await getMessages();
-  // @ts-ignore
-  const betFormTranslations = messages.MarketDetail.betForm;
   
   const session = await auth()
   if (!session?.user?.id) return redirect("/api/auth/signin")
@@ -233,7 +230,6 @@ export default async function MarketPage(props: PageProps) {
                     userPoints={membership?.points || 0} 
                     totalPool={totalPool} 
                     feePercent={(arenaSettings?.tradingFeePercent || 0) / 100}
-                    translations={betFormTranslations}
                   />
               )}
             </CardContent>

@@ -5,10 +5,15 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
-import { Coins, AlertTriangle } from "lucide-react"
+import { Coins, AlertTriangle, Zap } from "lucide-react"
 import { ApproveMarketButton } from "./ApproveMarketButton"
 import { useTranslations } from 'next-intl';
 import { generateGradient } from "@/lib/utils"
+import { ShareMarketButton } from "./ShareMarketButton"
+import { BetForm } from "./BetForm"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useState } from "react"
 
 interface MarketWithDetails extends Market {
   creator: User
@@ -20,11 +25,19 @@ interface MarketWithDetails extends Market {
   assets?: MarketAsset[]
 }
 
-export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isAdmin?: boolean }) {
+interface MarketCardProps {
+  market: MarketWithDetails
+  isAdmin?: boolean
+  userPoints?: number
+  feePercent?: number
+}
+
+export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: MarketCardProps) {
   const t = useTranslations('Markets');
   const hasPositions = market.userBets && market.userBets.length > 0
   const coverImage = market.assets?.find(a => a.type === "IMAGE")?.url
   const isPending = market.approved === false
+  const [isBetOpen, setIsBetOpen] = useState(false)
   
   let probabilityDisplay = null
   
@@ -52,22 +65,29 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
     : `/markets/${market.id}`
 
   return (
-    <Link href={href}>
-      <Card className={`h-full transition-all cursor-pointer flex flex-col overflow-hidden relative ${hasPositions ? 'border-blue-200 bg-blue-50/20' : 'hover:bg-muted/50'} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''}`}>
-        {isPending && (
-            <div className="absolute top-2 end-2 z-10">
-                <Badge variant="destructive" className="gap-1 bg-yellow-500 hover:bg-yellow-600">
-                    <AlertTriangle className="w-3 h-3" /> {t('pendingApproval')}
-                </Badge>
-            </div>
-        )}
+    <Card className={`h-full transition-all flex flex-col overflow-hidden relative group hover:shadow-md ${hasPositions ? 'border-blue-200 bg-blue-50/20' : ''} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''}`}>
+      {/* Navigation Link Overlay */}
+      <Link href={href} className="absolute inset-0 z-0 focus:outline-none">
+         <span className="sr-only">{market.title}</span>
+      </Link>
+
+      {isPending && (
+          <div className="absolute top-2 end-2 z-10">
+              <Badge variant="destructive" className="gap-1 bg-yellow-500 hover:bg-yellow-600">
+                  <AlertTriangle className="w-3 h-3" /> {t('pendingApproval')}
+              </Badge>
+          </div>
+      )}
+
+      {/* Content Section - Pointer events passed through to Link unless caught */}
+      <div className="flex flex-col h-full pointer-events-none"> 
         {coverImage ? (
           <div className="relative h-32 w-full overflow-hidden bg-muted">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={coverImage} 
               alt={market.title}
-              className="object-cover w-full h-full transition-transform hover:scale-105 duration-500"
+              className="object-cover w-full h-full transition-transform group-hover:scale-105 duration-500"
             />
           </div>
         ) : (
@@ -76,7 +96,7 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
             style={{ background: generateGradient(market.id) }}
           />
         )}
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 relative z-10">
           <div className="flex justify-between items-start gap-2">
             <CardTitle className="text-lg leading-tight">{market.title}</CardTitle>
             <Badge variant={market.type === "BINARY" ? "default" : "secondary"}>
@@ -87,7 +107,7 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
             {market.description}
           </div>
         </CardHeader>
-        <CardContent className="mt-auto space-y-4">
+        <CardContent className="mt-auto space-y-4 relative z-10">
            {/* Probability for Binary Markets */}
            {probabilityDisplay && (
              <div className="bg-background/50 p-3 rounded-lg border shadow-sm">
@@ -112,17 +132,52 @@ export function MarketCard({ market, isAdmin }: { market: MarketWithDetails, isA
              {t('createdBy', { name: market.creator.name || "Unknown" })}
            </div>
         </CardContent>
-        <CardFooter className="text-xs text-muted-foreground flex justify-between border-t pt-4">
-           <span>{t('betsCount', { count: market._count.bets })}</span>
-           <span>{formatDistanceToNow(new Date(market.resolutionDate), { addSuffix: true })}</span>
-        </CardFooter>
-        
-        {isPending && isAdmin && market.arenaId && (
-            <div className="p-2 border-t bg-yellow-100/50">
-                <ApproveMarketButton marketId={market.id} arenaId={market.arenaId} />
-            </div>
-        )}
-      </Card>
-    </Link>
+      </div>
+      
+      <CardFooter className="text-xs text-muted-foreground flex justify-between items-center border-t p-3 relative z-20 pointer-events-auto bg-card">
+          <div className="flex flex-col sm:flex-row sm:gap-3 gap-1 min-w-0 flex-1 mr-2">
+             <span className="truncate">{t('betsCount', { count: market._count.bets })}</span>
+             <span className="hidden sm:inline text-muted-foreground/50">•</span>
+             <span className="truncate">{formatDistanceToNow(new Date(market.resolutionDate), { addSuffix: true })}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <ShareMarketButton 
+                marketTitle={market.title} 
+                url={href}
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+            />
+
+            {market.status === "OPEN" && !isPending && (
+                <Dialog open={isBetOpen} onOpenChange={setIsBetOpen}>
+                    <DialogTrigger asChild>
+                        <Button size="sm" variant="default" className="h-9 px-4 shadow-sm shrink-0 font-medium">
+                            <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" />
+                            Bet
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]" onClick={(e) => e.stopPropagation()}>
+                        <DialogHeader>
+                            <DialogTitle>{market.title}</DialogTitle>
+                        </DialogHeader>
+                        <BetForm 
+                            market={market}
+                            userPoints={userPoints}
+                            feePercent={feePercent}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
+          </div>
+      </CardFooter>
+      
+      {isPending && isAdmin && market.arenaId && (
+          <div className="p-2 border-t bg-yellow-100/50 relative z-20 pointer-events-auto">
+              <ApproveMarketButton marketId={market.id} arenaId={market.arenaId} />
+          </div>
+      )}
+    </Card>
   )
 }

@@ -38,8 +38,23 @@ type PotentialReturn =
   | { type: "AMM"; payout: number; profit: number; percent: number; fee: number }
   | null;
 
-export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0 }: BetFormProps) {
-  const t = useTranslations('MarketDetail.betForm');
+export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, translations }: BetFormProps) {
+  const tHook = useTranslations('MarketDetail.betForm');
+  
+  // Fallback to provided translations or use hook
+  const t = (key: string, params?: Record<string, string | number>) => {
+      if (translations && translations[key]) {
+          let text = translations[key];
+          if (params) {
+              Object.entries(params).forEach(([k, v]) => {
+                  text = text.replace(`{${k}}`, String(v));
+              });
+          }
+          return text;
+      }
+      // @ts-ignore
+      return tHook(key, params);
+  }
 
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
