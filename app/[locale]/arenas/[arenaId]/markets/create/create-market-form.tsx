@@ -32,7 +32,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { createMarketAction } from "@/app/actions/create-market"
 import { CreateMarketValues, createMarketSchema } from "@/lib/schemas"
-import { useTransition, useState, useMemo } from "react"
+import { useTransition, useState, useMemo, useEffect } from "react"
 import { MultiUserSelector } from "@/components/ui/multi-user-selector"
 import { getUploadUrlAction } from "@/app/actions/storage"
 import { AssetType } from "@prisma/client"
@@ -44,6 +44,13 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [placeholder, setPlaceholder] = useState("")
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * 11) + 1
+    setPlaceholder(t(`placeholders.${randomIndex}`))
+  }, [t])
+
 
   const form = useForm<CreateMarketValues>({
     // @ts-ignore
@@ -57,10 +64,13 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
       hideBetsFromUserIds: [],
       arenaId: arenaId,
       assets: [],
+      rangeMin: 0,
+      rangeMax: 100,
+      rangeBins: 5,
     },
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "options",
   })
@@ -71,10 +81,38 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
   })
 
   const marketType = form.watch("type")
+  const rangeMin = form.watch("rangeMin")
+  const rangeMax = form.watch("rangeMax")
+  const rangeBins = form.watch("rangeBins")
+
+  // Auto-generate options for Numeric Range
+  useEffect(() => {
+    if (marketType === "NUMERIC_RANGE" && rangeMin !== undefined && rangeMax !== undefined && rangeBins) {
+       // Basic validation
+       if (rangeMin >= rangeMax || rangeBins <= 0) return;
+
+       const step = (rangeMax - rangeMin) / rangeBins
+       const newOptions = []
+       for(let i=0; i<rangeBins; i++) {
+          const start = rangeMin + (i * step)
+          const end = rangeMin + ((i+1) * step)
+          
+          // Format numbers nicely
+          const formatNum = (n: number) => {
+            if (Number.isInteger(n)) return n.toString();
+            return n.toFixed(2);
+          }
+
+          newOptions.push({ value: `${formatNum(start)} - ${formatNum(end)}` })
+       }
+       replace(newOptions)
+    }
+  }, [marketType, rangeMin, rangeMax, rangeBins, replace])
 
   const totalCost = useMemo(() => {
     if (marketType === "BINARY") return seedLiquidity * 2;
     if (marketType === "MULTIPLE_CHOICE") return seedLiquidity * (fields.length || 0);
+    if (marketType === "NUMERIC_RANGE") return seedLiquidity * (fields.length || 0);
     return 0;
   }, [marketType, fields, seedLiquidity]);
 
@@ -163,7 +201,7 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
             <FormItem>
               <FormLabel>{t('marketTitle')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('marketTitlePlaceholder')} {...field} />
+                <Input placeholder={placeholder || t('marketTitlePlaceholder')} {...field} />
               </FormControl>
               <FormDescription>
                 {t('marketTitleDesc')}
@@ -433,6 +471,64 @@ export function CreateMarketForm({ arenaId, seedLiquidity = 100, tradingFeePerce
                  {form.formState.errors.options.message || form.formState.errors.options.root?.message}
                </p>
              )}
+          </div>
+        )}
+
+        {marketType === "NUMERIC_RANGE" && (
+          <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+             <h3 className="font-medium">{t('rangeSettings')}</h3>
+             <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control as any}
+                  name="rangeMin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('rangeMin')}</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="rangeMax"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('rangeMax')}</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="rangeBins"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('rangeBins')}</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={2} max={20} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+             </div>
+             
+             <div className="space-y-2">
+                <FormLabel>{t('generatedBuckets')}</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {fields.map((field, i) => (
+                    <div key={field.id} className="text-sm p-2 bg-background border rounded text-center">
+                       {field.value}
+                    </div>
+                  ))}
+                </div>
+             </div>
           </div>
         )}
 

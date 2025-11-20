@@ -32,14 +32,23 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { createMarketAction } from "@/app/actions/create-market"
 import { CreateMarketValues, createMarketSchema } from "@/lib/schemas"
-import { useTransition, useState } from "react"
+import { useTransition, useState, useEffect } from "react"
 import { MultiUserSelector } from "@/components/ui/multi-user-selector"
 import { generateDescriptionAction } from "@/app/actions/generate-description"
 import { Loader2, Sparkles } from "lucide-react"
 
+import { useTranslations } from 'next-intl';
+
 export function CreateMarketForm() {
+  const t = useTranslations('CreateMarket.form');
   const [isPending, startTransition] = useTransition()
   const [isGenerating, setIsGenerating] = useState(false)
+  const [placeholder, setPlaceholder] = useState("")
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * 11) + 1
+    setPlaceholder(t(`placeholders.${randomIndex}`))
+  }, [t])
 
   const form = useForm<CreateMarketValues>({
     // @ts-ignore
@@ -114,12 +123,12 @@ export function CreateMarketForm() {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Market Title</FormLabel>
+              <FormLabel>{t('marketTitle')}</FormLabel>
               <FormControl>
-                <Input placeholder="Will sales exceed $1M in Q4?" {...field} />
+                <Input placeholder={placeholder || t('marketTitlePlaceholder')} {...field} />
               </FormControl>
               <FormDescription>
-                A clear and concise question.
+                {t('marketTitleDesc')}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -132,7 +141,7 @@ export function CreateMarketForm() {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t('description')}</FormLabel>
                 <Button
                   type="button"
                   variant="outline"
@@ -141,16 +150,16 @@ export function CreateMarketForm() {
                   disabled={isGenerating || !form.watch("title")}
                 >
                   {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-4 w-4 animate-spin me-2" />
                   ) : (
-                    <Sparkles className="h-4 w-4 mr-2" />
+                    <Sparkles className="h-4 w-4 me-2" />
                   )}
                   {isGenerating ? "Generating..." : "Generate with AI"}
                 </Button>
               </div>
               <FormControl>
                 <Textarea 
-                  placeholder="Provide additional context for the market..." 
+                  placeholder={t('descriptionPlaceholder')} 
                   className="resize-none" 
                   {...field} 
                 />
@@ -166,17 +175,17 @@ export function CreateMarketForm() {
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Market Type</FormLabel>
+                <FormLabel>{t('marketType')}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a market type" />
+                      <SelectValue placeholder={t('marketTypePlaceholder')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="BINARY">Binary (Yes/No)</SelectItem>
-                    <SelectItem value="MULTIPLE_CHOICE">Multiple Choice</SelectItem>
-                    <SelectItem value="NUMERIC_RANGE">Numeric Range</SelectItem>
+                    <SelectItem value="BINARY">{t('binary')}</SelectItem>
+                    <SelectItem value="MULTIPLE_CHOICE">{t('multipleChoice')}</SelectItem>
+                    <SelectItem value="NUMERIC_RANGE">{t('numericRange')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -189,23 +198,23 @@ export function CreateMarketForm() {
             name="resolutionDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Resolution Date</FormLabel>
+                <FormLabel>{t('resolutionDate')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant={"outline"}
                         className={cn(
-                          "w-full pl-3 text-left font-normal",
+                          "w-full ps-3 text-start font-normal",
                           !field.value && "text-muted-foreground"
                         )}
                       >
                         {field.value ? (
                           format(field.value, "PPP")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>{t('pickDate')}</span>
                         )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        <CalendarIcon className="ms-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
