@@ -2,10 +2,11 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { acceptInvitationAction } from "@/app/actions/accept-invitation"
 import Link from "next/link"
 import { CheckCircle2, XCircle } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default async function InvitePage({ params }: { params: Promise<{ locale: string, token: string }> }) {
   const { token, locale } = await params
@@ -21,18 +22,20 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
 
   if (!invitation) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
-                    <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <div className="flex justify-center mb-4">
+                        <XCircle className="w-12 h-12 text-destructive" />
+                    </div>
                     <CardTitle>Invalid Invitation</CardTitle>
                     <CardDescription>This invitation link is invalid or has expired.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex justify-center">
-                    <Button asChild>
+                <CardFooter className="flex justify-center">
+                    <Button asChild variant="secondary">
                         <Link href={`/${locale}`}>Go Home</Link>
                     </Button>
-                </CardContent>
+                </CardFooter>
             </Card>
         </div>
     )
@@ -45,20 +48,22 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
 
   if (isInvalidStatus || isExpired || isLimitReached) {
      return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
-                    <XCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                    <div className="flex justify-center mb-4">
+                         <XCircle className="w-12 h-12 text-amber-500" />
+                    </div>
                     <CardTitle>Invitation Expired</CardTitle>
                     <CardDescription>
                         {isLimitReached ? "This invitation has reached its usage limit." : "This invitation is no longer valid."}
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex justify-center">
-                    <Button asChild>
+                <CardFooter className="flex justify-center">
+                    <Button asChild variant="secondary">
                         <Link href={`/${locale}`}>Go Home</Link>
                     </Button>
-                </CardContent>
+                </CardFooter>
             </Card>
         </div>
     )
@@ -68,16 +73,46 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
   const isWrongUser = isLoggedIn && invitation.email && session.user.email?.toLowerCase() !== invitation.email.toLowerCase()
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-          <CardTitle>You're Invited!</CardTitle>
-          <CardDescription>
-             <strong>{invitation.inviter.name || "Someone"}</strong> invited you to join the <strong>{invitation.arena.name}</strong> arena.
-          </CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+      <Card className="w-full max-w-md overflow-hidden">
+        {invitation.arena.coverImage && (
+            <div className="h-32 w-full relative">
+                <img 
+                    src={invitation.arena.coverImage} 
+                    alt={invitation.arena.name}
+                    className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            </div>
+        )}
+        
+        <CardHeader className="text-center relative z-10">
+          {!invitation.arena.coverImage && (
+              <div className="flex justify-center mb-4">
+                  <CheckCircle2 className="w-12 h-12 text-primary" />
+              </div>
+          )}
+          
+          <CardTitle className="text-2xl">{invitation.arena.name}</CardTitle>
+          {invitation.arena.description && (
+              <CardDescription className="line-clamp-2 mt-2">
+                  {invitation.arena.description}
+              </CardDescription>
+          )}
         </CardHeader>
-        <CardContent className="space-y-4">
+        
+        <CardContent className="space-y-6">
+           <div className="flex items-center justify-center gap-3 p-4 bg-muted/50 rounded-lg">
+                <Avatar className="h-10 w-10 border-2 border-background">
+                    <AvatarImage src={invitation.inviter.image || ""} />
+                    <AvatarFallback>{invitation.inviter.name?.[0] || "U"}</AvatarFallback>
+                </Avatar>
+                <div className="text-sm text-left">
+                    <p className="font-medium text-foreground">{invitation.inviter.name || "Someone"}</p>
+                    <p className="text-muted-foreground">invited you to join</p>
+                </div>
+           </div>
+
            {isLoggedIn ? (
              isWrongUser ? (
                  <div className="text-center space-y-4">
@@ -92,7 +127,7 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
                  </div>
              ) : (
                <form action={acceptInvitationAction.bind(null, token)}>
-                   <Button className="w-full" type="submit">
+                   <Button className="w-full" size="lg" type="submit">
                        Accept Invitation
                    </Button>
                </form>
@@ -100,7 +135,7 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
            ) : (
              <div className="space-y-4 text-center">
                  <p className="text-sm text-muted-foreground">Please log in to accept this invitation.</p>
-                 <Button asChild className="w-full">
+                 <Button asChild className="w-full" size="lg">
                      <Link href={`/api/auth/signin?callbackUrl=/${locale}/invite/${token}`}>Log in / Sign up</Link>
                  </Button>
              </div>
