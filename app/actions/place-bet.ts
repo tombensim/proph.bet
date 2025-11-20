@@ -98,9 +98,36 @@ export async function placeBetAction(data: PlaceBetValues) {
           }
         })
     
-        // --- FEE LOGIC ---
-        const arenaSettings = await tx.arenaSettings.findUnique({ where: { arenaId } })
-        const FEE_PERCENT = (arenaSettings?.tradingFeePercent ?? 0) / 100
+
+    // --- FEE LOGIC ---
+    const arenaSettings = await tx.arenaSettings.findUnique({ where: { arenaId } })
+
+    // Check limitMultipleBets restriction
+    if (arenaSettings?.limitMultipleBets) {
+      const existingBet = await tx.bet.findFirst({
+        where: {
+          marketId: market.id,
+          userId: session.user.id
+        }
+      })
+
+      if (existingBet) {
+        const uniqueBettors = await tx.bet.groupBy({
+          by: ['userId'],
+          where: {
+            marketId: market.id,
+            userId: { not: session.user.id }
+          }
+        })
+
+        const threshold = arenaSettings.multiBetThreshold ?? 3
+        if (uniqueBettors.length < threshold) {
+           throw new Error(`You can only place additional bets after at least ${threshold} other members have bet on this market. Currently: ${uniqueBettors.length}`)
+        }
+      }
+    }
+
+    const FEE_PERCENT = (arenaSettings?.tradingFeePercent ?? 0) / 100
         const fee = Math.floor(amount * FEE_PERCENT)
         const netBetAmount = amount - fee
     
