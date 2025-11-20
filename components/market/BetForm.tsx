@@ -17,6 +17,7 @@ import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { v4 as uuidv4 } from 'uuid';
+import { useIsMounted } from "@/lib/hooks/use-is-mounted"
 
 interface BetFormProps {
   market: Market & { options: Option[] }
@@ -70,6 +71,8 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
       amount: market.minBet || 10,
     }
   })
+
+  const isMounted = useIsMounted();
 
   // Calculate probabilities for display
   const inverseSum = market.options.reduce((sum, o) => sum + (1 / (o.liquidity || 100)), 0)
@@ -268,34 +271,38 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
                        
                        {/* Histogram */}
                        <div className="h-[200px] w-full border rounded-lg p-2 bg-muted/10">
-                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={numericData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                               <XAxis 
-                                    dataKey="range" 
-                                    fontSize={10} 
-                                    tickLine={false} 
-                                    interval={0} 
-                                    angle={-45}
-                                    textAnchor="end"
-                                    height={50}
-                               />
-                               <YAxis hide />
-                               <Tooltip 
-                                  formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "Probability"]}
-                                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }}
-                                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
-                               />
-                               <Bar dataKey="probability" onClick={(data) => field.onChange(data.id)} cursor="pointer" radius={[4, 4, 0, 0]}>
-                                  {numericData.map((entry, index) => (
-                                     <Cell 
-                                       key={`cell-${index}`} 
-                                       fill={field.value === entry.id ? "hsl(var(--primary))" : "hsl(var(--primary))"} 
-                                       opacity={field.value === entry.id ? 1 : 0.5}
-                                     />
-                                  ))}
-                               </Bar>
-                            </BarChart>
-                         </ResponsiveContainer>
+                         {isMounted ? (
+                           <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={numericData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                                 <XAxis 
+                                      dataKey="range" 
+                                      fontSize={10} 
+                                      tickLine={false} 
+                                      interval={0} 
+                                      angle={-45}
+                                      textAnchor="end"
+                                      height={50}
+                                 />
+                                 <YAxis hide />
+                                 <Tooltip 
+                                    formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "Probability"]}
+                                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }}
+                                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                                 />
+                                 <Bar dataKey="probability" onClick={(data) => field.onChange(data.id)} cursor="pointer" radius={[4, 4, 0, 0]}>
+                                    {numericData.map((entry, index) => (
+                                       <Cell 
+                                         key={`cell-${index}`} 
+                                         fill={field.value === entry.id ? "hsl(var(--primary))" : "hsl(var(--primary))"} 
+                                         opacity={field.value === entry.id ? 1 : 0.5}
+                                       />
+                                    ))}
+                                 </Bar>
+                              </BarChart>
+                           </ResponsiveContainer>
+                         ) : (
+                           <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">Loading chart...</div>
+                         )}
                        </div>
 
                        <FormControl>
