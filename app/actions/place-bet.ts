@@ -104,10 +104,14 @@ export async function placeBetAction(data: PlaceBetValues) {
 
     // Check limitMultipleBets restriction
     if (arenaSettings?.limitMultipleBets) {
-      const existingBet = await tx.bet.findFirst({
+      // Check if user has already placed a "real" bet (recorded as a Transaction)
+      // We use Transaction instead of Bet because market creators get initial "bets" 
+      // for liquidity, but those don't have a BET_PLACED transaction.
+      const existingBet = await tx.transaction.findFirst({
         where: {
           marketId: market.id,
-          userId: session.user.id
+          fromUserId: session.user.id,
+          type: TransactionType.BET_PLACED
         }
       })
 
