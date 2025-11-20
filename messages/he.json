@@ -295,5 +295,49 @@
     "generating": "מייצר...",
     "generated": "התוכן נוצר בהצלחה",
     "error": "יצירת התוכן נכשלה"
+  },
+  "AboutPage": {
+    "hero": {
+      "title": "לחזות. לשחק. לנצח.",
+      "subtitle": "הזירה הפרטית שלכם ליישוב ויכוחים, חיזוי העתיד והוכחה שצדקתם לאורך כל הדרך."
+    },
+    "intro": {
+      "text": "חשבו על proph.bet כעל ה-Polymarket הפרטי שלכם ושל החברים שלכם. בין אם זה לחזות את ההשקה הטכנולוגית הגדולה הבאה, הימורים משרדיים, או סתם להחליט מי יאחר לפגישה, אנחנו הופכים את זה לכיף, קל וממכר באופן מוזר."
+    },
+    "features": {
+      "crystalBall": {
+        "title": "🔮 כדור בדולח",
+        "description": "צרו שווקים על כל דבר ממש. \"האם ירד גשם מחר?\" \"האם דייב יאכל סלט?\" השמיים הם הגבול."
+      },
+      "trustedCircles": {
+        "title": "🤝 מעגלים מהימנים",
+        "description": "שמרו על אינטימיות. הזמינו את החברים, העמיתים או חברי הקהילה שלכם לזירה פרטית שבה מה שקורה נשאר בקבוצה."
+      },
+      "glory": {
+        "title": "🏆 תהילה וזכויות התרברבות",
+        "description": "טפסו בטבלת המובילים והבטיחו את מעמדכם כאורקל המקומי. הנקודות וירטואליות, אבל התהילה אמיתית."
+      }
+    },
+    "howToPlay": {
+      "title": "איך משחקים",
+      "steps": {
+        "join": {
+          "title": "הצטרף לזירה",
+          "description": "היכנס לזירה."
+        },
+        "pick": {
+          "title": "בחר הימור",
+          "description": "סמוך על תחושת הבטן שלך."
+        },
+        "watch": {
+          "title": "עקוב אחר הסיכויים",
+          "description": "השוק זז מהר."
+        },
+        "win": {
+          "title": "תבע ניצחון",
+          "description": "אמרתי לכם."
+        }
+      }
+    }
   }
 }

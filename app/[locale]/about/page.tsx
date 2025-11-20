@@ -2,9 +2,11 @@ import { Navbar } from "@/components/layout/Navbar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { auth } from "@/lib/auth"
 import Image from "next/image"
+import { getTranslations } from "next-intl/server"
 
 export default async function AboutPage() {
   const session = await auth()
+  const t = await getTranslations('AboutPage')
 
   return (
     <>
@@ -23,10 +25,10 @@ export default async function AboutPage() {
                 />
             </div>
             <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Predict. Play. Win.
+              {t('hero.title')}
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Your private arena for settling debates, predicting the future, and proving you were right all along.
+              {t('hero.subtitle')}
             </p>
           </div>
 
@@ -34,9 +36,7 @@ export default async function AboutPage() {
           <Card className="border-2 border-primary/10 bg-secondary/30 backdrop-blur-sm">
             <CardContent className="p-8 text-center">
               <p className="text-lg leading-relaxed font-medium">
-                Think of proph.bet as your private Polymarket for you and your friends. 
-                Whether it's predicting the next big tech launch, office pools, or just settling who's going to be late to the meeting, 
-                we make it fun, easy, and oddly addictive.
+                {t('intro.text')}
               </p>
             </CardContent>
           </Card>
@@ -45,31 +45,31 @@ export default async function AboutPage() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card className="transform hover:-translate-y-1 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-2xl">🔮 Crystal Ball</CardTitle>
+                <CardTitle className="text-2xl">{t('features.crystalBall.title')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Create markets on literally anything. "Will it rain tomorrow?" "Will Dave eat a salad?" The sky's the limit.
+                  {t('features.crystalBall.description')}
                 </p>
               </CardContent>
             </Card>
             <Card className="transform hover:-translate-y-1 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-2xl">🤝 Trusted Circles</CardTitle>
+                <CardTitle className="text-2xl">{t('features.trustedCircles.title')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Keep it cozy. Invite your friends, colleagues, or community members into a private Arena where what happens stays in the group.
+                  {t('features.trustedCircles.description')}
                 </p>
               </CardContent>
             </Card>
             <Card className="transform hover:-translate-y-1 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-2xl">🏆 Glory & Bragging Rights</CardTitle>
+                <CardTitle className="text-2xl">{t('features.glory.title')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Climb the leaderboard and secure your status as the resident oracle. Points are virtual, but the glory is real.
+                  {t('features.glory.description')}
                 </p>
               </CardContent>
             </Card>
@@ -77,27 +77,27 @@ export default async function AboutPage() {
 
           {/* How it Works - Playful Version */}
           <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-center">How to Play</h2>
+            <h2 className="text-3xl font-bold text-center">{t('howToPlay.title')}</h2>
             <div className="grid gap-4 md:grid-cols-4">
                 <div className="flex flex-col items-center text-center space-y-2 p-4 rounded-lg bg-card border hover:border-primary/50 transition-colors">
                     <div className="text-4xl mb-2">🏟️</div>
-                    <h3 className="font-bold">Join an Arena</h3>
-                    <p className="text-sm text-muted-foreground">Enter the ring.</p>
+                    <h3 className="font-bold">{t('howToPlay.steps.join.title')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('howToPlay.steps.join.description')}</p>
                 </div>
                 <div className="flex flex-col items-center text-center space-y-2 p-4 rounded-lg bg-card border hover:border-primary/50 transition-colors">
                     <div className="text-4xl mb-2">💡</div>
-                    <h3 className="font-bold">Make a Pick</h3>
-                    <p className="text-sm text-muted-foreground">Trust your gut.</p>
+                    <h3 className="font-bold">{t('howToPlay.steps.pick.title')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('howToPlay.steps.pick.description')}</p>
                 </div>
                 <div className="flex flex-col items-center text-center space-y-2 p-4 rounded-lg bg-card border hover:border-primary/50 transition-colors">
                     <div className="text-4xl mb-2">📉</div>
-                    <h3 className="font-bold">Watch the Odds</h3>
-                    <p className="text-sm text-muted-foreground">Market moves fast.</p>
+                    <h3 className="font-bold">{t('howToPlay.steps.watch.title')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('howToPlay.steps.watch.description')}</p>
                 </div>
                 <div className="flex flex-col items-center text-center space-y-2 p-4 rounded-lg bg-card border hover:border-primary/50 transition-colors">
                     <div className="text-4xl mb-2">👑</div>
-                    <h3 className="font-bold">Claim Victory</h3>
-                    <p className="text-sm text-muted-foreground">I told you so.</p>
+                    <h3 className="font-bold">{t('howToPlay.steps.win.title')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('howToPlay.steps.win.description')}</p>
                 </div>
             </div>
           </div>
