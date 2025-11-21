@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { isSystemAdmin } from "@/lib/roles"
 import { Role, ArenaRole } from "@prisma/client"
 
-export async function getUsersAction(query: string = "", arenaId?: string) {
+export async function getUsersAction(query: string = "", arenaId?: string, userIds?: string[]) {
   const session = await auth()
   if (!session?.user) return []
 
@@ -13,6 +13,21 @@ export async function getUsersAction(query: string = "", arenaId?: string) {
     session.user.role === Role.ADMIN || 
     session.user.role === Role.GLOBAL_ADMIN || 
     isSystemAdmin(session.user.email)
+
+  // Special case: Fetch specific users by ID (for pre-filling selections)
+  if (userIds && userIds.length > 0) {
+    return prisma.user.findMany({
+      where: {
+        id: { in: userIds }
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true
+      }
+    })
+  }
 
   // 1. Global Search (No Arena Context)
   // Only allowed for Global/System Admins

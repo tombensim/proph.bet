@@ -4,6 +4,13 @@ import { RefObject } from "react"
 import { Badge } from "@/components/ui/badge"
 import { ShareMarketButton } from "@/components/market/ShareMarketButton"
 import { DownloadSummaryButton } from "@/components/market/DownloadSummaryButton"
+import { EditMarketDialog } from "@/components/market/EditMarketDialog"
+
+interface UserOption {
+  id: string
+  name: string | null
+  email: string
+}
 
 interface MarketHeaderProps {
   marketType: string
@@ -18,6 +25,11 @@ interface MarketHeaderProps {
     closed: string
     betsHidden: string
   }
+  // Added for edit dialog
+  isCreatorOrAdmin?: boolean
+  arenaId?: string
+  hiddenUsers?: UserOption[]
+  hideBetsFromUsers?: UserOption[]
 }
 
 export function MarketHeader({ 
@@ -28,7 +40,11 @@ export function MarketHeader({
   marketTitle,
   marketId,
   summaryRef,
-  translations 
+  translations,
+  isCreatorOrAdmin,
+  arenaId,
+  hiddenUsers,
+  hideBetsFromUsers
 }: MarketHeaderProps) {
   const isResolved = marketStatus === "RESOLVED"
   
@@ -47,6 +63,15 @@ export function MarketHeader({
       {hideBets && <Badge variant="secondary">{translations.betsHidden}</Badge>}
       
       <div className="flex items-center gap-2 ms-auto">
+        {isCreatorOrAdmin && hiddenUsers && hideBetsFromUsers && (
+            <EditMarketDialog 
+               marketId={marketId}
+               arenaId={arenaId}
+               initialHiddenUsers={hiddenUsers} 
+               initialHideBetsFromUsers={hideBetsFromUsers}
+            />
+        )}
+        
         {isResolved && summaryRef && (
           <DownloadSummaryButton 
             summaryRef={summaryRef} 
@@ -60,4 +85,3 @@ export function MarketHeader({
     </div>
   )
 }
-

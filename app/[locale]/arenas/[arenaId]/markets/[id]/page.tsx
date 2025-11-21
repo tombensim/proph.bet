@@ -68,10 +68,10 @@ export default async function MarketPage(props: PageProps) {
       orderBy: { createdAt: 'asc' }
     },
     hiddenUsers: {
-      select: { id: true }
+      select: { id: true, name: true, email: true }
     },
     hideBetsFromUsers: {
-      select: { id: true }
+      select: { id: true, name: true, email: true }
     },
     comments: {
       include: {
@@ -168,7 +168,9 @@ export default async function MarketPage(props: PageProps) {
         isCreator={isCreator}
       />
 
-      <h1 className="text-3xl font-bold mb-2 mt-2">{market.title}</h1>
+      <div className="flex items-start justify-between gap-4 mb-2 mt-2">
+         <h1 className="text-3xl font-bold">{market.title}</h1>
+      </div>
       <div className="text-muted-foreground whitespace-pre-wrap mb-4">
         {market.description}
       </div>
@@ -367,6 +369,8 @@ export default async function MarketPage(props: PageProps) {
       disputeSection={disputeSection}
       heroSection={heroSection}
       mainContent={mainContent}
+      isCreatorOrAdmin={isCreator || isAdmin}
+      arenaId={arenaId}
     />
   )
 }

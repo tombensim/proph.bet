@@ -33,13 +33,14 @@ interface MultiUserSelectorProps {
   onChange: (value: string[]) => void
   placeholder?: string
   arenaId?: string
+  initialUsers?: UserOption[]
 }
 
-export function MultiUserSelector({ value = [], onChange, placeholder = "Select users...", arenaId }: MultiUserSelectorProps) {
+export function MultiUserSelector({ value = [], onChange, placeholder = "Select users...", arenaId, initialUsers = [] }: MultiUserSelectorProps) {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [options, setOptions] = React.useState<UserOption[]>([])
-  const [selectedUsers, setSelectedUsers] = React.useState<UserOption[]>([])
+  const [selectedUsers, setSelectedUsers] = React.useState<UserOption[]>(initialUsers)
   const debouncedQuery = useDebounce(query, 300)
 
   // Fetch users on search
@@ -51,18 +52,36 @@ export function MultiUserSelector({ value = [], onChange, placeholder = "Select 
     return () => { active = false }
   }, [debouncedQuery, arenaId])
 
-  // Fetch details for selected users if they are not in options
+  // Hydrate selected users from value if not present
   React.useEffect(() => {
-    // In a real app, you'd fetch specific IDs to show their names.
-    // For this draft, we'll assume the user found them via search and we kept them.
-    // If `value` comes from parent but we don't have the objects, we might show IDs or need a fetch-by-ids action.
-    // For simplicity in V1 creation flow: we only set state from selection.
-    // But we should sync `value` prop changes if they come from outside (e.g. form reset).
-  }, [value])
+    // Identify IDs that are in `value` but not in `selectedUsers`
+    const missingIds = value.filter(id => !selectedUsers.some(u => u.id === id))
+
+    if (missingIds.length > 0) {
+      getUsersAction("", arenaId, missingIds).then((fetchedUsers) => {
+        setSelectedUsers(prev => {
+          const existingIds = new Set(prev.map(u => u.id))
+          const newUsers = fetchedUsers.filter(u => !existingIds.has(u.id))
+          if (newUsers.length === 0) return prev
+          return [...prev, ...newUsers]
+        })
+      })
+    } else if (value.length < selectedUsers.length) {
+        // If value was reduced externally (though unlikely in this controlled component pattern without onChange), 
+        // or if we want to sync 'selectedUsers' to be exactly 'value'.
+        // But usually we keep the user objects even if deselected if we want cache, 
+        // OR we should sync strictly.
+        // Let's sync strictly to be safe: remove users not in value.
+        setSelectedUsers(prev => prev.filter(u => value.includes(u.id)))
+    }
+  }, [value, arenaId]) // Removed selectedUsers from dep array to avoid loops, relying on functional state update or careful check
 
   const handleSelect = (user: UserOption) => {
     if (value.includes(user.id)) {
       onChange(value.filter((id) => id !== user.id))
+      // State update will happen via useEffect if we rely on prop, but let's update optimistic too for speed
+      // setSelectedUsers is handled by useEffect sync now to avoid double source of truth issues? 
+      // No, usually better to update immediately for UI responsiveness.
       setSelectedUsers(prev => prev.filter(u => u.id !== user.id))
     } else {
       onChange([...value, user.id])
@@ -138,4 +157,3 @@ export function MultiUserSelector({ value = [], onChange, placeholder = "Select 
     </div>
   )
 }
-

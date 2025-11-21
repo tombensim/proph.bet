@@ -16,6 +16,12 @@ type MarketWithRelations = Prisma.MarketGetPayload<{
     }
     options: true
     analystSentiments: true
+    hiddenUsers: {
+        select: { id: true, name: true, email: true }
+    }
+    hideBetsFromUsers: {
+        select: { id: true, name: true, email: true }
+    }
   }
 }>
 
@@ -31,6 +37,8 @@ interface MarketContentProps {
   disputeSection?: ReactNode
   heroSection: ReactNode
   mainContent: ReactNode
+  isCreatorOrAdmin?: boolean
+  arenaId?: string
 }
 
 export function MarketContent({
@@ -40,7 +48,9 @@ export function MarketContent({
   translations,
   disputeSection,
   heroSection,
-  mainContent
+  mainContent,
+  isCreatorOrAdmin,
+  arenaId
 }: MarketContentProps) {
   const summaryRef = useRef<HTMLDivElement>(null)
   const isResolved = market.status === "RESOLVED"
@@ -60,6 +70,10 @@ export function MarketContent({
           marketId={market.id}
           summaryRef={isResolved ? summaryRef : undefined}
           translations={translations}
+          isCreatorOrAdmin={isCreatorOrAdmin}
+          arenaId={arenaId}
+          hiddenUsers={market.hiddenUsers as any[]}
+          hideBetsFromUsers={market.hideBetsFromUsers as any[]}
         />
 
         {disputeSection}
@@ -75,4 +89,3 @@ export function MarketContent({
     </div>
   )
 }
-
