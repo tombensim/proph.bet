@@ -15,9 +15,34 @@ import { getTranslations, getMessages } from 'next-intl/server';
 import { EditMarketCover } from "./edit-market-cover"
 import { DisputeDialog } from "./dispute-dialog"
 import { AlertTriangle } from "lucide-react"
-import { ShareMarketButton } from "@/components/market/ShareMarketButton"
 import { AnalystSentimentDisplay } from "@/components/market/AnalystSentimentDisplay"
-import { ResolvedMarketSummary } from "@/components/market/ResolvedMarketSummary"
+import { MarketContent } from "./market-content"
+import { Prisma } from "@prisma/client"
+
+// Extended market type with all relations
+type ExtendedMarket = Prisma.MarketGetPayload<{
+  include: {
+    creator: true
+    options: true
+    assets: true
+    bets: {
+      include: { user: true, option: true }
+    }
+    priceHistory: true
+    hiddenUsers: true
+    hideBetsFromUsers: true
+    comments: {
+      include: {
+        user: true
+      }
+    }
+    disputes: true
+    analystSentiments: true
+    transactions: {
+      include: { toUser: true }
+    }
+  }
+}>
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -31,48 +56,50 @@ export default async function MarketPage(props: PageProps) {
   const session = await auth()
   if (!session?.user?.id) return redirect("/api/auth/signin")
 
+  const marketInclude: any = {
+    creator: true,
+    options: true,
+    assets: true,
+    bets: {
+      include: { user: true, option: true },
+      orderBy: { createdAt: 'desc' }
+    },
+    priceHistory: {
+      orderBy: { createdAt: 'asc' }
+    },
+    hiddenUsers: {
+      select: { id: true }
+    },
+    hideBetsFromUsers: {
+      select: { id: true }
+    },
+    comments: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    },
+    disputes: {
+      where: { userId: session.user.id },
+      select: { id: true }
+    },
+    analystSentiments: true,
+    transactions: {
+      where: { type: "WIN_PAYOUT" },
+      include: { toUser: true }
+    }
+  }
+  
   const market = await prisma.market.findUnique({
     where: { id: id },
-    include: {
-      creator: true,
-      options: true,
-      assets: true,
-      bets: {
-        include: { user: true, option: true },
-        orderBy: { createdAt: 'desc' }
-      },
-      priceHistory: {
-        orderBy: { createdAt: 'asc' }
-      },
-      hiddenUsers: {
-         select: { id: true }
-      },
-      hideBetsFromUsers: {
-         select: { id: true }
-      },
-      comments: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      },
-      disputes: {
-        where: { userId: session.user.id },
-        select: { id: true }
-      },
-      analystSentiments: true,
-      transactions: {
-        where: { type: "WIN_PAYOUT" },
-        include: { toUser: true }
-      }
-    }
-  })
+    include: marketInclude
+  }) as ExtendedMarket | null
 
   if (!market) notFound()
 
@@ -103,7 +130,7 @@ export default async function MarketPage(props: PageProps) {
     select: { points: true }
   })
 
-  const arenaSettings = await prisma.arenaSettings.findUnique({
+  const arenaSettings = await (prisma as any).arenaSettings.findUnique({
     where: { arenaId },
     select: { tradingFeePercent: true }
   })
@@ -131,98 +158,79 @@ export default async function MarketPage(props: PageProps) {
   
   const isExpired = market.status === 'OPEN' && new Date() > market.resolutionDate
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header Section - Always at top */}
-      <div>
-        <EditMarketCover 
-          marketId={market.id} 
-          initialImageUrl={heroImage?.url} 
-          marketTitle={market.title}
-          isCreator={isCreator}
-        />
+  // Hero section content
+  const heroSection = (
+    <>
+      <EditMarketCover 
+        marketId={market.id} 
+        initialImageUrl={heroImage?.url} 
+        marketTitle={market.title}
+        isCreator={isCreator}
+      />
 
-        <div className="flex items-center gap-3 mb-2">
-            <Badge>{market.type}</Badge>
-            {market.status === "OPEN" ? (
-              isExpired ? (
-                 <Badge variant="outline" className="text-yellow-600 border-yellow-600">Expired</Badge>
-              ) : (
-                 <Badge variant="outline" className="text-green-600 border-green-600">{t('open')}</Badge>
-              )
-            ) : (
-              <Badge variant="destructive">{t('closed')}</Badge>
-            )}
-            {hideBets && <Badge variant="secondary">{t('betsHidden')}</Badge>}
-            
-            <ShareMarketButton 
-              marketTitle={market.title} 
-              className="ms-auto"
-            />
-        </div>
-
-        {market.status === "RESOLVED" && (
-            <div className="mb-4">
-            {market.disputes.length > 0 ? (
-                <div className="flex items-center gap-2 p-3 bg-yellow-500/10 text-yellow-600 rounded-md border border-yellow-500/20 text-sm">
-                    <AlertTriangle className="h-4 w-4" />
-                    You have disputed this resolution.
-                </div>
-            ) : (
-                <DisputeDialog marketId={market.id} marketTitle={market.title} />
-            )}
-            </div>
-        )}
-
-        <h1 className="text-3xl font-bold mb-2">{market.title}</h1>
-        <div className="text-muted-foreground whitespace-pre-wrap mb-4">
-          {market.description}
-        </div>
-
-        {/* Assets / Evidence Section (excluding hero) */}
-        {remainingAssets.length > 0 && (
-          <div className="mb-6 space-y-3">
-            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">{t('resources')}</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {remainingAssets.map((asset) => (
-                <a 
-                  href={asset.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  key={asset.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all group"
-                >
-                  {asset.type === "IMAGE" ? (
-                      <div className="relative w-10 h-10 flex-shrink-0 rounded-md overflow-hidden bg-muted border">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={asset.url} alt="" className="object-cover w-full h-full" />
-                      </div>
-                  ) : (
-                      <div className="flex-shrink-0 p-2 bg-muted rounded-md group-hover:bg-background transition-colors">
-                          <LinkIcon className="h-4 w-4 text-blue-500" />
-                      </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                      {asset.label || (asset.type === "IMAGE" ? t('imageAttachment') : t('externalLink'))}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate opacity-70 group-hover:opacity-100">
-                      {new URL(asset.url).hostname}
-                    </p>
-                  </div>
-                  <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-50 transition-opacity" />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+      <h1 className="text-3xl font-bold mb-2 mt-2">{market.title}</h1>
+      <div className="text-muted-foreground whitespace-pre-wrap mb-4">
+        {market.description}
       </div>
 
-      {market.status === "RESOLVED" && (
-        <ResolvedMarketSummary market={market as any} />
+      {/* Assets / Evidence Section (excluding hero) */}
+      {remainingAssets.length > 0 && (
+        <div className="mb-6 space-y-3">
+          <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">{t('resources')}</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {remainingAssets.map((asset) => (
+              <a 
+                href={asset.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                key={asset.id}
+                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all group"
+              >
+                {asset.type === "IMAGE" ? (
+                    <div className="relative w-10 h-10 flex-shrink-0 rounded-md overflow-hidden bg-muted border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={asset.url} alt="" className="object-cover w-full h-full" />
+                    </div>
+                ) : (
+                    <div className="flex-shrink-0 p-2 bg-muted rounded-md group-hover:bg-background transition-colors">
+                        <LinkIcon className="h-4 w-4 text-blue-500" />
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                    {asset.label || (asset.type === "IMAGE" ? t('imageAttachment') : t('externalLink'))}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate opacity-70 group-hover:opacity-100">
+                    {new URL(asset.url).hostname}
+                  </p>
+                </div>
+                <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-50 transition-opacity" />
+              </a>
+            ))}
+          </div>
+        </div>
       )}
+    </>
+  )
 
-      {/* Main Content Grid */}
+  // Dispute section content
+  const disputes = (market as any).disputes as Array<{ id: string }>
+  const disputeSection = market.status === "RESOLVED" ? (
+    <div className="mb-4">
+      {disputes && disputes.length > 0 ? (
+        <div className="flex items-center gap-2 p-3 bg-yellow-500/10 text-yellow-600 rounded-md border border-yellow-500/20 text-sm">
+          <AlertTriangle className="h-4 w-4" />
+          You have disputed this resolution.
+        </div>
+      ) : (
+        <DisputeDialog marketId={market.id} marketTitle={market.title} />
+      )}
+    </div>
+  ) : null
+
+  // Main content grid
+  const mainContent = (
+    <>{/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Right Column (Mobile: Top) */}
@@ -343,6 +351,22 @@ export default async function MarketPage(props: PageProps) {
           />
         </div>
       </div>
-    </div>
+    </>
+  )
+
+  return (
+    <MarketContent
+      market={market}
+      isExpired={isExpired}
+      hideBets={hideBets}
+      translations={{
+        open: t('open'),
+        closed: t('closed'),
+        betsHidden: t('betsHidden')
+      }}
+      disputeSection={disputeSection}
+      heroSection={heroSection}
+      mainContent={mainContent}
+    />
   )
 }
