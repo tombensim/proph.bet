@@ -47,11 +47,11 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={locale === 'he' ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans overflow-x-hidden`}
         suppressHydrationWarning
       >
         <NextIntlClientProvider messages={messages}>
-          <main className="container mx-auto py-8 px-4">
+          <main className="container mx-auto py-8 px-4 overflow-x-hidden">
             {children}
           </main>
           <CommandPalette />

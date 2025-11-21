@@ -21,11 +21,17 @@ export function LocaleSwitcher() {
     router.replace(pathname, { locale: value });
   };
 
+  // Map locale codes to abbreviated and full names
+  const localeDisplay = {
+    en: { short: "en", full: "English" },
+    he: { short: "עב", full: "עברית" }
+  };
+
   return (
     <Select defaultValue={locale} onValueChange={onSelectChange}>
-      <SelectTrigger className="w-[140px] bg-transparent border-none focus:ring-0 focus:ring-offset-0">
-        <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
-        <SelectValue placeholder={t("language")} />
+      <SelectTrigger className="w-[60px] bg-transparent border-none focus:ring-0 focus:ring-offset-0">
+        <Globe className="mr-1 h-4 w-4 text-muted-foreground" />
+        <span className="text-sm">{localeDisplay[locale as keyof typeof localeDisplay]?.short || locale}</span>
       </SelectTrigger>
       <SelectContent align="end">
         <SelectItem value="en">English</SelectItem>

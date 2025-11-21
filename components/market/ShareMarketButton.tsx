@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Share2, Check, Copy } from "lucide-react"
+import { Share2, Check } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useTranslations } from 'next-intl';
@@ -56,21 +56,20 @@ export function ShareMarketButton({
     }
   }
 
-  const showText = size !== "icon"
-
   return (
     <Button 
       variant={variant} 
-      size={size} 
+      size={size}
       onClick={handleShare}
       className={className}
+      title={copied ? "Copied" : "Share"}
     >
       {copied ? (
-        <Check className={`h-4 w-4 ${showText ? "mr-2" : ""}`} />
+        <Check className="h-4 w-4" />
       ) : (
-        <Share2 className={`h-4 w-4 ${showText ? "mr-2" : ""}`} />
+        <Share2 className="h-4 w-4" />
       )}
-      {showText && (copied ? "Copied" : "Share")}
+      {size !== "icon" && <span className="ml-2 hidden sm:inline">{copied ? "Copied" : "Share"}</span>}
     </Button>
   )
 }

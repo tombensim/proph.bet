@@ -59,20 +59,21 @@ export function DownloadSummaryButton({ summaryRef, marketId, className }: Downl
   return (
     <Button 
       variant="outline" 
-      size="sm" 
+      size="sm"
       onClick={handleDownload} 
       disabled={isExporting}
       className={className}
+      title="Download Summary"
     >
       {isExporting ? (
         <>
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Generating...
+          <span className="hidden sm:inline">Generating...</span>
         </>
       ) : (
         <>
-          <Download className="w-4 h-4 mr-2" />
-          Download Summary
+          <Download className="w-4 h-4" />
+          <span className="ml-2 hidden sm:inline">Download Summary</span>
         </>
       )}
     </Button>

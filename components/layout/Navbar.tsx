@@ -71,8 +71,8 @@ export async function Navbar({ arenaId }: NavbarProps) {
   const baseUrl = arenaId ? `/arenas/${arenaId}` : ""
 
   return (
-    <header className="border-b mb-8">
-      <div className="flex h-16 items-center px-4 container mx-auto">
+    <header className="border-b sticky top-0 z-50 bg-background -mt-8 -mx-4 w-screen max-w-full">
+      <div className="flex h-16 items-center px-4 max-w-7xl mx-auto">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl me-4 hidden md:flex hover:opacity-80 transition-opacity">
           <Image src="/chami-beige.png" alt="Logo" width={32} height={32} className="object-contain" />
           <span>proph.bet</span>

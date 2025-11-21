@@ -45,9 +45,9 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
         <>
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-[140px] md:w-[200px] justify-between me-2 md:me-6 px-2 md:px-4">
+                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-[110px] md:w-[200px] justify-between me-1 md:me-6 px-1.5 md:px-4 text-xs md:text-sm">
                         <span className="truncate">{currentArena ? currentArena.name : "Select Arena"}</span>
-                        <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="ms-1 md:ms-2 h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-0">
