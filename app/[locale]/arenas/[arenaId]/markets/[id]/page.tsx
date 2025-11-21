@@ -17,6 +17,7 @@ import { DisputeDialog } from "./dispute-dialog"
 import { AlertTriangle } from "lucide-react"
 import { ShareMarketButton } from "@/components/market/ShareMarketButton"
 import { AnalystSentimentDisplay } from "@/components/market/AnalystSentimentDisplay"
+import { ResolvedMarketSummary } from "@/components/market/ResolvedMarketSummary"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -65,7 +66,11 @@ export default async function MarketPage(props: PageProps) {
         where: { userId: session.user.id },
         select: { id: true }
       },
-      analystSentiments: true
+      analystSentiments: true,
+      transactions: {
+        where: { type: "WIN_PAYOUT" },
+        include: { toUser: true }
+      }
     }
   })
 
@@ -213,6 +218,10 @@ export default async function MarketPage(props: PageProps) {
         )}
       </div>
 
+      {market.status === "RESOLVED" && (
+        <ResolvedMarketSummary market={market as any} />
+      )}
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -289,7 +298,9 @@ export default async function MarketPage(props: PageProps) {
               </div>
           )}
 
-          <AnalystSentimentDisplay sentiments={market.analystSentiments} />
+          {market.status !== "RESOLVED" && (
+            <AnalystSentimentDisplay sentiments={market.analystSentiments} />
+          )}
 
           <Separator />
 
