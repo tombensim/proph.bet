@@ -27,7 +27,7 @@ export default async function Home() {
         <p className="max-w-[600px] text-muted-foreground md:text-xl">
           Place bets, climb the leaderboard, and have fun with your colleagues.
         </p>
-        <Link href="/api/auth/signin">
+        <Link href="/auth/signin">
           <Button size="lg">Get Started</Button>
         </Link>
       </div>

@@ -19,7 +19,7 @@ export default async function MembersPage(props: PageProps) {
     const t = await getTranslations('Members');
     const tCommon = await getTranslations('Common');
     
-    if (!session?.user) return redirect("/api/auth/signin")
+    if (!session?.user) return redirect("/auth/signin")
     
     const { arenaId } = await props.params
     

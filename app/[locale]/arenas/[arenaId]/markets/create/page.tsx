@@ -14,7 +14,7 @@ export default async function CreateMarketPage(props: PageProps) {
   const t = await getTranslations('CreateMarket');
 
   if (!session?.user) {
-    redirect("/api/auth/signin")
+    redirect("/auth/signin")
   }
 
   const { arenaId } = await props.params

@@ -136,7 +136,7 @@ export default async function InvitePage({ params }: { params: Promise<{ locale:
              <div className="space-y-4 text-center">
                  <p className="text-sm text-muted-foreground">Please log in to accept this invitation.</p>
                  <Button asChild className="w-full" size="lg">
-                     <Link href={`/api/auth/signin?callbackUrl=/${locale}/invite/${token}`}>Log in / Sign up</Link>
+                     <Link href={`/auth/signin?callbackUrl=/${locale}/invite/${token}`}>Log in / Sign up</Link>
                  </Button>
              </div>
            )}

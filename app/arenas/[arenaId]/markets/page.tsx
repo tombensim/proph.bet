@@ -13,7 +13,7 @@ interface PageProps {
 
 export default async function MarketsPage(props: PageProps) {
   const session = await auth()
-  if (!session?.user) return redirect("/api/auth/signin")
+  if (!session?.user) return redirect("/auth/signin")
 
   const { arenaId } = await props.params
   const searchParams = await props.searchParams

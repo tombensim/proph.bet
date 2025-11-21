@@ -173,7 +173,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
                 <UserNav user={session.user} arenaId={arenaId} />
              </div>
            ) : (
-             <Link href="/api/auth/signin">
+             <Link href="/auth/signin">
                 <Button>{t('signIn')}</Button>
              </Link>
            )}

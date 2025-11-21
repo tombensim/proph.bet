@@ -14,7 +14,7 @@ export default async function ActivityPage({
   const session = await auth()
   
   if (!session?.user?.id) {
-    return redirect("/api/auth/signin")
+    return redirect("/auth/signin")
   }
 
   const resolvedSearchParams = await searchParams

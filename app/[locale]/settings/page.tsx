@@ -12,7 +12,7 @@ export default async function SettingsPage() {
   const session = await auth()
   
   if (!session?.user?.id) {
-    return redirect("/api/auth/signin")
+    return redirect("/auth/signin")
   }
 
   const user = await prisma.user.findUnique({
@@ -25,7 +25,7 @@ export default async function SettingsPage() {
     }
   })
 
-  if (!user) return redirect("/api/auth/signin")
+  if (!user) return redirect("/auth/signin")
 
   const notificationSettings = await getNotificationSettings()
   

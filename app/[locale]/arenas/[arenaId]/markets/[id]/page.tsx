@@ -54,7 +54,7 @@ export default async function MarketPage(props: PageProps) {
   const t = await getTranslations('MarketDetail');
   
   const session = await auth()
-  if (!session?.user?.id) return redirect("/api/auth/signin")
+  if (!session?.user?.id) return redirect("/auth/signin")
 
   const marketInclude: any = {
     creator: true,

@@ -20,7 +20,7 @@ export default function AuthErrorPage() {
           <ErrorDetails />
         </Suspense>
         <a
-          href="/api/auth/signin"
+          href="/auth/signin"
           className="mt-4 inline-block px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
         >
           Try again

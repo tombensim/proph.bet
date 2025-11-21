@@ -24,7 +24,7 @@ export default async function LeaderboardPage(props: PageProps) {
   const session = await auth()
   const t = await getTranslations('Leaderboard');
 
-  if (!session?.user) return redirect("/api/auth/signin")
+  if (!session?.user) return redirect("/auth/signin")
 
   const { arenaId } = await props.params
 

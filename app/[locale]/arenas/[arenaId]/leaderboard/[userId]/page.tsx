@@ -28,7 +28,7 @@ export default async function UserProfilePage(props: PageProps) {
   const session = await auth()
   const t = await getTranslations('Profile');
   
-  if (!session?.user?.id) redirect("/api/auth/signin")
+  if (!session?.user?.id) redirect("/auth/signin")
 
   // Get target user details
   const targetUser = await prisma.user.findUnique({

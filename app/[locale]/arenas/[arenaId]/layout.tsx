@@ -11,7 +11,7 @@ interface ArenaLayoutProps {
 
 export default async function ArenaLayout({ children, params }: ArenaLayoutProps) {
   const session = await auth()
-  if (!session?.user?.id) redirect("/api/auth/signin")
+  if (!session?.user?.id) redirect("/auth/signin")
 
   const { arenaId } = await params
 
