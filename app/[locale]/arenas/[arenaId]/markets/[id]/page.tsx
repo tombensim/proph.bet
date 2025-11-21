@@ -17,6 +17,7 @@ import { DisputeDialog } from "./dispute-dialog"
 import { AlertTriangle } from "lucide-react"
 import { ShareMarketButton } from "@/components/market/ShareMarketButton"
 import { AnalystSentimentDisplay } from "@/components/market/AnalystSentimentDisplay"
+import { ResolvedMarketSummary } from "@/components/market/ResolvedMarketSummary"
 
 interface PageProps {
   params: Promise<{ arenaId: string; id: string }>
@@ -65,7 +66,11 @@ export default async function MarketPage(props: PageProps) {
         where: { userId: session.user.id },
         select: { id: true }
       },
-      analystSentiments: true
+      analystSentiments: true,
+      transactions: {
+        where: { type: "WIN_PAYOUT" },
+        include: { toUser: true }
+      }
     }
   })
 
@@ -123,6 +128,8 @@ export default async function MarketPage(props: PageProps) {
   // Determine hero image (first image asset)
   const heroImage = market.assets.find(a => a.type === "IMAGE")
   const remainingAssets = market.assets.filter(a => a.id !== heroImage?.id)
+  
+  const isExpired = market.status === 'OPEN' && new Date() > market.resolutionDate
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -138,7 +145,11 @@ export default async function MarketPage(props: PageProps) {
         <div className="flex items-center gap-3 mb-2">
             <Badge>{market.type}</Badge>
             {market.status === "OPEN" ? (
-              <Badge variant="outline" className="text-green-600 border-green-600">{t('open')}</Badge>
+              isExpired ? (
+                 <Badge variant="outline" className="text-yellow-600 border-yellow-600">Expired</Badge>
+              ) : (
+                 <Badge variant="outline" className="text-green-600 border-green-600">{t('open')}</Badge>
+              )
             ) : (
               <Badge variant="destructive">{t('closed')}</Badge>
             )}
@@ -207,6 +218,10 @@ export default async function MarketPage(props: PageProps) {
         )}
       </div>
 
+      {market.status === "RESOLVED" && (
+        <ResolvedMarketSummary market={market as any} />
+      )}
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -232,6 +247,7 @@ export default async function MarketPage(props: PageProps) {
                     userPoints={membership?.points || 0} 
                     totalPool={totalPool} 
                     feePercent={(arenaSettings?.tradingFeePercent || 0) / 100}
+                    isExpired={isExpired}
                   />
               )}
             </CardContent>
@@ -282,7 +298,9 @@ export default async function MarketPage(props: PageProps) {
               </div>
           )}
 
-          <AnalystSentimentDisplay sentiments={market.analystSentiments} />
+          {market.status !== "RESOLVED" && (
+            <AnalystSentimentDisplay sentiments={market.analystSentiments} />
+          )}
 
           <Separator />
 
