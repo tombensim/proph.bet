@@ -24,7 +24,7 @@ export interface BillingReport {
 
 export interface Env {
   VERCEL_TOKEN: string;
-  CLOUDFLARE_API_TOKEN: string;
+  CLOUDFLARE_ANALYTICS_TOKEN: string;
   CLOUDFLARE_ACCOUNT_ID: string;
   GOOGLE_SERVICE_ACCOUNT_JSON: string;
   RESEND_API_KEY: string;

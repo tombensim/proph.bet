@@ -54,9 +54,9 @@ async function generateAndSendReport(env: Env) {
 
     // Cloudflare
     (async () => {
-      if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID) {
+      if (env.CLOUDFLARE_ANALYTICS_TOKEN && env.CLOUDFLARE_ACCOUNT_ID) {
         try {
-          report.cloudflare = await getCloudflareUsage(env.CLOUDFLARE_API_TOKEN, env.CLOUDFLARE_ACCOUNT_ID);
+          report.cloudflare = await getCloudflareUsage(env.CLOUDFLARE_ANALYTICS_TOKEN, env.CLOUDFLARE_ACCOUNT_ID);
         } catch (e: any) {
           console.error('Cloudflare Error:', e);
           errors.push(`Cloudflare: ${e.message}`);
