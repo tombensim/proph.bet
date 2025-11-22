@@ -1,16 +1,16 @@
 import { BillingReport } from '../types';
 
-export async function getVercelUsage(token: string): Promise<BillingReport['vercel']> {
+export async function getVercelUsage(token: string, fromDate?: Date, toDate?: Date): Promise<BillingReport['vercel']> {
   const projectId = ''; // Optional: if we want to filter by project, but usually usage is team/account wide or we can iterate. 
   // However, without a specific team ID or project ID, it might default to the user's personal account. 
   // For now, we will assume the token has access to the relevant scope.
   
-  // We need to calculate the start and end date for the "last week".
+  // We need to calculate the start and end date for the "last week" or provided range.
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   
-  const from = sevenDaysAgo.toISOString();
-  const to = now.toISOString();
+  const from = fromDate ? fromDate.toISOString() : sevenDaysAgo.toISOString();
+  const to = toDate ? toDate.toISOString() : now.toISOString();
 
   // https://vercel.com/docs/rest-api/endpoints/usage#get-usage
   // Note: The endpoint might require teamId if it's a team.

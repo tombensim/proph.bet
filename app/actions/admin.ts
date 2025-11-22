@@ -357,3 +357,61 @@ export async function getAnalyticsData() {
     userStats
   }
 }
+
+export interface BillingReport {
+  vercel: {
+    bandwidth: number;
+    functionInvocations: number;
+    buildMinutes: number;
+    costEstimate: number;
+  };
+  cloudflare: {
+    storageUsed: number;
+    classAOperations: number;
+    classBOperations: number;
+    costEstimate: number;
+  };
+  google: {
+    totalCost: number;
+    currency: string;
+    services: {
+      name: string;
+      cost: number;
+    }[];
+  };
+  timestamp: string;
+}
+
+export async function getBillingReport(from?: Date, to?: Date): Promise<BillingReport | null> {
+  await requireAdmin();
+
+  const workerUrl = process.env.BILLING_WORKER_URL;
+  const accessToken = process.env.BILLING_WORKER_ACCESS_TOKEN;
+
+  if (!workerUrl || !accessToken) {
+    console.warn('Missing BILLING_WORKER_URL or BILLING_WORKER_ACCESS_TOKEN');
+    return null;
+  }
+
+  const url = new URL(workerUrl);
+  if (from) url.searchParams.set('from', from.toISOString());
+  if (to) url.searchParams.set('to', to.toISOString());
+
+  try {
+    const res = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      next: { revalidate: 3600 } // Cache for 1 hour, or 0 if we want fresh
+    });
+
+    if (!res.ok) {
+      throw new Error(`Billing worker returned ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error('Failed to fetch billing report:', error);
+    return null;
+  }
+}

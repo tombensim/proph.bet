@@ -44,7 +44,7 @@ async function getAccessToken(serviceAccountJson: string): Promise<string> {
   return data.access_token;
 }
 
-export async function getGoogleUsage(serviceAccountJson: string): Promise<BillingReport['google']> {
+export async function getGoogleUsage(serviceAccountJson: string, fromDate?: Date, toDate?: Date): Promise<BillingReport['google']> {
   const serviceAccount: ServiceAccount = JSON.parse(serviceAccountJson);
   const projectId = serviceAccount.project_id;
   const token = await getAccessToken(serviceAccountJson);
@@ -57,9 +57,12 @@ export async function getGoogleUsage(serviceAccountJson: string): Promise<Billin
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+  const start = fromDate || sevenDaysAgo;
+  const end = toDate || now;
+
   // ISO formatted strings
-  const startTime = sevenDaysAgo.toISOString();
-  const endTime = now.toISOString();
+  const startTime = start.toISOString();
+  const endTime = end.toISOString();
 
   // Filter for our service
   const filter = `metric.type="serviceruntime.googleapis.com/api/request_count" AND resource.labels.service="generativelanguage.googleapis.com"`;

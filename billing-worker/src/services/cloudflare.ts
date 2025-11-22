@@ -2,14 +2,19 @@ import { BillingReport } from '../types';
 
 export async function getCloudflareUsage(
   token: string,
-  accountId: string
+  accountId: string,
+  fromDate?: Date,
+  toDate?: Date
 ): Promise<BillingReport['cloudflare']> {
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   
+  const start = fromDate || sevenDaysAgo;
+  const end = toDate || now;
+
   // Format: YYYY-MM-DD
-  const dateStart = sevenDaysAgo.toISOString().split('T')[0];
-  const dateEnd = now.toISOString().split('T')[0];
+  const dateStart = start.toISOString().split('T')[0];
+  const dateEnd = end.toISOString().split('T')[0];
 
   const query = `
     query R2Usage($accountTag: string!, $dateStart: Date!, $dateEnd: Date!) {

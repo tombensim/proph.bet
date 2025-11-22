@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { BillingWidget } from "@/components/admin/billing-widget"
 
 export default async function AdminDashboard() {
   const [stats, analytics] = await Promise.all([
@@ -66,6 +67,8 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <BillingWidget />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
