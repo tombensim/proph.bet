@@ -29,5 +29,6 @@ export interface Env {
   GOOGLE_SERVICE_ACCOUNT_JSON: string;
   RESEND_API_KEY: string;
   ADMIN_EMAIL: string;
+  BILLING_ACCESS_TOKEN?: string;
 }
 
