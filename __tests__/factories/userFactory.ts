@@ -1,6 +1,6 @@
-import { Factory } from './index'
+import { Factory } from './base'
 import { User, Prisma } from '@prisma/client'
-import { v4 as uuid } from 'uuid'
+import { randomUUID } from 'crypto'
 
 export class UserFactory extends Factory {
   /**
@@ -8,7 +8,7 @@ export class UserFactory extends Factory {
    */
   async create(overrides: Partial<Prisma.UserCreateInput> = {}): Promise<User> {
     const defaults: Prisma.UserCreateInput = {
-      id: uuid(),
+      id: randomUUID(),
       email: this.generateEmail('user'),
       name: `Test User ${Date.now()}`,
       image: 'https://avatars.githubusercontent.com/u/1?v=4',
@@ -28,8 +28,7 @@ export class UserFactory extends Factory {
       data: {
         name: arenaName || `Test Arena ${Date.now()}`,
         slug: this.generateSlug('arena'),
-        creatorId: user.id,
-        users: {
+        members: {
           create: {
             userId: user.id,
             role: 'ADMIN',
@@ -38,7 +37,7 @@ export class UserFactory extends Factory {
         },
       },
       include: {
-        users: true,
+        members: true,
       },
     })
 
@@ -60,7 +59,7 @@ export class UserFactory extends Factory {
    * Add user to an existing arena
    */
   async addToArena(userId: string, arenaId: string, points: number = 1000) {
-    return this.prisma.arenaUser.create({
+    return this.prisma.arenaMembership.create({
       data: {
         userId,
         arenaId,

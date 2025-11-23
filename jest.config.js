@@ -19,6 +19,10 @@ const config = {
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
   ],
+  transformIgnorePatterns: [
+    // Transform ESM modules
+    'node_modules/(?!(uuid|@web3-storage|ip/.*)/)',
+  ],
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
     'components/**/*.{js,jsx,ts,tsx}',

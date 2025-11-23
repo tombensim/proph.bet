@@ -22,7 +22,8 @@ export default async function ArenaLayout({ children, params }: ArenaLayoutProps
         userId: session.user.id,
         arenaId
       }
-    }
+    },
+    select: { id: true } // Only select ID to check existence
   })
 
   if (!membership) {

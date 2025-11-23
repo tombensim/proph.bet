@@ -25,7 +25,8 @@ export default async function MembersPage(props: PageProps) {
     
     // Check if admin
     const membership = await prisma.arenaMembership.findUnique({
-        where: { userId_arenaId: { userId: session.user.id, arenaId } }
+        where: { userId_arenaId: { userId: session.user.id, arenaId } },
+        select: { role: true }
     })
 
     const isGlobalOrSystemAdmin = 
@@ -44,7 +45,16 @@ export default async function MembersPage(props: PageProps) {
     
     const members = await prisma.arenaMembership.findMany({
         where: { arenaId },
-        include: { user: true },
+        select: {
+            id: true,
+            userId: true,
+            arenaId: true,
+            role: true,
+            points: true,
+            joinedAt: true,
+            // hidden: true, // Temporarily disabled to prevent crash in production
+            user: true
+        },
         orderBy: { joinedAt: 'desc' }
     })
     
@@ -99,9 +109,10 @@ export default async function MembersPage(props: PageProps) {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <p className="font-medium">{m.user.name || "Unknown"}</p>
+                                    {/* Hidden feature temporarily disabled until DB migration is applied
                                     {m.hidden && (
                                         <Badge variant="outline" className="text-xs h-5">Hidden</Badge>
-                                    )}
+                                    )} */}
                                 </div>
                                 <p className="text-sm text-muted-foreground">{m.user.email}</p>
                             </div>
@@ -117,7 +128,7 @@ export default async function MembersPage(props: PageProps) {
                                 arenaId={arenaId}
                                 userId={m.userId}
                                 currentRole={m.role}
-                                isHidden={m.hidden}
+                                isHidden={false} // m.hidden - temporarily disabled
                                 isSelf={m.userId === session.user.id}
                             />
                         </div>

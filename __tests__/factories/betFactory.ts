@@ -1,6 +1,6 @@
-import { Factory } from './index'
+import { Factory } from './base' // Changed import from index to base to avoid cycle
 import { Bet, Prisma } from '@prisma/client'
-import { v4 as uuid } from 'uuid'
+import { randomUUID } from 'crypto'
 
 export class BetFactory extends Factory {
   /**
@@ -13,13 +13,13 @@ export class BetFactory extends Factory {
     overrides: Partial<Prisma.BetCreateInput> = {}
   ): Promise<Bet> {
     const defaults: Prisma.BetCreateInput = {
-      id: uuid(),
+      id: randomUUID(),
       user: { connect: { id: userId } },
       market: { connect: { id: marketId } },
       option: { connect: { id: optionId } },
       amount: 100,
-      potentialPayout: 200,
-      probability: 50,
+      shares: 100, // Assuming 1:1 for simplicity in factory defaults
+      // Removed potentialPayout and probability which are not in schema
     }
 
     return this.prisma.bet.create({
@@ -43,7 +43,7 @@ export class BetFactory extends Factory {
       created.push(
         await this.create(bet.userId, bet.marketId, bet.optionId, {
           amount: bet.amount || 100,
-          potentialPayout: (bet.amount || 100) * 2,
+          shares: (bet.amount || 100), // Updated to use shares
         })
       )
     }

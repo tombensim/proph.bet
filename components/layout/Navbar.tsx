@@ -30,7 +30,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
   let isAdmin = false
   
   if (session?.user?.id) {
-    // Fetch current points if in arena
+        // Fetch current points if in arena
     if (arenaId) {
         const membership = await prisma.arenaMembership.findUnique({
         where: {
@@ -38,6 +38,10 @@ export async function Navbar({ arenaId }: NavbarProps) {
             userId: session.user.id,
             arenaId: arenaId
             }
+        },
+        select: {
+            points: true,
+            role: true
         }
         })
         if (membership) {
@@ -52,17 +56,22 @@ export async function Navbar({ arenaId }: NavbarProps) {
     // Fetch all memberships for switcher
     allMemberships = await prisma.arenaMembership.findMany({
         where: { userId: session.user.id },
-        include: { 
-          arena: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              archivedAt: true,
-              coverImage: true,
-              description: true
+        select: {
+            userId: true,
+            arenaId: true,
+            role: true,
+            points: true,
+            joinedAt: true,
+            arena: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    archivedAt: true,
+                    coverImage: true,
+                    description: true
+                }
             }
-          }
         }
     })
   }

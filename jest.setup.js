@@ -67,7 +67,10 @@ jest.mock('@/lib/prisma', () => ({
 }))
 
 // Set up environment variables for tests
-process.env.NEXTAUTH_SECRET = 'test-secret'
-process.env.NEXTAUTH_URL = 'http://localhost:3000'
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test'
+process.env.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || 'test-secret'
+process.env.NEXTAUTH_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+// Only set dummy DATABASE_URL if not already set (e.g. by .env)
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test'
+}
 
