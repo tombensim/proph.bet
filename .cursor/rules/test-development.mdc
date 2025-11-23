@@ -1,0 +1,108 @@
+---
+description: Guidelines for developing tests following the v2 testing strategy
+globs: "**/*.test.ts", "**/*.test.tsx", "**/__tests__/**/*"
+---
+
+# Test Development Guidelines (v2 Strategy)
+
+This project follows a "v2 Testing Strategy" that emphasizes critical domain integration tests with a real database, alongside standard unit and component tests.
+
+## 1. Testing Strategy Overview
+
+- **Unit Tests (70%)**: Focus on individual functions, utilities, and schemas. Fast, fully mocked, no DB.
+- **Component Tests (20%)**: Focus on UI interactions using React Testing Library. Mock complex children and data fetching.
+- **Integration Tests (10%)**: **CRITICAL**. Focus on business flows (Market creation, Betting, Resolution). Use REAL Postgres database via `testPrisma`.
+
+## 2. File Structure & Naming
+
+- **Location**: All tests reside in `__tests__/`.
+  - Unit/Component: Mirror the source structure (e.g., `src/lib/utils.ts` -> `__tests__/lib/utils.test.ts`).
+  - Integration: `__tests__/integration/<domain>/<feature>.test.ts`.
+- **Naming**: Use `*.test.ts` for logic/backend and `*.test.tsx` for components.
+
+## 3. Integration Tests (Real Database)
+
+Integration tests MUST use the dedicated test infrastructure.
+
+### Setup & Teardown
+ALWAYS use the helpers from `__tests__/integration/setup/test-db.ts`.
+
+```typescript
+import { testPrisma, resetDatabase, disconnectTestDb } from '../setup/test-db'
+import { UserFactory, MarketFactory } from '../../factories'
+
+describe('Feature Integration', () => {
+  // Initialize factories with testPrisma
+  const userFactory = new UserFactory(testPrisma)
+
+  beforeEach(async () => {
+    await resetDatabase() // Truncates tables before each test
+  })
+
+  afterAll(async () => {
+    await disconnectTestDb()
+  })
+
+  it('should perform action', async () => {
+    // Test logic
+  })
+})
+```
+
+### Using Factories
+Use factories to generate test data instead of manual Prisma calls.
+
+```typescript
+// Create dependencies
+const { user, arena } = await userFactory.createWithArena()
+const market = await marketFactory.create(arena.id)
+
+// Create complex scenarios
+const { market, bets } = await marketFactory.createWithBets(arena.id, [user.id], 100)
+```
+
+### Rules for Integration Tests
+- **NEVER** mock Prisma in integration tests; use `testPrisma`.
+- **ALWAYS** await `resetDatabase()` in `beforeEach`.
+- **ALWAYS** use Factories for setup when possible.
+- **Avoid** mocking internal logic; test the real flow.
+- **External Services**: Mock external APIs (e.g., email, payment gateways) but keep the DB real.
+
+## 4. Unit & Component Tests
+
+### Unit Tests
+- Fast and isolated.
+- Mock all external dependencies (Prisma, Auth, etc.).
+- Use `jest.mock('@/lib/...')`.
+
+```typescript
+jest.mock('@/lib/prisma')
+// ...
+(prisma.user.findUnique as jest.Mock).mockResolvedValue(...)
+```
+
+### Component Tests
+- Use `@testing-library/react` and `@testing-library/user-event`.
+- favor `userEvent` over `fireEvent`.
+- Use `screen.getByRole` whenever possible (accessibility-first).
+- Mock Next.js hooks (`useRouter`, `usePathname`) if needed.
+
+```typescript
+const user = userEvent.setup()
+render(<MyComponent />)
+await user.click(screen.getByRole('button', { name: /submit/i }))
+```
+
+## 5. Running Tests
+
+- **Unit**: `npm run test:unit`
+- **Integration**: `npm run test:integration` (Requires test DB running)
+- **All**: `npm test`
+- **Watch**: `npm run test:watch`
+
+## 6. Common Pitfalls (Don'ts)
+
+- **DO NOT** import `prisma` from `@/lib/prisma` in integration tests. Use `testPrisma` from `setup/test-db`.
+- **DO NOT** use `create` methods directly in tests if a Factory exists.
+- **DO NOT** mix unit and integration styles. If it hits the DB, it belongs in `__tests__/integration`.
+- **DO NOT** leave `console.log` in tests.

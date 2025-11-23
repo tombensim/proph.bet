@@ -37,7 +37,15 @@ export default async function Home() {
 
   const memberships = await prisma.arenaMembership.findMany({
     where: { userId: session.user.id },
-    include: { arena: true },
+    select: {
+      id: true,
+      userId: true,
+      arenaId: true,
+      role: true,
+      points: true,
+      joinedAt: true,
+      arena: true
+    },
     orderBy: { joinedAt: 'desc' }
   })
   
