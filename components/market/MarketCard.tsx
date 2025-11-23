@@ -121,7 +121,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
             style={{ background: generateGradient(market.id) }}
           />
         )}
-        <CardHeader className="pb-3 relative z-10">
+        <CardHeader className="pt-4 pb-3 relative z-10">
           <div className="flex justify-between items-start gap-2">
             <CardTitle className="text-lg leading-tight line-clamp-2 min-h-[3rem]" title={market.title}>{market.title}</CardTitle>
             <Badge variant={market.type === "BINARY" ? "default" : "secondary"}>
