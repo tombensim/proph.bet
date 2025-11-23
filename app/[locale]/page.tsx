@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { Link } from "@/lib/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Navbar } from "@/components/layout/Navbar"
 import { ArrowRight } from "lucide-react"
 import Image from "next/image"
 
@@ -44,12 +45,14 @@ export default async function Home() {
   const canCreateArena = user?.role === 'ADMIN' || user?.role === 'GLOBAL_ADMIN'
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Your Arenas</h1>
-      </div>
+    <>
+      <Navbar />
+      <div className="space-y-8 mt-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Your Arenas</h1>
+        </div>
 
-      {memberships.length === 0 ? (
+        {memberships.length === 0 ? (
         <div className="text-center py-12 border rounded-lg bg-muted/20 flex flex-col items-center">
           <div className="relative w-32 h-32 mb-4 opacity-80">
             <Image 
@@ -84,6 +87,7 @@ export default async function Home() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
