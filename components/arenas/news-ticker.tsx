@@ -29,7 +29,7 @@ export async function NewsTicker({ arenaId }: { arenaId: string }) {
   )
 
   return (
-    <div className="bg-zinc-900 text-white overflow-hidden py-2.5 z-40 border-b border-white/10 relative select-none -mx-4 sticky top-16 w-screen max-w-full">
+    <div className="bg-zinc-900 text-white overflow-hidden py-2.5 z-40 border-b border-white/10 relative select-none sticky top-16 w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]">
        <div className="flex w-fit animate-marquee hover:[animation-play-state:paused]">
           {content}
           {content}
