@@ -135,40 +135,6 @@ export function CreateMarketForm() {
           )}
         />
         
-        <FormField
-          control={form.control as any}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>{t('description')}</FormLabel>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateDescription}
-                  disabled={isGenerating || !form.watch("title")}
-                >
-                  {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin me-2" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 me-2" />
-                  )}
-                  {isGenerating ? "Generating..." : "Generate with AI"}
-                </Button>
-              </div>
-              <FormControl>
-                <Textarea 
-                  placeholder={t('descriptionPlaceholder')} 
-                  className="resize-none" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control as any}
@@ -282,6 +248,40 @@ export function CreateMarketForm() {
              )}
           </div>
         )}
+
+        <FormField
+          control={form.control as any}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>{t('description')}</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateDescription}
+                  disabled={isGenerating || !form.watch("title")}
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin me-2" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 me-2" />
+                  )}
+                  {isGenerating ? "Generating..." : "Generate with AI"}
+                </Button>
+              </div>
+              <FormControl>
+                <Textarea 
+                  placeholder={t('descriptionPlaceholder')} 
+                  className="resize-none" 
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="grid grid-cols-2 gap-6">
           <FormField
