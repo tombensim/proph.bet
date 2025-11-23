@@ -1,0 +1,59 @@
+
+// Types matching Polymarket API response
+export interface PolymarketMarket {
+  id: string
+  question: string
+  description: string
+  endDate: string
+  outcomes: string // JSON string array
+  outcomePrices: string // JSON string array
+  volume: string
+  image?: string
+  icon?: string
+  active: boolean
+  closed: boolean
+  tags?: Array<{ id: string; label: string }>
+  groupItemTitle?: string
+}
+
+export type PolymarketFilter = {
+  limit?: number
+  closed?: boolean
+  tag_id?: string
+  offset?: number
+}
+
+const POLYMARKET_API_URL = "https://gamma-api.polymarket.com/markets"
+
+export async function fetchPolymarketMarkets(filter: PolymarketFilter = {}) {
+  const params = new URLSearchParams()
+  if (filter.limit) params.append("limit", filter.limit.toString())
+  if (filter.closed !== undefined) params.append("closed", filter.closed.toString())
+  if (filter.tag_id) params.append("tag_id", filter.tag_id)
+  if (filter.offset) params.append("offset", filter.offset.toString())
+  
+  // Sort by volume to get "relevant" bets
+  params.append("order", "volume")
+  params.append("ascending", "false")
+
+  // Use standard fetch (works in Node 18+ and Next.js)
+  const response = await fetch(`${POLYMARKET_API_URL}?${params.toString()}`, {
+     // next: { revalidate: 60 } // This is Next.js specific. If running in script, this might be ignored or valid. 
+     // To make it pure for testing, we can pass options or just leave it. 
+     // 'fetch' in Node (undici) might not support 'next' option, but it usually ignores unknown options.
+     // However, for the Server Action, we WANT caching.
+     // I'll leave it, assuming standard fetch ignores it or I can overload.
+     // Better: The Action calls this service. The SERVICE just fetches. The Action adds cache control?
+     // Or we just keep it here.
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch from Polymarket: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data as PolymarketMarket[]
+}
+
+
+

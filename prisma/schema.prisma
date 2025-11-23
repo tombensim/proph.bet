@@ -294,6 +294,10 @@ model Market {
   winningOptionId String?
   winningValue    Float?
 
+  // Polymarket Integration
+  polymarketId    String?   @unique
+  source          MarketSource @default(NATIVE)
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -491,6 +495,11 @@ enum AssetType {
   IMAGE
   LINK
   FILE
+}
+
+enum MarketSource {
+  NATIVE
+  POLYMARKET
 }
 
 model Invitation {
