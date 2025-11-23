@@ -4,9 +4,35 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search, Plus, RefreshCw, Loader2, Info, ExternalLink } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
+import { fetchPolymarketMarkets, importPolymarketMarket, type PolymarketMarket } from "@/app/actions/polymarket"
 
-// ...
+interface PolymarketImportDialogProps {
+  arenaId: string
+  trigger?: React.ReactNode
+}
+
+function formatOutcomes(outcomes: string) {
+  try {
+    const parsed = JSON.parse(outcomes)
+    return Array.isArray(parsed) ? parsed.join(" / ") : outcomes
+  } catch {
+    return outcomes
+  }
+}
+
+function formatOdds(prices: string) {
+  try {
+    const p = JSON.parse(prices)
+    return Array.isArray(p) ? p.map((v: string) => Math.round(parseFloat(v) * 100) + "%").join(" / ") : ""
+  } catch {
+    return ""
+  }
+}
 
 export function PolymarketImportDialog({ arenaId, trigger }: PolymarketImportDialogProps) {
   const [open, setOpen] = useState(false)

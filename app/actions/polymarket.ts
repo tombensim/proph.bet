@@ -34,8 +34,12 @@ export async function importPolymarketMarket(
     where: { userId_arenaId: { userId: session.user.id, arenaId } }
   })
   
+  if (!membership) {
+    throw new Error("You must be a member of the arena to import markets")
+  }
+
   const isGlobalAdmin = session.user.role === "ADMIN" || session.user.role === "GLOBAL_ADMIN"
-  const isArenaAdmin = membership?.role === "ADMIN"
+  const isArenaAdmin = membership.role === "ADMIN"
 
   if (!isGlobalAdmin && !isArenaAdmin) {
     throw new Error("Only arena admins can import markets")
