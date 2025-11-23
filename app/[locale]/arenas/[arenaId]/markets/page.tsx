@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { MarketCard } from "@/components/market/MarketCard"
 import { MarketFilter } from "@/components/market/MarketFilter"
 import { MarketSearch } from "@/components/market/MarketSearch"
+import { PolymarketImportDialog } from "@/components/arenas/polymarket-import-dialog"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/lib/navigation"
 import { redirect } from "next/navigation"
@@ -199,6 +200,7 @@ export default async function MarketsPage(props: PageProps) {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           <MarketSearch />
           <div className="flex items-center gap-2">
+            {isAdmin && <PolymarketImportDialog arenaId={arenaId} />}
             <Link href={`/arenas/${arenaId}/markets/create`}>
                 <Button>{t('createMarket')}</Button>
             </Link>
