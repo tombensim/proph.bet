@@ -1,5 +1,7 @@
 # proph.bet
 
+[![CI](https://github.com/YOUR_USERNAME/proph.bet/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/proph.bet/actions/workflows/ci.yml)
+
 A modern social betting platform where users can create arenas, predict outcomes, and compete on leaderboards. Built with Next.js 15, Tailwind CSS, and Prisma.
 
 ## Features
@@ -85,6 +87,41 @@ A modern social betting platform where users can create arenas, predict outcomes
    npx prisma db push
    ```
 
+## Testing
+
+We maintain a comprehensive test suite to ensure code quality and prevent regressions.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode (during development)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Coverage
+
+- **Unit Tests**: Utilities, schemas, and business logic
+- **Component Tests**: UI components and user interactions
+- **Integration Tests**: Server actions and API routes
+
+For detailed testing guidelines, see [docs/TEST_PLAN.md](docs/TEST_PLAN.md).
+
+## CI/CD
+
+All pull requests automatically run:
+- ✅ Linting checks
+- ✅ Translation validation
+- ✅ Full test suite with coverage
+- ✅ Build verification
+
+PRs with the `auto-merge` label or from Dependabot will automatically merge when all checks pass.
+
 ## Project Structure
 
 - `/app`: Next.js App Router pages and API routes.
@@ -92,3 +129,5 @@ A modern social betting platform where users can create arenas, predict outcomes
 - `/lib`: Utility functions, hooks, and service configurations.
 - `/prisma`: Database schema and seeds.
 - `/messages`: i18n translation files.
+- `/__tests__`: Test files organized by module.
+- `/docs`: Documentation including test plan and best practices.
