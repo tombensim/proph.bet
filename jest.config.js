@@ -10,7 +10,7 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const config = {
   coverageProvider: 'v8',
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node', // Default to node for integration tests with Prisma
   // Add more setup options before each test is run
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
@@ -22,7 +22,7 @@ const config = {
   ],
   transformIgnorePatterns: [
     // Transform ESM modules
-    'node_modules/(?!(uuid|@web3-storage|ip/.*)/)',
+    'node_modules/(?!(uuid|@web3-storage|ip/.*|next-auth|@auth)/)',
   ],
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',

@@ -1,7 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 
 // Use separate database URL for integration tests
-const DATABASE_URL = process.env.DATABASE_URL_TEST || process.env.DATABASE_URL
+// Priority: TEST_DATABASE_URL (CI) > DATABASE_URL_TEST (local) > DATABASE_URL (fallback)
+const DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL_TEST || process.env.DATABASE_URL
 
 export const testPrisma = new PrismaClient({
   datasources: {
