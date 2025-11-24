@@ -8,7 +8,8 @@ export class MarketFactory extends Factory {
    */
   async create(
     arenaId: string,
-    overrides: Partial<Prisma.MarketCreateInput> = {}
+    overrides: Partial<Prisma.MarketCreateInput> = {},
+    userId?: string
   ): Promise<Market> {
     const resolutionDate = new Date(Date.now() + 86400000) // +1 day
 
@@ -20,7 +21,7 @@ export class MarketFactory extends Factory {
       status: MarketStatus.OPEN,
       resolutionDate,
       arena: { connect: { id: arenaId } },
-      creator: { connect: { id: 'user-id-placeholder' } }, // Creator is required
+      creator: userId ? { connect: { id: userId } } : undefined,
       options: {
         create: [
           {
@@ -35,9 +36,6 @@ export class MarketFactory extends Factory {
       },
     }
     
-    // We need a creator ID. If not provided in overrides, this might fail unless we ensure valid ID.
-    // However, MarketFactory is usually used with valid params.
-    
     return this.prisma.market.create({
       data: { ...defaults, ...overrides },
       include: { options: true },
@@ -49,17 +47,19 @@ export class MarketFactory extends Factory {
    */
   async createMultipleChoice(
     arenaId: string,
-    options: string[] = ['Option A', 'Option B', 'Option C']
+    options: string[] = ['Option A', 'Option B', 'Option C'],
+    userId?: string
   ): Promise<Market> {
     return this.prisma.market.create({
       data: {
         id: randomUUID(),
         title: `Multiple choice test ${Date.now()}`,
+        description: 'A multiple choice test market',
         type: MarketType.MULTIPLE_CHOICE,
         status: MarketStatus.OPEN,
         resolutionDate: new Date(Date.now() + 86400000),
         arena: { connect: { id: arenaId } },
-        // Missing creator here too, but ignoring as this factory is broken anyway
+        creator: userId ? { connect: { id: userId } } : undefined,
         options: {
           create: options.map((text) => ({
             id: randomUUID(),
@@ -77,9 +77,10 @@ export class MarketFactory extends Factory {
   async createWithBets(
     arenaId: string,
     userIds: string[],
-    betAmount: number = 100
+    betAmount: number = 100,
+    creatorId?: string
   ) {
-    const market = await this.create(arenaId)
+    const market = await this.create(arenaId, {}, creatorId || userIds[0])
 
     const bets = await Promise.all(
       userIds.map((userId, i) =>
@@ -104,9 +105,10 @@ export class MarketFactory extends Factory {
    */
   async createResolved(
     arenaId: string,
-    winningOptionIndex: number = 0
+    winningOptionIndex: number = 0,
+    userId?: string
   ): Promise<Market> {
-    const market = await this.create(arenaId)
+    const market = await this.create(arenaId, {}, userId)
 
     return this.prisma.market.update({
       where: { id: market.id },

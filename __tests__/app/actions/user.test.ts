@@ -2,6 +2,17 @@ import { updateProfileImage } from '@/app/actions/user'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
+// Mock next-auth before other imports
+jest.mock('next-auth', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}))
+
+jest.mock('next-auth/providers/google', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}))
+
 // Mock dependencies
 jest.mock('@/lib/auth')
 jest.mock('@/lib/prisma', () => ({
