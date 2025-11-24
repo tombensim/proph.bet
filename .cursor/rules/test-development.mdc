@@ -1,8 +1,7 @@
 ---
 description: Guidelines for developing tests following the v2 testing strategy
-globs: "**/*.test.ts", "**/*.test.tsx", "**/__tests__/**/*"
+alwaysApply: false
 ---
-
 # Test Development Guidelines (v2 Strategy)
 
 This project follows a "v2 Testing Strategy" that emphasizes critical domain integration tests with a real database, alongside standard unit and component tests.
