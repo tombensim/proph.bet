@@ -201,38 +201,41 @@ export default async function MarketsPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
-      {/* Arena Header Banner */}
-      {(arena?.logo || arena?.description) && (
-          <div className="flex items-start md:items-center gap-4 pb-6 border-b">
-              {arena.logo && (
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
-                      <Image 
-                          src={arena.logo} 
-                          alt={arena.name} 
-                          fill 
-                          className="object-cover"
-                      />
-                  </div>
-              )}
-              <div>
-                  <h2 className="text-2xl font-bold">{arena.name}</h2>
-                  {arena.description && (
-                      <p className="text-muted-foreground mt-1">{arena.description}</p>
-                  )}
+      {/* Arena Header Banner & Title */}
+      <div className="flex flex-col gap-6">
+        {(arena?.logo || arena?.description) && (
+          <div className="flex items-start md:items-center gap-4">
+            {arena.logo && (
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
+                <Image 
+                  src={arena.logo} 
+                  alt={arena.name} 
+                  fill 
+                  className="object-cover"
+                  unoptimized={arena.logo.includes('localhost')}
+                />
               </div>
+            )}
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold">{arena.name}</h2>
+              {arena.description && (
+                <p className="text-muted-foreground mt-1">{arena.description}</p>
+              )}
+            </div>
           </div>
-      )}
+        )}
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <MarketSearch />
-          <div className="flex items-center gap-2">
-            {isAdmin && <PolymarketImportDialog arenaId={arenaId} />}
-            <Link href={`/arenas/${arenaId}/markets/create`}>
-                <Button>{t('createMarket')}</Button>
-            </Link>
-            <MarketFilter isAdmin={isAdmin} />
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <MarketSearch />
+            <div className="flex items-center gap-2">
+              {isAdmin && <PolymarketImportDialog arenaId={arenaId} />}
+              <Link href={`/arenas/${arenaId}/markets/create`}>
+                  <Button>{t('createMarket')}</Button>
+              </Link>
+              <MarketFilter isAdmin={isAdmin} />
+            </div>
           </div>
         </div>
       </div>

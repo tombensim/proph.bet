@@ -55,6 +55,7 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                                         alt={currentArena.name}
                                         fill
                                         className="object-cover"
+                                        unoptimized={currentArena.logo.includes('localhost')}
                                     />
                                 </div>
                             ) : null}
@@ -91,6 +92,7 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                                                     alt={membership.arena.name}
                                                     fill
                                                     className="object-cover"
+                                                    unoptimized={membership.arena.logo.includes('localhost')}
                                                 />
                                             </div>
                                         )}
@@ -136,6 +138,7 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                                                             alt={membership.arena.name}
                                                             fill
                                                             className="object-cover"
+                                                            unoptimized={membership.arena.logo.includes('localhost')}
                                                         />
                                                     </div>
                                                 )}

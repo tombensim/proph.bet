@@ -38,7 +38,7 @@ jobs:
           DATABASE_URL: postgresql://test:test@localhost:5432/test
         run: |
           npx prisma generate
-          npx prisma db push --skip-generate
+          npx prisma db push --skip-generate --accept-data-loss
 
       - name: Run tests
         env:

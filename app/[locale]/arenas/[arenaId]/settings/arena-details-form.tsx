@@ -194,6 +194,7 @@ export function ArenaDetailsForm({ arena }: { arena: Arena }) {
                                         alt="Arena logo"
                                         fill
                                         className="object-contain p-2"
+                                        unoptimized={field.value.includes('localhost')}
                                     />
                                     <Button
                                         type="button"
