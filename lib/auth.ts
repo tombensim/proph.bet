@@ -60,10 +60,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
           token.role = "ADMIN"
         }
+        
+        // Auto-assign admin role to dev@genoox.com in development
+        if (process.env.NODE_ENV === "development" && user.email === "dev@genoox.com") {
+          try {
+             await prisma.user.update({
+               where: { email: "dev@genoox.com" },
+               data: { role: "ADMIN" }
+             })
+          } catch (e) {
+             console.error("Failed to auto-assign admin role to dev user", e)
+          }
+          token.role = "ADMIN"
+        }
       }
       
       // Ensure admin role in token even if not re-logged in
       if (token.email === "tombensim@gmail.com") {
+        token.role = "ADMIN"
+      }
+      
+      // Ensure admin role in token for dev user in development
+      if (process.env.NODE_ENV === "development" && token.email === "dev@genoox.com") {
         token.role = "ADMIN"
       }
 

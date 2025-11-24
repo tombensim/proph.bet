@@ -41,8 +41,20 @@ export function ActivityList({ notifications, onLinkClick }: ActivityListProps) 
   )
 }
 
+function NotificationIcon({ type, className }: { type: string; className?: string }) {
+  switch (type) {
+    case "BET_RESOLVED": return <Scale className={className} />
+    case "MARKET_RESOLVED": return <Scale className={className} />
+    case "WIN_PAYOUT": return <Coins className={className} />
+    case "MARKET_CREATED": return <PlusCircle className={className} />
+    case "MONTHLY_WINNER": return <Trophy className={className} />
+    case "POINTS_RESET": return <RefreshCw className={className} />
+    case "MARKET_DISPUTED": return <AlertTriangle className={className} />
+    default: return <Info className={className} />
+  }
+}
+
 function ActivityItem({ notification, onLinkClick }: { notification: Notification & { arena?: { id: string, name: string } | null }, onLinkClick?: () => void }) {
-  const Icon = getIcon(notification.type)
   const metadata = notification.metadata as any
   const link = getLink(notification, metadata)
   
@@ -56,7 +68,7 @@ function ActivityItem({ notification, onLinkClick }: { notification: Notificatio
         link && "hover:bg-muted/50 cursor-pointer"
     )}>
       <div className="mt-1 bg-muted p-2 rounded-full">
-        <Icon className="h-5 w-5 text-primary" />
+        <NotificationIcon type={notification.type} className="h-5 w-5 text-primary" />
       </div>
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between">
@@ -117,7 +129,7 @@ function ActivityItem({ notification, onLinkClick }: { notification: Notificatio
                     "hover:bg-muted/50"
                 )}>
                   <div className="mt-1 bg-muted p-2 rounded-full">
-                    <Icon className="h-5 w-5 text-primary" />
+                    <NotificationIcon type={notification.type} className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">

@@ -9,7 +9,7 @@ import { Link } from "@/lib/navigation"
 import { redirect } from "next/navigation"
 import { ArenaRole, Role } from "@prisma/client"
 import { getTranslations } from 'next-intl/server';
-import { Flame } from "lucide-react"
+import Image from "next/image"
 
 interface PageProps {
   searchParams: Promise<{ 
@@ -36,11 +36,17 @@ export default async function MarketsPage(props: PageProps) {
     select: { role: true, points: true }
   })
   
-  // Get Arena Settings
-  const arenaSettings = await prisma.arenaSettings.findUnique({
-     where: { arenaId },
-     select: { tradingFeePercent: true }
-  })
+  // Get Arena Settings and Details
+  const [arenaSettings, arena] = await Promise.all([
+     prisma.arenaSettings.findUnique({
+        where: { arenaId },
+        select: { tradingFeePercent: true }
+     }),
+     prisma.arena.findUnique({
+        where: { id: arenaId },
+        select: { name: true, logo: true, description: true }
+     })
+  ])
 
   // Cast to any to avoid linter error if types are outdated relative to schema
   const isAdmin = session.user.role === Role.ADMIN || 
@@ -195,16 +201,40 @@ export default async function MarketsPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <MarketSearch />
-          <div className="flex items-center gap-2">
-            {isAdmin && <PolymarketImportDialog arenaId={arenaId} />}
-            <Link href={`/arenas/${arenaId}/markets/create`}>
-                <Button>{t('createMarket')}</Button>
-            </Link>
-            <MarketFilter isAdmin={isAdmin} />
+      {/* Arena Header Banner & Title */}
+      <div className="flex flex-col gap-6">
+        {(arena?.logo || arena?.description) && (
+          <div className="flex items-start md:items-center gap-4">
+            {arena.logo && (
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
+                <Image 
+                  src={arena.logo} 
+                  alt={arena.name} 
+                  fill 
+                  className="object-cover"
+                  unoptimized={arena.logo.includes('localhost')}
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold">{arena.name} {t('title')}</h2>
+              {arena.description && (
+                <p className="text-muted-foreground mt-1">{arena.description}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <MarketSearch />
+            <div className="flex items-center gap-2">
+              {isAdmin && <PolymarketImportDialog arenaId={arenaId} />}
+              <Link href={`/arenas/${arenaId}/markets/create`}>
+                  <Button>{t('createMarket')}</Button>
+              </Link>
+              <MarketFilter isAdmin={isAdmin} />
+            </div>
           </div>
         </div>
       </div>
@@ -213,8 +243,14 @@ export default async function MarketsPage(props: PageProps) {
       {trendingMarkets.length > 0 && (
           <div className="space-y-3">
               <div className="flex items-center gap-2 text-lg font-semibold text-orange-600">
-                  <Flame className="h-5 w-5 fill-orange-600" />
                   {t('trending')}
+                  <Image 
+                    src="/chami-trending.png" 
+                    alt="Trending" 
+                    width={24} 
+                    height={24} 
+                    className="object-contain"
+                  />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {trendingMarkets.map(market => (

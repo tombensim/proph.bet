@@ -55,6 +55,7 @@ async function ensureBucketConfig() {
   }
 
   // Always ensure CORS is configured (safe to update)
+  // Note: MinIO in local development may not support CORS configuration
   try {
     await s3Client.send(new PutBucketCorsCommand({
       Bucket: BUCKET_NAME,
@@ -70,9 +71,11 @@ async function ensureBucketConfig() {
         ]
       }
     }))
-  } catch (corsError) {
-    // Non-fatal, but good to log
-    console.warn("Failed to set CORS:", corsError)
+  } catch (corsError: any) {
+    // Non-fatal, MinIO may not support CORS configuration in local dev
+    if (corsError?.Code !== 'NotImplemented') {
+      console.warn("Failed to set CORS:", corsError)
+    }
   }
 }
 

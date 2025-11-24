@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { refreshArenaNews } from "@/actions/arena-news"
+import { refreshArenaNews } from "@/app/actions/arena-news"
 import { NextResponse } from "next/server"
 
 export const dynamic = 'force-dynamic' // static by default, unless reading the request

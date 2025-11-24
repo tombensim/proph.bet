@@ -157,7 +157,7 @@ export async function placeBetAction(data: PlaceBetValues) {
     
         // CPMM Logic
         let shares = 0;
-        let finalOptionId = optionId;
+        const finalOptionId = optionId;
     
         if ((market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE || (market.type === MarketType.NUMERIC_RANGE && market.options.length > 0)) && optionId && market.options.length > 0) {
             const options = await tx.option.findMany({

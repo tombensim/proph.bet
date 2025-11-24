@@ -21,6 +21,7 @@ import {
 import { useRouter } from "@/lib/navigation"
 import { Arena, ArenaMembership } from "@prisma/client"
 import { CreateArenaDialog } from "@/components/arenas/create-arena-dialog"
+import Image from "next/image"
 
 type MembershipWithArena = ArenaMembership & { arena: Arena }
 
@@ -46,7 +47,20 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" aria-expanded={open} className="w-[110px] md:w-[200px] justify-between me-1 md:me-6 px-1.5 md:px-4 text-xs md:text-sm">
-                        <span className="truncate">{currentArena ? currentArena.name : "Select Arena"}</span>
+                        <div className="flex items-center gap-2 truncate">
+                            {currentArena?.logo ? (
+                                <div className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border bg-muted">
+                                    <Image
+                                        src={currentArena.logo}
+                                        alt={currentArena.name}
+                                        fill
+                                        className="object-cover"
+                                        unoptimized={currentArena.logo.includes('localhost')}
+                                    />
+                                </div>
+                            ) : null}
+                            <span className="truncate">{currentArena ? currentArena.name : "Select Arena"}</span>
+                        </div>
                         <ChevronsUpDown className="ms-1 md:ms-2 h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
@@ -71,7 +85,18 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                                                 currentArenaId === membership.arena.id ? "opacity-100" : "opacity-0"
                                             )}
                                         />
-                                        {membership.arena.name}
+                                        {membership.arena.logo && (
+                                            <div className="relative mr-2 h-5 w-5 shrink-0 overflow-hidden rounded-full border bg-muted">
+                                                <Image
+                                                    src={membership.arena.logo}
+                                                    alt={membership.arena.name}
+                                                    fill
+                                                    className="object-cover"
+                                                    unoptimized={membership.arena.logo.includes('localhost')}
+                                                />
+                                            </div>
+                                        )}
+                                        <span className="truncate">{membership.arena.name}</span>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
@@ -106,7 +131,18 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
                                                         currentArenaId === membership.arena.id ? "opacity-100" : "opacity-0"
                                                     )}
                                                 />
-                                                {membership.arena.name}
+                                                {membership.arena.logo && (
+                                                    <div className="relative mr-2 h-4 w-4 shrink-0 overflow-hidden rounded-full border bg-muted">
+                                                        <Image
+                                                            src={membership.arena.logo}
+                                                            alt={membership.arena.name}
+                                                            fill
+                                                            className="object-cover"
+                                                            unoptimized={membership.arena.logo.includes('localhost')}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <span className="truncate">{membership.arena.name}</span>
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>
@@ -137,4 +173,3 @@ export function ArenaSwitcher({ memberships, currentArenaId, canCreate }: ArenaS
         </>
     )
 }
-

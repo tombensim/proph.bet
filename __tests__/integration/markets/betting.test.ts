@@ -31,13 +31,13 @@ describe('Bet Placement Integration', () => {
     it('should place a bet and record it in database', async () => {
       // Arrange
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
       const option = market.options[0]
 
       // Act
       const bet = await betFactory.create(user.id, market.id, option.id, {
         amount: 100,
-        potentialPayout: 200,
+        shares: 100,
       })
 
       // Assert
@@ -46,12 +46,12 @@ describe('Bet Placement Integration', () => {
       expect(bet.marketId).toBe(market.id)
       expect(bet.optionId).toBe(option.id)
       expect(bet.amount).toBe(100)
-      expect(bet.potentialPayout).toBe(200)
+      expect(bet.shares).toBe(100)
     })
 
     it('should allow multiple bets from same user on same market', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
       const option = market.options[0]
 
       const bet1 = await betFactory.create(user.id, market.id, option.id, {
@@ -73,7 +73,7 @@ describe('Bet Placement Integration', () => {
 
     it('should allow bets on different options', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       const betYes = await betFactory.create(user.id, market.id, market.options[0].id)
       const betNo = await betFactory.create(user.id, market.id, market.options[1].id)
@@ -84,9 +84,9 @@ describe('Bet Placement Integration', () => {
 
   describe('Multiple Users Betting', () => {
     it('should handle multiple users betting on same market', async () => {
-      const { arena } = await userFactory.createWithArena()
+      const { user, arena } = await userFactory.createWithArena()
       const users = await userFactory.createMany(3)
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       // Add users to arena
       await Promise.all(
@@ -105,9 +105,9 @@ describe('Bet Placement Integration', () => {
     })
 
     it('should track total amount bet on each option', async () => {
-      const { arena } = await userFactory.createWithArena()
+      const { user, arena } = await userFactory.createWithArena()
       const users = await userFactory.createMany(4)
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       await Promise.all(
         users.map((user) => userFactory.addToArena(user.id, arena.id))
@@ -154,7 +154,7 @@ describe('Bet Placement Integration', () => {
 
     it('should prevent betting on non-existent option', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       await expect(
         betFactory.create(user.id, market.id, 'non-existent-option')
@@ -163,7 +163,7 @@ describe('Bet Placement Integration', () => {
 
     it('should prevent betting with negative amount', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       // Negative amounts should be caught at application layer
       // but we test database accepts positive amounts
@@ -180,7 +180,7 @@ describe('Bet Placement Integration', () => {
   describe('Bet History', () => {
     it('should maintain bet creation timestamps', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       const beforeBet = new Date()
       const bet = await betFactory.create(user.id, market.id, market.options[0].id)
@@ -193,8 +193,8 @@ describe('Bet Placement Integration', () => {
 
     it('should retrieve bet history for a user', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market1 = await marketFactory.create(arena.id, { title: 'Market 1' })
-      const market2 = await marketFactory.create(arena.id, { title: 'Market 2' })
+      const market1 = await marketFactory.create(arena.id, { title: 'Market 1' }, user.id)
+      const market2 = await marketFactory.create(arena.id, { title: 'Market 2' }, user.id)
 
       await betFactory.create(user.id, market1.id, market1.options[0].id)
       await betFactory.create(user.id, market2.id, market2.options[0].id)
@@ -214,7 +214,7 @@ describe('Bet Placement Integration', () => {
   describe('Database Constraints', () => {
     it('should cascade delete bets when market is deleted', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
       const bet = await betFactory.create(user.id, market.id, market.options[0].id)
 
       // Delete market
@@ -230,30 +230,25 @@ describe('Bet Placement Integration', () => {
       expect(foundBet).toBeNull()
     })
 
-    it('should cascade delete bets when user is deleted', async () => {
+    it('should prevent deleting user who created markets', async () => {
       const { user, arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
       const bet = await betFactory.create(user.id, market.id, market.options[0].id)
 
-      // Delete user
-      await testPrisma.user.delete({
-        where: { id: user.id },
-      })
-
-      // Bet should be deleted too
-      const foundBet = await testPrisma.bet.findUnique({
-        where: { id: bet.id },
-      })
-
-      expect(foundBet).toBeNull()
+      // Attempting to delete user should fail because they created markets
+      await expect(
+        testPrisma.user.delete({
+          where: { id: user.id },
+        })
+      ).rejects.toThrow(/Foreign key constraint/)
     })
   })
 
   describe('Factory Helpers', () => {
     it('should create multiple bets at once', async () => {
-      const { arena } = await userFactory.createWithArena()
+      const { user, arena } = await userFactory.createWithArena()
       const users = await userFactory.createMany(3)
-      const market = await marketFactory.create(arena.id)
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       await Promise.all(users.map((u) => userFactory.addToArena(u.id, arena.id)))
 
@@ -275,7 +270,7 @@ describe('Bet Placement Integration', () => {
         'A',
         'B',
         'C',
-      ])
+      ], user.id)
 
       const bets = await betFactory.createForAllOptions(user.id, market.id, 50)
 

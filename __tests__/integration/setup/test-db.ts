@@ -1,7 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 
 // Use separate database URL for integration tests
-const DATABASE_URL = process.env.DATABASE_URL_TEST || process.env.DATABASE_URL
+// Priority: TEST_DATABASE_URL (CI) > DATABASE_URL_TEST (local) > DATABASE_URL (fallback)
+const DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL_TEST || process.env.DATABASE_URL
 
 export const testPrisma = new PrismaClient({
   datasources: {
@@ -17,6 +18,9 @@ export const testPrisma = new PrismaClient({
  * Called before each integration test suite
  */
 export async function resetDatabase() {
+  // Disable foreign key checks temporarily to avoid deadlocks
+  await testPrisma.$executeRawUnsafe('SET session_replication_role = replica;')
+  
   const tables = await testPrisma.$queryRaw<Array<{ tablename: string }>>`
     SELECT tablename FROM pg_tables WHERE schemaname='public'
   `
@@ -24,12 +28,15 @@ export async function resetDatabase() {
   for (const { tablename } of tables) {
     if (tablename !== '_prisma_migrations') {
       try {
-        await testPrisma.$executeRawUnsafe(`TRUNCATE TABLE "${tablename}" CASCADE`)
+        await testPrisma.$executeRawUnsafe(`TRUNCATE TABLE "${tablename}" RESTART IDENTITY CASCADE`)
       } catch (error) {
         console.error(`Failed to truncate ${tablename}:`, error)
       }
     }
   }
+  
+  // Re-enable foreign key checks
+  await testPrisma.$executeRawUnsafe('SET session_replication_role = DEFAULT;')
 }
 
 /**

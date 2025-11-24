@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 function ErrorDetails() {
   const searchParams = useSearchParams()
@@ -19,12 +20,12 @@ export default function AuthErrorPage() {
         <Suspense fallback={<p>Loading error details...</p>}>
           <ErrorDetails />
         </Suspense>
-        <a
+        <Link
           href="/auth/signin"
           className="mt-4 inline-block px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
         >
           Try again
-        </a>
+        </Link>
       </div>
     </div>
   )

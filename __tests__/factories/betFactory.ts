@@ -71,7 +71,7 @@ export class BetFactory extends Factory {
       market.options.map((option) =>
         this.create(userId, marketId, option.id, {
           amount,
-          potentialPayout: amount * 2,
+          shares: amount,
         })
       )
     )

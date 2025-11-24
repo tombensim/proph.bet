@@ -34,7 +34,7 @@ describe('Market Creation Integration', () => {
       const market = await marketFactory.create(arena.id, {
         title: 'Will it rain tomorrow?',
         description: 'Weather prediction market',
-      })
+      }, user.id)
 
       // Assert
       expect(market).toBeDefined()
@@ -42,38 +42,41 @@ describe('Market Creation Integration', () => {
       expect(market.type).toBe(MarketType.BINARY)
       expect(market.status).toBe(MarketStatus.OPEN)
       expect(market.options).toHaveLength(2)
-      expect(market.options.map((o) => o.value)).toEqual(['YES', 'NO'])
-      expect(market.options[0].initialProbability).toBe(50)
-      expect(market.options[1].initialProbability).toBe(50)
+      expect(market.options.map((o) => o.text)).toEqual(['YES', 'NO'])
     })
 
-    it('should enforce title minimum length', async () => {
-      const { arena } = await userFactory.createWithArena()
+    it('should allow short titles at DB level (validation is application-level)', async () => {
+      const { user, arena } = await userFactory.createWithArena()
 
-      // Attempt to create market with short title should fail at DB level
-      await expect(
-        testPrisma.market.create({
-          data: {
-            title: 'Hi', // Too short
-            type: MarketType.BINARY,
-            status: MarketStatus.OPEN,
-            resolutionDate: new Date(),
-            arenaId: arena.id,
-          },
-        })
-      ).rejects.toThrow()
+      // Database allows short titles - validation is in application layer (Zod schema)
+      const market = await testPrisma.market.create({
+        data: {
+          title: 'Hi', // Too short for app validation, but DB allows it
+          description: 'Test',
+          type: MarketType.BINARY,
+          status: MarketStatus.OPEN,
+          resolutionDate: new Date(),
+          arenaId: arena.id,
+          creatorId: user.id,
+        },
+      })
+
+      expect(market.title).toBe('Hi')
+      // This demonstrates why application-level validation is important
     })
 
     it('should require a resolution date', async () => {
-      const { arena } = await userFactory.createWithArena()
+      const { user, arena } = await userFactory.createWithArena()
 
       await expect(
         testPrisma.market.create({
           data: {
             title: 'Test Market',
+            description: 'Test market description',
             type: MarketType.BINARY,
             status: MarketStatus.OPEN,
             arenaId: arena.id,
+            creatorId: user.id,
             // Missing resolutionDate
           } as any,
         })
@@ -83,35 +86,27 @@ describe('Market Creation Integration', () => {
 
   describe('Multiple Choice Markets', () => {
     it('should create multiple choice market with custom options', async () => {
-      const { arena } = await userFactory.createWithArena()
+      const { user, arena } = await userFactory.createWithArena()
 
       const market = await marketFactory.createMultipleChoice(arena.id, [
         'Sunny',
         'Rainy',
         'Cloudy',
         'Snowy',
-      ])
+      ], user.id)
 
       expect(market.type).toBe(MarketType.MULTIPLE_CHOICE)
       expect(market.options).toHaveLength(4)
-      expect(market.options.map((o) => o.value)).toEqual([
+      expect(market.options.map((o) => o.text)).toEqual([
         'Sunny',
         'Rainy',
         'Cloudy',
         'Snowy',
       ])
-
-      // Probabilities should sum to ~100
-      const totalProbability = market.options.reduce(
-        (sum, o) => sum + o.currentProbability,
-        0
-      )
-      expect(totalProbability).toBeGreaterThanOrEqual(95)
-      expect(totalProbability).toBeLessThanOrEqual(100)
     })
 
     it('should require at least 2 options for multiple choice', async () => {
-      const { arena } = await userFactory.createWithArena()
+      const { user, arena } = await userFactory.createWithArena()
 
       // Creating market with 1 option should fail validation
       // This would be caught at the application layer (Zod schema)
@@ -119,12 +114,14 @@ describe('Market Creation Integration', () => {
       const market = await testPrisma.market.create({
         data: {
           title: 'Test Market',
+          description: 'Test market description',
           type: MarketType.MULTIPLE_CHOICE,
           status: MarketStatus.OPEN,
           resolutionDate: new Date(Date.now() + 86400000),
           arenaId: arena.id,
+          creatorId: user.id,
           options: {
-            create: [{ value: 'Only One', initialProbability: 100, currentProbability: 100 }],
+            create: [{ text: 'Only One' }],
           },
         },
         include: { options: true },
@@ -138,8 +135,8 @@ describe('Market Creation Integration', () => {
 
   describe('Arena Association', () => {
     it('should associate market with correct arena', async () => {
-      const { arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const { user, arena } = await userFactory.createWithArena()
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       const foundMarket = await testPrisma.market.findUnique({
         where: { id: market.id },
@@ -157,14 +154,14 @@ describe('Market Creation Integration', () => {
     })
 
     it('should allow multiple markets in same arena', async () => {
-      const { arena } = await userFactory.createWithArena()
+      const { user, arena } = await userFactory.createWithArena()
 
       const market1 = await marketFactory.create(arena.id, {
         title: 'Market 1',
-      })
+      }, user.id)
       const market2 = await marketFactory.create(arena.id, {
         title: 'Market 2',
-      })
+      }, user.id)
 
       const arenaMarkets = await testPrisma.market.findMany({
         where: { arenaId: arena.id },
@@ -179,28 +176,26 @@ describe('Market Creation Integration', () => {
 
   describe('Market Status', () => {
     it('should create markets with OPEN status by default', async () => {
-      const { arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const { user, arena } = await userFactory.createWithArena()
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       expect(market.status).toBe(MarketStatus.OPEN)
-      expect(market.resolvedAt).toBeNull()
-      expect(market.resolvedOptionId).toBeNull()
+      expect(market.winningOptionId).toBeNull()
     })
 
     it('should allow creating resolved markets', async () => {
-      const { arena } = await userFactory.createWithArena()
-      const market = await marketFactory.createResolved(arena.id, 0)
+      const { user, arena } = await userFactory.createWithArena()
+      const market = await marketFactory.createResolved(arena.id, 0, user.id)
 
       expect(market.status).toBe(MarketStatus.RESOLVED)
-      expect(market.resolvedAt).toBeDefined()
-      expect(market.resolvedOptionId).toBe(market.options[0].id)
+      expect(market.winningOptionId).toBe(market.options[0].id)
     })
   })
 
   describe('Database Constraints', () => {
     it('should prevent duplicate market IDs', async () => {
-      const { arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const { user, arena } = await userFactory.createWithArena()
+      const market = await marketFactory.create(arena.id, {}, user.id)
 
       // Attempt to create market with same ID
       await expect(
@@ -208,18 +203,20 @@ describe('Market Creation Integration', () => {
           data: {
             id: market.id, // Same ID
             title: 'Duplicate',
+            description: 'Test',
             type: MarketType.BINARY,
             status: MarketStatus.OPEN,
             resolutionDate: new Date(),
             arenaId: arena.id,
+            creatorId: user.id,
           },
         })
       ).rejects.toThrow()
     })
 
     it('should cascade delete options when market is deleted', async () => {
-      const { arena } = await userFactory.createWithArena()
-      const market = await marketFactory.create(arena.id)
+      const { user, arena } = await userFactory.createWithArena()
+      const market = await marketFactory.create(arena.id, {}, user.id)
       const optionIds = market.options.map((o) => o.id)
 
       // Delete market
@@ -228,7 +225,7 @@ describe('Market Creation Integration', () => {
       })
 
       // Options should be deleted too
-      const remainingOptions = await testPrisma.marketOption.findMany({
+      const remainingOptions = await testPrisma.option.findMany({
         where: { id: { in: optionIds } },
       })
 

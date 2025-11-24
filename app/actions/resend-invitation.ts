@@ -62,7 +62,8 @@ export async function resendInvitationAction(invitationId: string) {
         inviterName,
         arenaName,
         inviteLink,
-        userEmail: invitation.email
+        userEmail: invitation.email,
+        arenaLogo: invitation.arena.logo
       })
     })
   } catch (error) {

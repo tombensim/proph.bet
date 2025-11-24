@@ -36,7 +36,7 @@ export default async function ActivityPage({
     }
   })
 
-  const arenas = memberships.map(m => ({
+  const arenas = memberships.map((m: { arena: { id: string; name: string } }) => ({
     id: m.arena.id,
     name: m.arena.name
   }))

@@ -19,6 +19,7 @@ interface ArenaInvitationEmailProps {
   arenaName: string;
   inviteLink: string;
   userEmail: string; // Used for "This invite was sent to..."
+  arenaLogo?: string | null;
   baseUrl?: string;
 }
 
@@ -27,6 +28,7 @@ export const ArenaInvitationEmail = ({
   arenaName,
   inviteLink,
   userEmail,
+  arenaLogo,
   baseUrl = process.env.NEXT_PUBLIC_APP_URL || "",
 }: ArenaInvitationEmailProps) => {
   const previewText = `${inviterName} invited you to join ${arenaName} on Proph.bet`;
@@ -47,6 +49,17 @@ export const ArenaInvitationEmail = ({
                 className="my-0 mx-auto"
               />
             </Section>
+            {arenaLogo && (
+              <Section className="mt-[20px]">
+                 <Img
+                    src={arenaLogo}
+                    width="80"
+                    height="80"
+                    alt={arenaName}
+                    className="my-0 mx-auto rounded-full object-cover"
+                 />
+              </Section>
+            )}
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
               Join <strong>{arenaName}</strong>
             </Heading>
