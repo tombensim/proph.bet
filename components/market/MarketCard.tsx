@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
-import { Coins, AlertTriangle, Zap, Bot, TrendingUp, TrendingDown } from "lucide-react"
+import { Coins, AlertTriangle, Zap, Bot, TrendingUp, TrendingDown, ExternalLink } from "lucide-react"
 import { ApproveMarketButton } from "./ApproveMarketButton"
 import { useTranslations } from 'next-intl';
 import { generateGradient } from "@/lib/utils"
@@ -104,6 +104,23 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
         </div>
       )}
 
+      {/* Polymarket Badge Overlay */}
+      {market.source === "POLYMARKET" && market.polymarketId && (
+        <a 
+          href={`https://polymarket.com/market/${market.polymarketId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-2 left-2 z-10 pointer-events-auto"
+          style={{ marginTop: latestSentiment ? '2.5rem' : '0' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+             <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 shadow-sm cursor-pointer">
+                <ExternalLink className="w-3 h-3" /> 
+                {t('polymarket')}
+            </Badge>
+        </a>
+      )}
+
       {/* Content Section - Pointer events passed through to Link unless caught */}
       <div className="flex flex-col flex-1 pointer-events-none min-h-0"> 
         {coverImage ? (
@@ -112,7 +129,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
             <img 
               src={coverImage} 
               alt={market.title}
-              className="object-cover w-full h-full transition-transform group-hover:scale-105 duration-500"
+              className="object-cover object-[center_30%] w-full h-full transition-transform group-hover:scale-105 duration-500"
             />
           </div>
         ) : (

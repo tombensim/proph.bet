@@ -18,6 +18,39 @@ export async function fetchPolymarketMarkets(filter: PolymarketFilter = {}) {
   return await fetchService(filter)
 }
 
+/**
+ * Extract market ID from Polymarket URL and fetch the market
+ * Supports URLs like:
+ * - https://polymarket.com/event/market-slug
+ * - https://polymarket.com/event/market-slug?param=value
+ */
+export async function fetchPolymarketMarketByUrl(url: string): Promise<PolymarketMarket | null> {
+  try {
+    // Extract the market ID/slug from the URL
+    // Polymarket URLs are typically: https://polymarket.com/event/{market-id}
+    const urlObj = new URL(url)
+    const pathParts = urlObj.pathname.split('/').filter(Boolean)
+    
+    // Look for 'event' in the path and get the next segment
+    const eventIndex = pathParts.indexOf('event')
+    if (eventIndex === -1 || eventIndex === pathParts.length - 1) {
+      throw new Error("Invalid Polymarket URL format. Expected: https://polymarket.com/event/market-id")
+    }
+    
+    const marketId = pathParts[eventIndex + 1]
+    if (!marketId) {
+      throw new Error("Could not extract market ID from URL")
+    }
+    
+    // Use the existing service function to fetch by ID
+    const { fetchPolymarketMarketById } = await import('@/lib/polymarket-service')
+    return await fetchPolymarketMarketById(marketId)
+  } catch (error) {
+    console.error("Error fetching market by URL:", error)
+    throw error
+  }
+}
+
 export async function importPolymarketMarket(
   marketData: PolymarketMarket, 
   arenaId: string, 
