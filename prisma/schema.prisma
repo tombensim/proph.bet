@@ -91,6 +91,7 @@ model Arena {
   description String?
   about       String? // Rich text / Markdown content
   coverImage  String?
+  logo        String?
   slug        String   @unique // For friendly URLs if needed, or just use ID
   
   members     ArenaMembership[]

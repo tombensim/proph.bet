@@ -9,7 +9,7 @@ import { Link } from "@/lib/navigation"
 import { redirect } from "next/navigation"
 import { ArenaRole, Role } from "@prisma/client"
 import { getTranslations } from 'next-intl/server';
-import { Flame } from "lucide-react"
+import Image from "next/image"
 
 interface PageProps {
   searchParams: Promise<{ 
@@ -213,8 +213,14 @@ export default async function MarketsPage(props: PageProps) {
       {trendingMarkets.length > 0 && (
           <div className="space-y-3">
               <div className="flex items-center gap-2 text-lg font-semibold text-orange-600">
-                  <Flame className="h-5 w-5 fill-orange-600" />
                   {t('trending')}
+                  <Image 
+                    src="/chami-trending.png" 
+                    alt="Trending" 
+                    width={24} 
+                    height={24} 
+                    className="object-contain"
+                  />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {trendingMarkets.map(market => (
