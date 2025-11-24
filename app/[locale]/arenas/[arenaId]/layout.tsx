@@ -35,7 +35,7 @@ export default async function ArenaLayout({ children, params }: ArenaLayoutProps
     <>
       <Navbar arenaId={arenaId} />
       <NewsTicker arenaId={arenaId} />
-      <div className="mt-8 lg:px-12 xl:px-24 2xl:px-32">
+      <div className="mt-12 lg:px-12 xl:px-24 2xl:px-32">
         {children}
       </div>
     </>
