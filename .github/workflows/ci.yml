@@ -31,6 +31,11 @@ jobs:
         run: npm run translations:validate
 
       - name: Run tests
+        env:
+          TEST_DATABASE_URL: postgresql://test:test@localhost:5432/test
+          VERCEL_GIT_COMMIT_REF: test
+          NEXTAUTH_SECRET: test-secret-for-ci
+          NEXTAUTH_URL: http://localhost:3000
         run: npm run test:ci
 
       - name: Upload coverage reports
