@@ -17,10 +17,14 @@ export default async function ArenaSetupPage(props: PageProps) {
   } = params;
   const session = await auth()
 
+  if (!session?.user?.id) {
+    return notFound()
+  }
+
   try {
       // Verify access first
       const membership = await prisma.arenaMembership.findUnique({
-        where: { userId_arenaId: { userId: session?.user?.id!, arenaId } }
+        where: { userId_arenaId: { userId: session.user.id, arenaId } }
       })
       
       // Only allow if admin

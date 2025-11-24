@@ -42,8 +42,16 @@ export function ActivityList({ notifications, onLinkClick }: ActivityListProps) 
 }
 
 function NotificationIcon({ type, className }: { type: string; className?: string }) {
-  const Icon = getIcon(type)
-  return <Icon className={className} />
+  switch (type) {
+    case "BET_RESOLVED": return <Scale className={className} />
+    case "MARKET_RESOLVED": return <Scale className={className} />
+    case "WIN_PAYOUT": return <Coins className={className} />
+    case "MARKET_CREATED": return <PlusCircle className={className} />
+    case "MONTHLY_WINNER": return <Trophy className={className} />
+    case "POINTS_RESET": return <RefreshCw className={className} />
+    case "MARKET_DISPUTED": return <AlertTriangle className={className} />
+    default: return <Info className={className} />
+  }
 }
 
 function ActivityItem({ notification, onLinkClick }: { notification: Notification & { arena?: { id: string, name: string } | null }, onLinkClick?: () => void }) {
