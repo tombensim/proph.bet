@@ -43,7 +43,9 @@
     "createdBy": "נוצר על ידי {name}",
     "betsCount": "{count} הימורים",
     "endsIn": "מסתיים {timeAgo}",
-    "chance": "סיכוי"
+    "chance": "סיכוי",
+    "polymarket": "Polymarket",
+    "importedFromPolymarket": "צפה ב-Polymarket"
   },
   "UserNav": {
     "profile": "פרופיל",
@@ -166,6 +168,9 @@
     "resolveForm": {
       "title": "סגירת שוק",
       "desc": "בחר את התוצאה הנכונה לחלוקת הנקודות.",
+      "polymarketIntegration": "אינטגרציה עם Polymarket",
+      "polymarketSyncDesc": "שוק זה יובא מ-Polymarket. ניתן לסנכרן את הסגירה באופן אוטומטי אם היא נפתרה שם.",
+      "syncFromPolymarket": "סנכרן סגירה מ-Polymarket",
       "winningOption": "אפשרות זוכה",
       "selectWinner": "בחר מנצח",
       "winningValue": "ערך זוכה",

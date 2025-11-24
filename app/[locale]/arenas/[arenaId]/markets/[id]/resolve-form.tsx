@@ -3,16 +3,18 @@
 import { useState, useTransition } from "react"
 import { Market, Option } from "@prisma/client"
 import { resolveMarketAction } from "@/app/actions/resolve-market"
+import { syncPolymarketResolutionAction } from "@/app/actions/sync-polymarket-resolution"
 import { getUploadUrlAction } from "@/app/actions/storage"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Loader2, Upload, FileCheck } from "lucide-react"
+import { Loader2, Upload, FileCheck, RefreshCw, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from 'next-intl';
 import Image from "next/image"
+import { toast } from "sonner"
 
 interface ResolveMarketFormProps {
   market: Market & { options: Option[] }
@@ -21,10 +23,13 @@ interface ResolveMarketFormProps {
 export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
   const t = useTranslations('MarketDetail.resolveForm');
   const [isPending, startTransition] = useTransition()
+  const [isSyncing, setIsSyncing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [winningOptionId, setWinningOptionId] = useState<string>("")
   const [winningValue, setWinningValue] = useState<string>("")
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null)
+  
+  const isPolymarket = market.source === "POLYMARKET"
   
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     console.log("File selected")
@@ -53,6 +58,25 @@ export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
       setIsUploading(false)
       // Clear value to allow re-upload if needed
       e.target.value = "" 
+    }
+  }
+
+  async function onSyncFromPolymarket() {
+    setIsSyncing(true)
+    try {
+      const result = await syncPolymarketResolutionAction(market.id)
+      if (result.success) {
+        toast.success(result.message)
+        // The page will refresh automatically due to revalidation
+        setTimeout(() => window.location.reload(), 1500)
+      } else {
+        toast.error(result.error)
+      }
+    } catch (error) {
+      console.error("Sync error:", error)
+      toast.error("Failed to sync resolution from Polymarket")
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -91,6 +115,30 @@ export function ResolveMarketForm({ market }: ResolveMarketFormProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t('desc')}</p>
+        
+        {isPolymarket && (
+          <div className="space-y-3 pb-4 border-b">
+            <div className="flex items-start gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <ExternalLink className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 text-sm">
+                <p className="font-medium text-purple-900 mb-1">{t('polymarketIntegration')}</p>
+                <p className="text-purple-700 text-xs">
+                  {t('polymarketSyncDesc')}
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={onSyncFromPolymarket}
+              disabled={isSyncing || isPending}
+              variant="outline"
+              className="w-full border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+            >
+              {isSyncing && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              {!isSyncing && <RefreshCw className="me-2 h-4 w-4" />}
+              {t('syncFromPolymarket')}
+            </Button>
+          </div>
+        )}
         
         {(market.type === "BINARY" || market.type === "MULTIPLE_CHOICE") && (
            <div className="space-y-2">

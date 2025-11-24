@@ -12,6 +12,8 @@ export interface PolymarketMarket {
   icon?: string
   active: boolean
   closed: boolean
+  resolved?: boolean
+  resolvedOutcome?: string // The winning outcome text (e.g., "Yes", "No")
   tags?: Array<{ id: string; label: string }>
   groupItemTitle?: string
 }
@@ -55,5 +57,26 @@ export async function fetchPolymarketMarkets(filter: PolymarketFilter = {}) {
   return data as PolymarketMarket[]
 }
 
+// Fetch a single market by ID
+export async function fetchPolymarketMarketById(id: string): Promise<PolymarketMarket | null> {
+  try {
+    const response = await fetch(`${POLYMARKET_API_URL}/${id}`, {
+      next: { revalidate: 60 } // Cache for 60 seconds
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null // Market not found
+      }
+      throw new Error(`Failed to fetch market from Polymarket: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data as PolymarketMarket
+  } catch (error) {
+    console.error(`Error fetching Polymarket market ${id}:`, error)
+    throw error
+  }
+}
 
 

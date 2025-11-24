@@ -4,12 +4,14 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, RefreshCw, Loader2, Info, ExternalLink } from "lucide-react"
+import { Search, RefreshCw, Loader2, Info, ExternalLink, Link2 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { fetchPolymarketMarkets, importPolymarketMarket, type PolymarketMarket } from "@/app/actions/polymarket"
+import { fetchPolymarketMarkets, importPolymarketMarket, fetchPolymarketMarketByUrl, type PolymarketMarket } from "@/app/actions/polymarket"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 
 interface PolymarketImportDialogProps {
   arenaId: string
@@ -41,6 +43,8 @@ export function PolymarketImportDialog({ arenaId, trigger }: PolymarketImportDia
   const [markets, setMarkets] = useState<PolymarketMarket[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
+  const [polymarketUrl, setPolymarketUrl] = useState("")
+  const [fetchingUrl, setFetchingUrl] = useState(false)
 
   const loadMarkets = async () => {
     setLoading(true)
@@ -56,18 +60,84 @@ export function PolymarketImportDialog({ arenaId, trigger }: PolymarketImportDia
     }
   }
 
+  const handleFetchByUrl = async () => {
+    if (!polymarketUrl.trim()) {
+      toast.error("Please enter a Polymarket URL")
+      return
+    }
+
+    setFetchingUrl(true)
+    try {
+      const market = await fetchPolymarketMarketByUrl(polymarketUrl)
+      if (market) {
+        // Add the fetched market to the top of the list
+        setMarkets(prev => [market, ...prev.filter(m => m.id !== market.id)])
+        setPolymarketUrl("")
+        toast.success("Market loaded successfully")
+      } else {
+        toast.error("Market not found")
+      }
+    } catch (error) {
+      toast.error("Failed to fetch market from URL")
+      console.error(error)
+    } finally {
+      setFetchingUrl(false)
+    }
+  }
+
   useEffect(() => {
     if (open) {
       loadMarkets()
     }
   }, [open])
 
-  // Filter markets based on search and active tab
+  // Filter markets based on search, relevance, and active tab
   const filteredMarkets = markets.filter(market => {
     const matchesSearch = market.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           market.description.toLowerCase().includes(searchQuery.toLowerCase())
     
     if (!matchesSearch) return false
+
+    // Filter out irrelevant markets
+    const volume = parseFloat(market.volume || "0")
+    const endDate = new Date(market.endDate)
+    const now = new Date()
+    const daysUntilExpiry = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    
+    // Skip markets with very low volume (less than $1000)
+    if (volume < 1000) return false
+    
+    // Skip markets expiring within 3 days
+    if (daysUntilExpiry < 3) return false
+    
+    // Skip already closed or expired markets, or markets with invalid dates
+    if (market.closed || endDate < now || isNaN(endDate.getTime())) return false
+
+    // Filter out markets with uninteresting (lopsided) odds ratios
+    try {
+      const prices = JSON.parse(market.outcomePrices)
+      if (Array.isArray(prices) && prices.length > 0) {
+        // Convert string prices to numbers
+        const numericPrices = prices.map((p: string) => parseFloat(p))
+        
+        // For binary markets, check if odds are too extreme (less than 10% or more than 90%)
+        // This filters out markets that are essentially decided
+        if (numericPrices.length === 2) {
+          const minPrice = Math.min(...numericPrices)
+          const maxPrice = Math.max(...numericPrices)
+          
+          // Skip if one side is below 10% (too lopsided)
+          if (minPrice < 0.10 || maxPrice > 0.90) return false
+        }
+        
+        // For multi-outcome markets, ensure at least 2 outcomes have reasonable probability (>5%)
+        const viableOutcomes = numericPrices.filter((p: number) => p > 0.05)
+        if (viableOutcomes.length < 2) return false
+      }
+    } catch (e) {
+      // If we can't parse prices, skip the market
+      return false
+    }
 
     if (activeTab === "all") return true
     
@@ -114,11 +184,58 @@ export function PolymarketImportDialog({ arenaId, trigger }: PolymarketImportDia
         <DialogHeader>
           <DialogTitle>Import Markets from Polymarket</DialogTitle>
           <DialogDescription>
-            Select high-volume markets to add to your arena. Odds will be preserved.
+            Paste a Polymarket URL or browse high-volume, relevant markets.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-2">
+          {/* URL Import Section */}
+          <div className="space-y-2">
+            <Label htmlFor="polymarket-url" className="text-sm font-medium">
+              Import from URL
+            </Label>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Link2 className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="polymarket-url"
+                  placeholder="https://polymarket.com/event/..."
+                  className="pl-8"
+                  value={polymarketUrl}
+                  onChange={(e) => setPolymarketUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleFetchByUrl()
+                    }
+                  }}
+                />
+              </div>
+              <Button 
+                variant="secondary" 
+                onClick={handleFetchByUrl} 
+                disabled={fetchingUrl || !polymarketUrl.trim()}
+              >
+                {fetchingUrl ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Fetch"
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or browse markets
+              </span>
+            </div>
+          </div>
+
+          {/* Search and Filter Section */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -143,6 +260,10 @@ export function PolymarketImportDialog({ arenaId, trigger }: PolymarketImportDia
               <TabsTrigger value="science">Science/Tech</TabsTrigger>
             </TabsList>
           </Tabs>
+
+          <p className="text-xs text-muted-foreground">
+            Showing markets with $1K+ volume, 3+ days until expiry, and competitive odds (10%-90%)
+          </p>
         </div>
 
         <div className="flex-1 overflow-hidden border rounded-md">

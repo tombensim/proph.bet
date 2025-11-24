@@ -43,7 +43,9 @@
     "createdBy": "Created by {name}",
     "betsCount": "{count} bets",
     "endsIn": "Ends {timeAgo}",
-    "chance": "Chance"
+    "chance": "Chance",
+    "polymarket": "Polymarket",
+    "importedFromPolymarket": "View on Polymarket"
   },
   "UserNav": {
     "profile": "Profile",
@@ -166,6 +168,9 @@
     "resolveForm": {
       "title": "Resolve Market",
       "desc": "Select the correct outcome to distribute points.",
+      "polymarketIntegration": "Polymarket Integration",
+      "polymarketSyncDesc": "This market was imported from Polymarket. You can automatically sync the resolution if it has been resolved there.",
+      "syncFromPolymarket": "Sync Resolution from Polymarket",
       "winningOption": "Winning Option",
       "selectWinner": "Select winner",
       "winningValue": "Winning Value",

@@ -52,6 +52,7 @@ export default async function MarketPage(props: PageProps) {
   const params = await props.params;
   const { arenaId, id } = params
   const t = await getTranslations('MarketDetail');
+  const tMarkets = await getTranslations('Markets');
   
   const session = await auth()
   if (!session?.user?.id) return redirect("/auth/signin")
@@ -169,7 +170,24 @@ export default async function MarketPage(props: PageProps) {
       />
 
       <div className="flex items-start justify-between gap-4 mb-2 mt-2">
-         <h1 className="text-3xl font-bold">{market.title}</h1>
+         <div className="flex-1">
+           <h1 className="text-3xl font-bold">{market.title}</h1>
+           {market.source === "POLYMARKET" && market.polymarketId && (
+             <div className="mt-2">
+               <a 
+                 href={`https://polymarket.com/market/${market.polymarketId}`}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="inline-block"
+               >
+                 <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-300 cursor-pointer transition-colors">
+                   <ExternalLink className="w-3 h-3" /> 
+                   {tMarkets('importedFromPolymarket')}
+                 </Badge>
+               </a>
+             </div>
+           )}
+         </div>
       </div>
       <div className="text-muted-foreground whitespace-pre-wrap mb-4">
         {market.description}
