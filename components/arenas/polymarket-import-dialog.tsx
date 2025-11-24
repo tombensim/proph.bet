@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, RefreshCw, Loader2, Info, ExternalLink } from "lucide-react"
+import { Search, RefreshCw, Loader2, Info, ExternalLink } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -105,8 +105,8 @@ export function PolymarketImportDialog({ arenaId, trigger }: PolymarketImportDia
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Import from Polymarket
+            Import
+            <img src="https://polymarket.com/favicon.ico" alt="Polymarket" className="h-4 w-4" />
           </Button>
         )}
       </DialogTrigger>
