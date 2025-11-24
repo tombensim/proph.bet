@@ -17,17 +17,25 @@ export default async function ArenaSettingsPage(props: PageProps) {
   const {
     arenaId
   } = params;
+
+  let data;
   try {
-      const [settings, arena] = await Promise.all([
+      data = await Promise.all([
         getArenaSettingsAction(arenaId),
         getArenaDetailsAction(arenaId)
       ])
+  } catch (error) {
+      // Likely unauthorized
+      return notFound()
+  }
+
+  const [settings, arena] = data;
       
-      return (
-        <div className="container max-w-4xl py-6">
-          <h1 className="text-3xl font-bold mb-6">Arena Management</h1>
-          
-          <Tabs defaultValue="general" className="w-full">
+  return (
+    <div className="container max-w-4xl py-6">
+      <h1 className="text-3xl font-bold mb-6">Arena Management</h1>
+      
+      <Tabs defaultValue="general" className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="general">General Details</TabsTrigger>
               <TabsTrigger value="rules">Game Rules</TabsTrigger>
@@ -55,14 +63,10 @@ export default async function ArenaSettingsPage(props: PageProps) {
                <AnalystsForm settings={settings} />
             </TabsContent>
 
-            <TabsContent value="danger">
-               <DangerZone arena={arena} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      )
-  } catch (error) {
-      // Likely unauthorized
-      return notFound()
-  }
+        <TabsContent value="danger">
+           <DangerZone arena={arena} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
 }

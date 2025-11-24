@@ -115,13 +115,14 @@ export async function getArenaDetailsAction(arenaId: string) {
   return arena
 }
 
-// Update arena details (name, description, about, coverImage)
+// Update arena details (name, description, about, coverImage, logo)
 const arenaDetailsSchema = z.object({
   id: z.string(),
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
   about: z.string().optional().nullable(),
   coverImage: z.string().optional().nullable(),
+  logo: z.string().optional().nullable(),
 })
 
 export async function updateArenaDetailsAction(data: z.infer<typeof arenaDetailsSchema>) {
@@ -136,6 +137,7 @@ export async function updateArenaDetailsAction(data: z.infer<typeof arenaDetails
       description: validated.description,
       about: validated.about,
       coverImage: validated.coverImage,
+      logo: validated.logo,
     }
   })
 

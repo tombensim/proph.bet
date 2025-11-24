@@ -63,20 +63,24 @@ export async function generateMarketDescription({
     throw new Error("GEMINI_KEY is not configured");
   }
 
-  let prompt = `You are helping create a prediction market. Generate a clear, concise description (2-3 sentences) for the following market:
+  const prompt = `You are helping create a prediction market. Generate a clear, concise description (2-3 sentences) for the following market:
 
 Title: "${title}"
 Type: ${type}`;
 
+  let optionsText = "";
   if (options && options.length > 0) {
-    prompt += `\nOptions: ${options.join(", ")}`;
+    optionsText = `\nOptions: ${options.join(", ")}`;
   }
 
+  let resolutionDateText = "";
   if (resolutionDate) {
-    prompt += `\nResolution Date: ${resolutionDate.toLocaleDateString()}`;
+    resolutionDateText = `\nResolution Date: ${resolutionDate.toLocaleDateString()}`;
   }
 
-  prompt += `\n\nThe description should:
+  const finalPrompt = `${prompt}${optionsText}${resolutionDateText}
+
+The description should:
 - Clearly explain what is being predicted
 - Mention resolution criteria if relevant
 - Be objective and neutral
@@ -86,7 +90,7 @@ Type: ${type}`;
     // Using the cheap and fast model as requested: gemini-2.5-flash
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: finalPrompt,
     });
     
     if (!response.text) {
@@ -124,15 +128,18 @@ export async function generateArenaAbout({
     throw new Error("GEMINI_KEY is not configured");
   }
 
-  let prompt = `You are helping manage a prediction arena (a community for prediction markets). Generate a rich, engaging "About" section in Markdown format for the following arena:
+  const prompt = `You are helping manage a prediction arena (a community for prediction markets). Generate a rich, engaging "About" section in Markdown format for the following arena:
 
 Arena Name: "${name}"`;
 
+  let descriptionText = "";
   if (description) {
-    prompt += `\nBrief Description: "${description}"`;
+    descriptionText = `\nBrief Description: "${description}"`;
   }
 
-  prompt += `\n\nThe "About" content should:
+  const finalPrompt = `${prompt}${descriptionText}
+
+The "About" content should:
 - Be formatted in Markdown (headers, bullet points, etc.)
 - Be engaging and welcoming to new members
 - Explain the purpose of the arena based on its name and description
@@ -144,7 +151,7 @@ Arena Name: "${name}"`;
     // Using the cheap and fast model as requested: gemini-2.5-flash
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: finalPrompt,
     });
     
     if (!response.text) {
@@ -186,7 +193,7 @@ export async function generateArenaNews({
     throw new Error("GEMINI_KEY is not configured");
   }
 
-  let prompt = `You are a sports/finance news ticker anchor for "${arenaName}". Generate 5-7 short, punchy, exciting headlines for a scrolling news ticker based on the following activity:
+  const prompt = `You are a sports/finance news ticker anchor for "${arenaName}". Generate 5-7 short, punchy, exciting headlines for a scrolling news ticker based on the following activity:
 
 Active Markets (Trending):
 ${activeMarkets.map((m) => `- ${m.title} (${m.volume} bets)`).join("\n")}
@@ -274,7 +281,7 @@ export async function generateAnalystSentiment({
     throw new Error("GEMINI_KEY is not configured");
   }
 
-  let prompt = `You are acting as an analyst named "${analyst.name}" for a prediction market.
+  const prompt = `You are acting as an analyst named "${analyst.name}" for a prediction market.
   
 Your Persona/Instructions:
 "${analyst.prompt}"

@@ -23,10 +23,11 @@ export async function addMemberAction(email: string, arenaId: string) {
     throw new Error("Unauthorized: Only arena admins can invite members")
   }
 
-  const arenaName = requesterMembership.arena.name
-  const inviterName = session.user.name || "A user"
+    const arenaName = requesterMembership.arena.name
+    const arenaLogo = requesterMembership.arena.logo
+    const inviterName = session.user.name || "A user"
 
-  // Find user
+    // Find user
   const user = await prisma.user.findUnique({ where: { email } })
 
   if (user) {
@@ -59,7 +60,8 @@ export async function addMemberAction(email: string, arenaId: string) {
           inviterName,
           arenaName,
           inviteLink: arenaLink,
-          userEmail: email
+          userEmail: email,
+          arenaLogo
         })
       })
     } catch (error) {
@@ -114,7 +116,8 @@ export async function addMemberAction(email: string, arenaId: string) {
           inviterName,
           arenaName,
           inviteLink,
-          userEmail: email
+          userEmail: email,
+          arenaLogo
         })
       })
     } catch (error) {

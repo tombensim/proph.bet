@@ -69,6 +69,7 @@ export async function Navbar({ arenaId }: NavbarProps) {
                     slug: true,
                     archivedAt: true,
                     coverImage: true,
+                    logo: true,
                     description: true
                 }
             }

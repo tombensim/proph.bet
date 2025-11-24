@@ -36,11 +36,17 @@ export default async function MarketsPage(props: PageProps) {
     select: { role: true, points: true }
   })
   
-  // Get Arena Settings
-  const arenaSettings = await prisma.arenaSettings.findUnique({
-     where: { arenaId },
-     select: { tradingFeePercent: true }
-  })
+  // Get Arena Settings and Details
+  const [arenaSettings, arena] = await Promise.all([
+     prisma.arenaSettings.findUnique({
+        where: { arenaId },
+        select: { tradingFeePercent: true }
+     }),
+     prisma.arena.findUnique({
+        where: { id: arenaId },
+        select: { name: true, logo: true, description: true }
+     })
+  ])
 
   // Cast to any to avoid linter error if types are outdated relative to schema
   const isAdmin = session.user.role === Role.ADMIN || 
@@ -195,6 +201,28 @@ export default async function MarketsPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
+      {/* Arena Header Banner */}
+      {(arena?.logo || arena?.description) && (
+          <div className="flex items-start md:items-center gap-4 pb-6 border-b">
+              {arena.logo && (
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
+                      <Image 
+                          src={arena.logo} 
+                          alt={arena.name} 
+                          fill 
+                          className="object-cover"
+                      />
+                  </div>
+              )}
+              <div>
+                  <h2 className="text-2xl font-bold">{arena.name}</h2>
+                  {arena.description && (
+                      <p className="text-muted-foreground mt-1">{arena.description}</p>
+                  )}
+              </div>
+          </div>
+      )}
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold">{t('title')}</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">

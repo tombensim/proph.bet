@@ -45,7 +45,7 @@ export function MarketFilter({ isAdmin }: { isAdmin?: boolean }) {
     params.delete("filter")
 
     // Handle Status
-    let nextStatuses = updates.status !== undefined ? updates.status : currentStatuses
+    const nextStatuses = updates.status !== undefined ? updates.status : currentStatuses
     
     if (nextStatuses.length === 0) {
         params.set("status", "")
