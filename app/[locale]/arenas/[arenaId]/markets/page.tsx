@@ -217,7 +217,7 @@ export default async function MarketsPage(props: PageProps) {
               </div>
             )}
             <div className="flex-1">
-              <h2 className="text-2xl font-bold">{arena.name}</h2>
+              <h2 className="text-2xl font-bold">{arena.name} {t('title')}</h2>
               {arena.description && (
                 <p className="text-muted-foreground mt-1">{arena.description}</p>
               )}
@@ -226,7 +226,6 @@ export default async function MarketsPage(props: PageProps) {
         )}
 
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <MarketSearch />
             <div className="flex items-center gap-2">
