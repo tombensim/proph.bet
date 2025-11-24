@@ -10,7 +10,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "test:ci": "jest --ci --coverage --maxWorkers=1",
     "test:unit": "jest --testPathIgnorePatterns=integration --testPathIgnorePatterns=e2e",
     "test:integration": "jest --testPathPattern=integration --runInBand",
     "test:integration:watch": "jest --testPathPattern=integration --watch --runInBand",
@@ -20,9 +20,6 @@
     "translations:validate": "npx tsx scripts/validate-translations.ts",
     "translations:generate": "npx tsx scripts/generate-translation-types.ts",
     "translations:check": "npx tsx scripts/validate-translations.ts --fix"
-  },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
