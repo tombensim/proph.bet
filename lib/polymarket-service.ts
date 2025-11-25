@@ -16,6 +16,51 @@ export interface PolymarketMarket {
   resolvedOutcome?: string // The winning outcome text (e.g., "Yes", "No")
   tags?: Array<{ id: string; label: string }>
   groupItemTitle?: string
+  slug?: string
+}
+
+/**
+ * Get the Polymarket event URL for a market.
+ * For grouped markets, derives the parent event slug from the market slug.
+ * 
+ * @param polymarketId - The stored polymarketId which can be:
+ *   - A numeric ID (legacy format, returns fallback URL)
+ *   - A slug (e.g., "elon-musk-of-tweets-december-2025")
+ *   - A slug with groupItemTitle (e.g., "elon-musk-of-tweets-december-2025-120-139|120-139")
+ * @returns The Polymarket event URL
+ */
+export function getPolymarketEventUrl(polymarketId: string): string {
+  // Check if it's a legacy numeric ID
+  if (/^\d+$/.test(polymarketId)) {
+    // Fallback for legacy imports - link to Polymarket homepage since we can't construct a valid URL
+    return `https://polymarket.com`
+  }
+  
+  // Check if it contains the groupItemTitle separator
+  const separatorIndex = polymarketId.indexOf('|')
+  let slug: string
+  let groupItemTitle: string | undefined
+  
+  if (separatorIndex !== -1) {
+    slug = polymarketId.slice(0, separatorIndex)
+    groupItemTitle = polymarketId.slice(separatorIndex + 1)
+  } else {
+    slug = polymarketId
+  }
+  
+  let eventSlug = slug
+  
+  // For grouped markets, remove the groupItemTitle suffix to get the parent event slug
+  // e.g., "elon-musk-of-tweets-december-2025-120-139" -> "elon-musk-of-tweets-december-2025"
+  if (groupItemTitle) {
+    // Normalize the groupItemTitle to match URL format (lowercase, spaces to hyphens)
+    const normalizedSuffix = groupItemTitle.toLowerCase().replace(/\s+/g, '-')
+    if (slug.endsWith(`-${normalizedSuffix}`)) {
+      eventSlug = slug.slice(0, -(normalizedSuffix.length + 1))
+    }
+  }
+  
+  return `https://polymarket.com/event/${eventSlug}`
 }
 
 export type PolymarketFilter = {

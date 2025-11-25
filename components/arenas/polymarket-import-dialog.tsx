@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { fetchPolymarketMarkets, importPolymarketMarket, fetchPolymarketMarketByUrl, type PolymarketMarket } from "@/app/actions/polymarket"
+import { getPolymarketEventUrl } from "@/lib/polymarket-service"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
@@ -314,7 +315,7 @@ export function PolymarketImportDialog({ arenaId, trigger }: PolymarketImportDia
                            )}
                          </Button>
                          <Button variant="ghost" size="sm" asChild>
-                           <a href={`https://polymarket.com/event/${market.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                           <a href={getPolymarketEventUrl(market.slug || market.id)} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                              View <ExternalLink className="h-3 w-3" />
                            </a>
                          </Button>
