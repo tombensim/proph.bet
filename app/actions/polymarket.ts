@@ -78,9 +78,15 @@ export async function importPolymarketMarket(
     throw new Error("Only arena admins can import markets")
   }
 
-  // 2. Check if already imported
-  const existing = await prisma.market.findUnique({
-    where: { polymarketId: marketData.id }
+  // 2. Check if already imported (check both id and slug for backwards compatibility)
+  const polymarketSlug = marketData.slug || marketData.id
+  const existing = await prisma.market.findFirst({
+    where: { 
+      OR: [
+        { polymarketId: marketData.id },
+        { polymarketId: polymarketSlug }
+      ]
+    }
   })
 
   if (existing) {
@@ -153,8 +159,10 @@ export async function importPolymarketMarket(
         minBet: 5,
         maxBet: null,
         
-        // Polymarket Specifics
-        polymarketId: marketData.id,
+        // Polymarket Specifics - store slug for URL construction (with groupItemTitle suffix if present)
+        polymarketId: marketData.slug 
+          ? `${marketData.slug}${marketData.groupItemTitle ? `|${marketData.groupItemTitle}` : ''}`
+          : marketData.id,
         source: "POLYMARKET",
         
         options: {

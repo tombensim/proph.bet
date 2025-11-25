@@ -9,6 +9,7 @@ import { Coins, AlertTriangle, Zap, Bot, TrendingUp, TrendingDown, ExternalLink 
 import { ApproveMarketButton } from "./ApproveMarketButton"
 import { useTranslations } from 'next-intl';
 import { generateGradient } from "@/lib/utils"
+import { getPolymarketEventUrl } from "@/lib/polymarket-service"
 import { ShareMarketButton } from "./ShareMarketButton"
 import { BetForm } from "./BetForm"
 import { Button } from "@/components/ui/button"
@@ -107,7 +108,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
       {/* Polymarket Badge Overlay */}
       {market.source === "POLYMARKET" && market.polymarketId && (
         <a 
-          href={`https://polymarket.com/market/${market.polymarketId}`}
+          href={getPolymarketEventUrl(market.polymarketId)}
           target="_blank"
           rel="noopener noreferrer"
           className="absolute top-2 left-2 z-10 pointer-events-auto"
