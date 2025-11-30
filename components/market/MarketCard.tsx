@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
-import { Coins, AlertTriangle, Bot, ExternalLink, Gift, Bookmark } from "lucide-react"
+import { Coins, AlertTriangle, Bot, ExternalLink } from "lucide-react"
 import { ApproveMarketButton } from "./ApproveMarketButton"
 import { useTranslations } from 'next-intl';
 import { generateGradient } from "@/lib/utils"
@@ -230,8 +230,6 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
                 variant="ghost"
                 className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
             />
-            <Gift className="h-4 w-4 text-muted-foreground" />
-            <Bookmark className="h-4 w-4 text-muted-foreground" />
           </div>
       </CardFooter>
       
