@@ -39,6 +39,7 @@ export function CompactBetForm({
   onSuccess
 }: CompactBetFormProps) {
   const [amount, setAmount] = useState(minBet)
+  const [inputValue, setInputValue] = useState(String(minBet))
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -88,9 +89,37 @@ export function CompactBetForm({
     })
   }
 
+  // Handle direct input changes - allow free typing
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setInputValue(value)
+    
+    const parsed = parseInt(value)
+    if (!isNaN(parsed) && parsed >= 0) {
+      setAmount(parsed)
+    }
+  }
+
+  // Clamp value on blur to valid range
+  const handleInputBlur = () => {
+    const parsed = parseInt(inputValue)
+    if (isNaN(parsed) || parsed < minBet) {
+      setAmount(minBet)
+      setInputValue(String(minBet))
+    } else if (parsed > effectiveMax) {
+      setAmount(effectiveMax)
+      setInputValue(String(effectiveMax))
+    } else {
+      setAmount(parsed)
+      setInputValue(String(parsed))
+    }
+  }
+
+  // Handle button/slider changes - these set both amount and input value
   const handleAmountChange = (value: number) => {
     const clamped = Math.min(Math.max(minBet, value), effectiveMax)
     setAmount(clamped)
+    setInputValue(String(clamped))
   }
 
   const isYes = side === "yes"
@@ -152,8 +181,9 @@ export function CompactBetForm({
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
           <Input
             type="number"
-            value={amount}
-            onChange={(e) => handleAmountChange(parseInt(e.target.value) || 0)}
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
             className="pl-7 h-10 bg-muted/50"
             min={minBet}
             max={effectiveMax}
