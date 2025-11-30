@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { NewsTicker } from "@/components/arenas/news-ticker"
+import { isSystemAdmin } from "@/lib/roles"
 
 interface ArenaLayoutProps {
   children: React.ReactNode
@@ -15,20 +16,25 @@ export default async function ArenaLayout({ children, params }: ArenaLayoutProps
 
   const { arenaId } = await params
 
-  // Verify membership
-  const membership = await prisma.arenaMembership.findUnique({
-    where: {
-      userId_arenaId: {
-        userId: session.user.id,
-        arenaId
-      }
-    },
-    select: { id: true } // Only select ID to check existence
-  })
+  // System admins can access any arena
+  const isSysAdmin = isSystemAdmin(session.user.email)
 
-  if (!membership) {
-    // If not a member, redirect to root
-    redirect("/")
+  // Verify membership (unless system admin)
+  if (!isSysAdmin) {
+    const membership = await prisma.arenaMembership.findUnique({
+      where: {
+        userId_arenaId: {
+          userId: session.user.id,
+          arenaId
+        }
+      },
+      select: { id: true } // Only select ID to check existence
+    })
+
+    if (!membership) {
+      // If not a member, redirect to root
+      redirect("/")
+    }
   }
 
   return (
