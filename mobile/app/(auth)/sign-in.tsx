@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, TextInput, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoogleAuth, authManager, isDevMode } from '@/lib/auth';
 import { Ionicons } from '@expo/vector-icons';
+import { theme } from '@/lib/theme';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -40,8 +41,10 @@ export default function SignInScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.header}>
-        <Text style={styles.logo}>🔮</Text>
-        <Text style={styles.title}>Proph.bet</Text>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoEmoji}>🔮</Text>
+        </View>
+        <Text style={styles.title}>proph.bet</Text>
         <Text style={styles.subtitle}>Prediction Markets for Everyone</Text>
       </View>
 
@@ -53,11 +56,15 @@ export default function SignInScreen() {
         </Text>
 
         <Pressable
-          style={[styles.googleButton, !isReady && styles.disabled]}
+          style={({ pressed }) => [
+            styles.googleButton, 
+            !isReady && styles.disabled,
+            pressed && styles.googleButtonPressed
+          ]}
           onPress={() => promptAsync()}
           disabled={!isReady}
         >
-          <Ionicons name="logo-google" size={24} color="#fff" />
+          <Ionicons name="logo-google" size={22} color="#fff" />
           <Text style={styles.googleButtonText}>Sign in with Google</Text>
         </Pressable>
 
@@ -74,18 +81,22 @@ export default function SignInScreen() {
               value={devEmail}
               onChangeText={setDevEmail}
               placeholder="dev@genoox.com"
-              placeholderTextColor="#64748b"
+              placeholderTextColor={theme.colors.mutedForeground}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
 
             <Pressable
-              style={[styles.devButton, isLoading && styles.disabled]}
+              style={({ pressed }) => [
+                styles.devButton, 
+                isLoading && styles.disabled,
+                pressed && styles.devButtonPressed
+              ]}
               onPress={handleDevSignIn}
               disabled={isLoading}
             >
-              <Ionicons name="code-slash" size={20} color="#fff" />
+              <Ionicons name="code-slash" size={18} color="#fff" />
               <Text style={styles.devButtonText}>
                 {isLoading ? 'Signing in...' : 'Dev Login'}
               </Text>
@@ -104,111 +115,131 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.background,
   },
   container: {
     flexGrow: 1,
-    padding: 24,
+    padding: theme.spacing['2xl'],
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: theme.spacing['4xl'],
   },
-  logo: {
-    fontSize: 72,
-    marginBottom: 16,
+  logoContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: theme.borderRadius['2xl'],
+    backgroundColor: theme.colors.muted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.md,
+  },
+  logoEmoji: {
+    fontSize: 56,
   },
   title: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
+    fontSize: theme.typography.fontSize['4xl'],
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.sm,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#94a3b8',
+    fontSize: theme.typography.fontSize.lg,
+    color: theme.colors.mutedForeground,
   },
   content: {
     alignItems: 'center',
   },
   description: {
-    fontSize: 16,
-    color: '#94a3b8',
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.mutedForeground,
     textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
+    marginBottom: theme.spacing['3xl'],
+    lineHeight: theme.typography.fontSize.base * theme.typography.lineHeight.relaxed,
+    maxWidth: 320,
   },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4285f4',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing['3xl'],
+    borderRadius: theme.borderRadius.lg,
     width: '100%',
-    gap: 12,
+    gap: theme.spacing.md,
+    ...theme.shadows.md,
+  },
+  googleButtonPressed: {
+    backgroundColor: '#3367d6',
   },
   disabled: {
     opacity: 0.5,
   },
   googleButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
   },
   devSection: {
     width: '100%',
-    marginTop: 24,
+    marginTop: theme.spacing['2xl'],
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#334155',
+    backgroundColor: theme.colors.border,
   },
   dividerText: {
-    color: '#f59e0b',
-    fontSize: 12,
-    fontWeight: '600',
-    marginHorizontal: 12,
+    color: theme.colors.warning,
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.semibold,
+    marginHorizontal: theme.spacing.md,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   devInput: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    color: '#fff',
-    fontSize: 16,
-    marginBottom: 12,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    color: theme.colors.foreground,
+    fontSize: theme.typography.fontSize.base,
+    marginBottom: theme.spacing.md,
   },
   devButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f59e0b',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 8,
+    backgroundColor: theme.colors.warning,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing['2xl'],
+    borderRadius: theme.borderRadius.lg,
+    gap: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  devButtonPressed: {
+    backgroundColor: '#e08900',
   },
   devButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
   },
   terms: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.mutedForeground,
     textAlign: 'center',
-    marginTop: 24,
+    marginTop: theme.spacing['2xl'],
+    lineHeight: theme.typography.fontSize.xs * theme.typography.lineHeight.normal,
   },
 });

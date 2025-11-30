@@ -9,6 +9,7 @@ import {
 import { useNotifications, useMarkNotificationsRead } from '@/hooks/useNotifications';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
+import { theme } from '@/lib/theme';
 
 interface Notification {
   id: string;
@@ -20,14 +21,14 @@ interface Notification {
   metadata?: Record<string, unknown>;
 }
 
-const NOTIFICATION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  MARKET_RESOLVED: 'checkmark-circle-outline',
-  BET_RESOLVED: 'trophy-outline',
-  WIN_PAYOUT: 'diamond-outline',
-  MARKET_CREATED: 'add-circle-outline',
-  MONTHLY_WINNER: 'medal-outline',
-  POINTS_RESET: 'refresh-outline',
-  MARKET_DISPUTED: 'warning-outline',
+const NOTIFICATION_ICONS: Record<string, { name: keyof typeof Ionicons.glyphMap; color: string }> = {
+  MARKET_RESOLVED: { name: 'checkmark-circle-outline', color: theme.colors.success },
+  BET_RESOLVED: { name: 'trophy-outline', color: theme.colors.warning },
+  WIN_PAYOUT: { name: 'diamond-outline', color: theme.colors.primary },
+  MARKET_CREATED: { name: 'add-circle-outline', color: theme.colors.primary },
+  MONTHLY_WINNER: { name: 'medal-outline', color: theme.colors.warning },
+  POINTS_RESET: { name: 'refresh-outline', color: theme.colors.mutedForeground },
+  MARKET_DISPUTED: { name: 'warning-outline', color: theme.colors.destructive },
 };
 
 export default function ActivityScreen() {
@@ -45,12 +46,28 @@ export default function ActivityScreen() {
   }
 
   function renderNotification({ item }: { item: Notification }) {
-    const icon = NOTIFICATION_ICONS[item.type] || 'notifications-outline';
+    const iconConfig = NOTIFICATION_ICONS[item.type] || { 
+      name: 'notifications-outline' as keyof typeof Ionicons.glyphMap, 
+      color: theme.colors.mutedForeground 
+    };
     
     return (
-      <View style={[styles.notificationCard, !item.read && styles.unread]}>
-        <View style={styles.iconContainer}>
-          <Ionicons name={icon} size={24} color={item.read ? '#64748b' : '#6366f1'} />
+      <Pressable 
+        style={({ pressed }) => [
+          styles.notificationCard, 
+          !item.read && styles.unread,
+          pressed && styles.notificationCardPressed
+        ]}
+      >
+        <View style={[
+          styles.iconContainer,
+          { backgroundColor: `${iconConfig.color}15` }
+        ]}>
+          <Ionicons 
+            name={iconConfig.name} 
+            size={22} 
+            color={iconConfig.color} 
+          />
         </View>
         <View style={styles.content}>
           <Text style={[styles.text, !item.read && styles.unreadText]}>
@@ -58,7 +75,9 @@ export default function ActivityScreen() {
           </Text>
           <View style={styles.meta}>
             {item.arena && (
-              <Text style={styles.arenaName}>{item.arena.name}</Text>
+              <View style={styles.arenaBadge}>
+                <Text style={styles.arenaName}>{item.arena.name}</Text>
+              </View>
             )}
             <Text style={styles.time}>
               {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
@@ -66,14 +85,22 @@ export default function ActivityScreen() {
           </View>
         </View>
         {!item.read && <View style={styles.unreadDot} />}
-      </View>
+      </Pressable>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Mark all as read button */}
       {unreadCount > 0 && (
-        <Pressable style={styles.markReadButton} onPress={handleMarkAllRead}>
+        <Pressable 
+          style={({ pressed }) => [
+            styles.markReadButton,
+            pressed && styles.markReadButtonPressed
+          ]} 
+          onPress={handleMarkAllRead}
+        >
+          <Ionicons name="checkmark-done" size={18} color={theme.colors.primary} />
           <Text style={styles.markReadText}>
             Mark all {unreadCount} as read
           </Text>
@@ -89,13 +116,16 @@ export default function ActivityScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#6366f1"
+            tintColor={theme.colors.primary}
           />
         }
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <Ionicons name="notifications-outline" size={48} color="#64748b" />
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="notifications-outline" size={48} color={theme.colors.mutedForeground} />
+              </View>
               <Text style={styles.emptyText}>No notifications yet</Text>
               <Text style={styles.emptySubtext}>
                 You'll see updates about your bets and markets here
@@ -111,91 +141,124 @@ export default function ActivityScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.background,
   },
   markReadButton: {
-    padding: 12,
-    backgroundColor: '#1e293b',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    gap: theme.spacing.sm,
+  },
+  markReadButtonPressed: {
+    backgroundColor: theme.colors.muted,
   },
   markReadText: {
-    color: '#6366f1',
-    fontSize: 14,
-    fontWeight: '500',
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   list: {
-    padding: 16,
+    padding: theme.spacing.lg,
+  },
+  separator: {
+    height: theme.spacing.sm,
   },
   notificationCard: {
     flexDirection: 'row',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
     alignItems: 'flex-start',
+    ...theme.shadows.sm,
+  },
+  notificationCardPressed: {
+    backgroundColor: theme.colors.muted,
   },
   unread: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.colors.indigoLight,
+    borderColor: theme.colors.primary,
     borderLeftWidth: 3,
-    borderLeftColor: '#6366f1',
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#334155',
+    width: 44,
+    height: 44,
+    borderRadius: theme.borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: theme.spacing.md,
   },
   content: {
     flex: 1,
   },
   text: {
-    fontSize: 14,
-    color: '#94a3b8',
-    lineHeight: 20,
-    marginBottom: 4,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.normal,
+    marginBottom: theme.spacing.sm,
   },
   unreadText: {
-    color: '#fff',
+    color: theme.colors.foreground,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  arenaBadge: {
+    backgroundColor: theme.colors.muted,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
   },
   arenaName: {
-    fontSize: 12,
-    color: '#6366f1',
-    fontWeight: '500',
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   time: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.mutedForeground,
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#6366f1',
-    marginLeft: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.colors.primary,
+    marginLeft: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
   },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: theme.spacing['4xl'],
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.muted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 16,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.sm,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 8,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
     textAlign: 'center',
+    maxWidth: 280,
   },
 });

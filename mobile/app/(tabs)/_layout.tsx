@@ -2,6 +2,7 @@ import { Tabs, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { theme } from '@/lib/theme';
 
 export default function TabsLayout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -9,7 +10,7 @@ export default function TabsLayout() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -21,16 +22,26 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#64748b',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.mutedForeground,
         tabBarStyle: {
-          backgroundColor: '#1e293b',
-          borderTopColor: '#334155',
+          backgroundColor: theme.colors.background,
+          borderTopColor: theme.colors.border,
+          borderTopWidth: 1,
+          height: theme.components.tabBar.height,
+          paddingBottom: theme.components.tabBar.paddingBottom,
         },
         headerStyle: {
-          backgroundColor: '#0f172a',
+          backgroundColor: theme.colors.background,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
         },
-        headerTintColor: '#fff',
+        headerTintColor: theme.colors.foreground,
+        headerTitleStyle: {
+          fontWeight: theme.typography.fontWeight.semibold,
+          fontSize: theme.typography.fontSize.lg,
+        },
+        headerShadowVisible: false,
       }}
     >
       <Tabs.Screen
@@ -75,6 +86,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.background,
   },
 });

@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./schemas": "./src/schemas.ts",
     "./types": "./src/types/index.ts",
-    "./utils": "./src/utils.ts"
+    "./utils": "./src/utils.ts",
+    "./design-tokens": "./src/design-tokens.ts"
   },
   "dependencies": {
     "zod": "^4.1.12"
