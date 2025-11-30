@@ -54,7 +54,8 @@ export default function ArenaScreen() {
   
   // Get user points from arena membership
   const userPoints = arena?.membership?.points ?? 0;
-  const feePercent = 0; // TODO: Get from arena settings
+  // Convert trading fee percentage (e.g., 2%) to decimal (0.02) for fee calculations
+  const feePercent = (arena?.settings?.tradingFeePercent ?? 0) / 100;
 
   function calculateProbability(option: { liquidity: number }, allOptions: { liquidity: number }[]) {
     const inverseSum = allOptions.reduce((sum, o) => sum + 1 / o.liquidity, 0);
