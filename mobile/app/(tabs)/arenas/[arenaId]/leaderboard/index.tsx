@@ -10,6 +10,7 @@ import { useLocalSearchParams, Stack } from 'expo-router';
 import { useArenaLeaderboard, useArena } from '@/hooks/useArenas';
 import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
+import { theme } from '@/lib/theme';
 
 interface LeaderboardEntry {
   rank: number;
@@ -45,7 +46,7 @@ export default function LeaderboardScreen() {
             <Image source={{ uri: item.user.image }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Ionicons name="person" size={16} color="#64748b" />
+              <Ionicons name="person" size={16} color={theme.colors.mutedForeground} />
             </View>
           )}
           <View style={styles.nameContainer}>
@@ -61,7 +62,7 @@ export default function LeaderboardScreen() {
         </View>
 
         <View style={styles.pointsContainer}>
-          <Ionicons name="diamond" size={14} color="#6366f1" />
+          <Ionicons name="diamond" size={14} color={theme.colors.primary} />
           <Text style={[styles.points, isTopThree && styles.topThreePoints]}>
             {item.points.toLocaleString()}
           </Text>
@@ -74,7 +75,15 @@ export default function LeaderboardScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: `${arena?.name || 'Arena'} Leaderboard` }} />
+      <Stack.Screen 
+        options={{ 
+          title: `${arena?.name || 'Arena'} Leaderboard`,
+          headerStyle: {
+            backgroundColor: theme.colors.background,
+          },
+          headerTintColor: theme.colors.foreground,
+        }} 
+      />
 
       {currentUserEntry && (
         <View style={styles.yourRank}>
@@ -97,14 +106,19 @@ export default function LeaderboardScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#6366f1"
+            tintColor={theme.colors.primary}
           />
         }
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <Ionicons name="trophy-outline" size={48} color="#64748b" />
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="trophy-outline" size={48} color={theme.colors.mutedForeground} />
+              </View>
               <Text style={styles.emptyText}>No rankings yet</Text>
+              <Text style={styles.emptySubtext}>
+                Rankings will appear as members place bets
+              </Text>
             </View>
           ) : null
         }
@@ -116,74 +130,80 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.background,
   },
   yourRank: {
-    backgroundColor: '#1e293b',
-    padding: 16,
+    backgroundColor: theme.colors.indigoLight,
+    padding: theme.spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: theme.colors.border,
   },
   yourRankText: {
-    fontSize: 14,
-    color: '#94a3b8',
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   yourRankInfo: {
     alignItems: 'flex-end',
   },
   yourRankNumber: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#6366f1',
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
   },
   yourRankPoints: {
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.mutedForeground,
   },
   list: {
-    padding: 16,
+    padding: theme.spacing.lg,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   currentUser: {
-    backgroundColor: '#6366f120',
-    borderWidth: 1,
-    borderColor: '#6366f1',
+    backgroundColor: theme.colors.indigoLight,
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
   },
   rankContainer: {
-    width: 40,
+    width: 44,
     alignItems: 'center',
   },
   medal: {
     fontSize: 24,
   },
   rank: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#64748b',
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.mutedForeground,
   },
   userInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: theme.spacing.md,
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
   },
   avatarPlaceholder: {
-    backgroundColor: '#334155',
+    backgroundColor: theme.colors.muted,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -191,50 +211,64 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: theme.spacing.sm,
   },
   name: {
-    fontSize: 14,
-    color: '#fff',
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.foreground,
     flex: 1,
   },
   topThreeName: {
-    fontWeight: '600',
+    fontWeight: theme.typography.fontWeight.semibold,
   },
   adminBadge: {
-    backgroundColor: '#6366f140',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    backgroundColor: theme.colors.indigoLight,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
   },
   adminText: {
-    fontSize: 10,
-    color: '#6366f1',
-    fontWeight: '500',
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   pointsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: theme.spacing.xs,
   },
   points: {
-    fontSize: 14,
-    color: '#94a3b8',
-    fontWeight: '500',
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   topThreePoints: {
-    color: '#6366f1',
-    fontWeight: '700',
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.bold,
   },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: theme.spacing['4xl'],
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.muted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 16,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    textAlign: 'center',
   },
 });

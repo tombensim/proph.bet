@@ -10,6 +10,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useBets } from '@/hooks/useBets';
 import { Ionicons } from '@expo/vector-icons';
+import { theme } from '@/lib/theme';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -32,12 +33,13 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* Profile Header */}
       <View style={styles.header}>
         {user?.image ? (
           <Image source={{ uri: user.image }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <Ionicons name="person" size={40} color="#64748b" />
+            <Ionicons name="person" size={40} color={theme.colors.mutedForeground} />
           </View>
         )}
         <Text style={styles.name}>{user?.name || 'User'}</Text>
@@ -49,23 +51,33 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>{totalBets}</Text>
           <Text style={styles.statLabel}>Total Bets</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{wonBets}</Text>
+          <Text style={[styles.statValue, styles.successValue]}>{wonBets}</Text>
           <Text style={styles.statLabel}>Won</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{winRate}%</Text>
+          <Text style={[styles.statValue, styles.primaryValue]}>{winRate}%</Text>
           <Text style={styles.statLabel}>Win Rate</Text>
         </View>
       </View>
 
+      {/* Recent Bets Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Bets</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Bets</Text>
+          {bets && bets.length > 5 && (
+            <Pressable>
+              <Text style={styles.seeAllText}>See all</Text>
+            </Pressable>
+          )}
+        </View>
+        
         {bets?.slice(0, 5).map((bet: {
           id: string;
           market: { title: string; status: string };
@@ -78,39 +90,92 @@ export default function ProfileScreen() {
               <Text style={styles.betMarket} numberOfLines={1}>
                 {bet.market.title}
               </Text>
-              <Text style={styles.betOption}>
+              <Text style={styles.betDetails}>
                 {bet.option?.text || 'N/A'} • {bet.amount} pts
               </Text>
             </View>
             {bet.market.status === 'RESOLVED' && (
-              <Ionicons
-                name={bet.won ? 'checkmark-circle' : 'close-circle'}
-                size={20}
-                color={bet.won ? '#22c55e' : '#ef4444'}
-              />
+              <View style={[
+                styles.resultBadge,
+                bet.won ? styles.wonBadge : styles.lostBadge
+              ]}>
+                <Ionicons
+                  name={bet.won ? 'checkmark' : 'close'}
+                  size={14}
+                  color={bet.won ? theme.colors.success : theme.colors.destructive}
+                />
+                <Text style={[
+                  styles.resultText,
+                  bet.won ? styles.wonText : styles.lostText
+                ]}>
+                  {bet.won ? 'Won' : 'Lost'}
+                </Text>
+              </View>
             )}
           </View>
         ))}
+        
         {(!bets || bets.length === 0) && (
-          <Text style={styles.noBets}>No bets yet</Text>
+          <View style={styles.emptyBets}>
+            <Ionicons name="document-outline" size={32} color={theme.colors.mutedForeground} />
+            <Text style={styles.emptyText}>No bets yet</Text>
+            <Text style={styles.emptySubtext}>Your betting history will appear here</Text>
+          </View>
         )}
       </View>
 
+      {/* Settings Section */}
       <View style={styles.section}>
-        <Pressable style={styles.menuItem} onPress={() => {}}>
-          <Ionicons name="settings-outline" size={20} color="#94a3b8" />
-          <Text style={styles.menuText}>Settings</Text>
-          <Ionicons name="chevron-forward" size={20} color="#64748b" />
+        <Text style={styles.sectionTitle}>Settings</Text>
+        
+        <Pressable 
+          style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+        >
+          <View style={styles.menuIconContainer}>
+            <Ionicons name="settings-outline" size={20} color={theme.colors.foreground} />
+          </View>
+          <Text style={styles.menuText}>Preferences</Text>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.mutedForeground} />
         </Pressable>
-        <Pressable style={styles.menuItem} onPress={() => {}}>
-          <Ionicons name="help-circle-outline" size={20} color="#94a3b8" />
+        
+        <Pressable 
+          style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+        >
+          <View style={styles.menuIconContainer}>
+            <Ionicons name="notifications-outline" size={20} color={theme.colors.foreground} />
+          </View>
+          <Text style={styles.menuText}>Notifications</Text>
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.mutedForeground} />
+        </Pressable>
+        
+        <Pressable 
+          style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+        >
+          <View style={styles.menuIconContainer}>
+            <Ionicons name="help-circle-outline" size={20} color={theme.colors.foreground} />
+          </View>
           <Text style={styles.menuText}>Help & Support</Text>
-          <Ionicons name="chevron-forward" size={20} color="#64748b" />
+          <Ionicons name="chevron-forward" size={20} color={theme.colors.mutedForeground} />
         </Pressable>
-        <Pressable style={[styles.menuItem, styles.signOut]} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+        
+        <Pressable 
+          style={({ pressed }) => [
+            styles.menuItem, 
+            styles.signOutItem,
+            pressed && styles.menuItemPressed
+          ]} 
+          onPress={handleSignOut}
+        >
+          <View style={[styles.menuIconContainer, styles.signOutIcon]}>
+            <Ionicons name="log-out-outline" size={20} color={theme.colors.destructive} />
+          </View>
           <Text style={[styles.menuText, styles.signOutText]}>Sign Out</Text>
         </Pressable>
+      </View>
+
+      {/* App Version */}
+      <View style={styles.footer}>
+        <Text style={styles.versionText}>proph.bet v1.0.0</Text>
       </View>
     </ScrollView>
   );
@@ -119,124 +184,211 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.background,
   },
   header: {
     alignItems: 'center',
-    padding: 24,
+    padding: theme.spacing['2xl'],
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.card,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 12,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    marginBottom: theme.spacing.md,
+    borderWidth: 3,
+    borderColor: theme.colors.border,
   },
   avatarPlaceholder: {
-    backgroundColor: '#1e293b',
+    backgroundColor: theme.colors.muted,
     justifyContent: 'center',
     alignItems: 'center',
   },
   name: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
+    fontSize: theme.typography.fontSize['2xl'],
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.xs,
   },
   email: {
-    fontSize: 14,
-    color: '#94a3b8',
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
   },
   roleBadge: {
-    marginTop: 8,
-    backgroundColor: '#6366f1',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    marginTop: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
   },
   roleText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '500',
+    color: theme.colors.primaryForeground,
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   statsContainer: {
     flexDirection: 'row',
-    padding: 16,
-    gap: 12,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.lg,
     alignItems: 'center',
+    ...theme.shadows.sm,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#6366f1',
-    marginBottom: 4,
+    fontSize: theme.typography.fontSize['2xl'],
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.xs,
+  },
+  successValue: {
+    color: theme.colors.success,
+  },
+  primaryValue: {
+    color: theme.colors.primary,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#94a3b8',
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.mutedForeground,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   section: {
-    padding: 16,
+    padding: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: theme.colors.border,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 12,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.foreground,
+  },
+  seeAllText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   betItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1e293b',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   betInfo: {
     flex: 1,
-    marginRight: 12,
+    marginRight: theme.spacing.md,
   },
   betMarket: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#fff',
-    marginBottom: 2,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.xs,
   },
-  betOption: {
-    fontSize: 12,
-    color: '#64748b',
+  betDetails: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.mutedForeground,
   },
-  noBets: {
-    fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    paddingVertical: 16,
+  resultBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    gap: theme.spacing.xs,
+  },
+  wonBadge: {
+    backgroundColor: theme.colors.successLight,
+  },
+  lostBadge: {
+    backgroundColor: theme.colors.destructiveLight,
+  },
+  resultText: {
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  wonText: {
+    color: theme.colors.success,
+  },
+  lostText: {
+    color: theme.colors.destructive,
+  },
+  emptyBets: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing['2xl'],
+  },
+  emptyText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.foreground,
+    marginTop: theme.spacing.md,
+  },
+  emptySubtext: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    marginTop: theme.spacing.xs,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    gap: 12,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginHorizontal: -theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  menuItemPressed: {
+    backgroundColor: theme.colors.muted,
+  },
+  menuIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.muted,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   menuText: {
     flex: 1,
-    fontSize: 16,
-    color: '#fff',
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.foreground,
   },
-  signOut: {
-    marginTop: 8,
+  signOutItem: {
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  signOutIcon: {
+    backgroundColor: theme.colors.destructiveLight,
   },
   signOutText: {
-    color: '#ef4444',
+    color: theme.colors.destructive,
+  },
+  footer: {
+    padding: theme.spacing['2xl'],
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.mutedForeground,
   },
 });

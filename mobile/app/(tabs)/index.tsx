@@ -5,16 +5,19 @@ import {
   Pressable,
   StyleSheet,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useArenas } from '@/hooks/useArenas';
 import { Ionicons } from '@expo/vector-icons';
+import { theme } from '@/lib/theme';
 
 interface Arena {
   id: string;
   name: string;
   description: string | null;
   slug: string;
+  logo?: string | null;
   membership?: {
     points: number;
     role: string;
@@ -32,41 +35,39 @@ export default function ArenasScreen() {
   function renderArena({ item }: { item: Arena }) {
     return (
       <Pressable
-        style={styles.arenaCard}
+        style={({ pressed }) => [
+          styles.arenaCard,
+          pressed && styles.arenaCardPressed,
+        ]}
         onPress={() => router.push(`/(tabs)/arenas/${item.id}`)}
       >
-        <View style={styles.arenaHeader}>
-          <Text style={styles.arenaName}>{item.name}</Text>
-          {item.membership?.role === 'ADMIN' && (
-            <View style={styles.adminBadge}>
-              <Text style={styles.adminBadgeText}>Admin</Text>
-            </View>
+        <View style={styles.arenaContent}>
+          {item.logo && (
+            <Image 
+              source={{ uri: item.logo }} 
+              style={styles.arenaLogo}
+              resizeMode="cover"
+            />
           )}
+          <View style={styles.arenaInfo}>
+            <Text style={styles.arenaName}>{item.name}</Text>
+            {item.description && (
+              <Text style={styles.arenaDescription} numberOfLines={2}>
+                {item.description}
+              </Text>
+            )}
+          </View>
         </View>
         
-        {item.description && (
-          <Text style={styles.arenaDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-        )}
-        
-        <View style={styles.arenaStats}>
-          <View style={styles.stat}>
-            <Ionicons name="people-outline" size={16} color="#94a3b8" />
-            <Text style={styles.statText}>{item._count?.members || 0}</Text>
-          </View>
-          <View style={styles.stat}>
-            <Ionicons name="bar-chart-outline" size={16} color="#94a3b8" />
-            <Text style={styles.statText}>{item._count?.markets || 0}</Text>
-          </View>
+        <View style={styles.arenaFooter}>
           {item.membership && (
-            <View style={styles.stat}>
-              <Ionicons name="diamond-outline" size={16} color="#6366f1" />
-              <Text style={[styles.statText, styles.points]}>
-                {item.membership.points}
-              </Text>
-            </View>
+            <Text style={styles.pointsText}>{item.membership.points} pts</Text>
           )}
+          <Ionicons 
+            name="arrow-forward" 
+            size={20} 
+            color={theme.colors.mutedForeground} 
+          />
         </View>
       </Pressable>
     );
@@ -83,13 +84,15 @@ export default function ArenasScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#6366f1"
+            tintColor={theme.colors.primary}
           />
         }
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <Ionicons name="grid-outline" size={48} color="#64748b" />
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="grid-outline" size={48} color={theme.colors.mutedForeground} />
+              </View>
               <Text style={styles.emptyText}>No arenas yet</Text>
               <Text style={styles.emptySubtext}>
                 You'll see your arenas here once you join one
@@ -105,79 +108,87 @@ export default function ArenasScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.background,
   },
   list: {
-    padding: 16,
-    gap: 12,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   arenaCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
   },
-  arenaHeader: {
+  arenaCardPressed: {
+    backgroundColor: theme.colors.muted,
+  },
+  arenaContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.md,
+  },
+  arenaLogo: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.muted,
+  },
+  arenaInfo: {
+    flex: 1,
+  },
+  arenaName: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.xs,
+  },
+  arenaDescription: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    lineHeight: theme.typography.fontSize.sm * theme.typography.lineHeight.normal,
+  },
+  arenaFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginTop: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
   },
-  arenaName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    flex: 1,
-  },
-  adminBadge: {
-    backgroundColor: '#6366f1',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  adminBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  arenaDescription: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  arenaStats: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  stat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statText: {
-    fontSize: 14,
-    color: '#94a3b8',
-  },
-  points: {
-    color: '#6366f1',
-    fontWeight: '600',
+  pointsText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: theme.spacing['4xl'],
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.muted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 16,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.foreground,
+    marginBottom: theme.spacing.sm,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 8,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
     textAlign: 'center',
+    maxWidth: 280,
   },
 });
