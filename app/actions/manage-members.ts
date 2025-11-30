@@ -13,19 +13,38 @@ export async function addMemberAction(email: string, arenaId: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
+  const isSysAdmin = isSystemAdmin(session.user.email)
+
   // Check requester role
   const requesterMembership = await prisma.arenaMembership.findUnique({
     where: { userId_arenaId: { userId: session.user.id, arenaId } },
     include: { arena: true }
   })
 
-  if (requesterMembership?.role !== "ADMIN") {
+  const isArenaAdmin = requesterMembership?.role === "ADMIN"
+
+  if (!isArenaAdmin && !isSysAdmin) {
     throw new Error("Unauthorized: Only arena admins can invite members")
   }
 
-    const arenaName = requesterMembership.arena.name
-    const arenaLogo = requesterMembership.arena.logo
-    const inviterName = session.user.name || "A user"
+  // Get arena details (for system admins who may not have membership)
+  let arenaName: string
+  let arenaLogo: string | null
+  
+  if (requesterMembership) {
+    arenaName = requesterMembership.arena.name
+    arenaLogo = requesterMembership.arena.logo
+  } else {
+    const arena = await prisma.arena.findUnique({
+      where: { id: arenaId },
+      select: { name: true, logo: true }
+    })
+    if (!arena) throw new Error("Arena not found")
+    arenaName = arena.name
+    arenaLogo = arena.logo
+  }
+  
+  const inviterName = session.user.name || "A user"
 
     // Find user
   const user = await prisma.user.findUnique({ where: { email } })
@@ -133,14 +152,18 @@ export async function createPublicInviteAction(arenaId: string, expiresInHours: 
     const session = await auth()
     if (!session?.user?.id) throw new Error("Unauthorized")
 
-    // Check admin
-     const requesterMembership = await prisma.arenaMembership.findUnique({
-        where: { userId_arenaId: { userId: session.user.id, arenaId } }
-      })
+    const isSysAdmin = isSystemAdmin(session.user.email)
 
-      if (requesterMembership?.role !== "ADMIN") {
-        throw new Error("Unauthorized: Only arena admins can create invites")
-      }
+    // Check admin
+    const requesterMembership = await prisma.arenaMembership.findUnique({
+      where: { userId_arenaId: { userId: session.user.id, arenaId } }
+    })
+
+    const isArenaAdmin = requesterMembership?.role === "ADMIN"
+
+    if (!isArenaAdmin && !isSysAdmin) {
+      throw new Error("Unauthorized: Only arena admins can create invites")
+    }
 
       const token = uuidv4()
       // If expiresInHours is null, set to 100 years
@@ -168,6 +191,8 @@ export async function revokeInvitationAction(invitationId: string) {
     const session = await auth()
     if (!session?.user?.id) throw new Error("Unauthorized")
 
+    const isSysAdmin = isSystemAdmin(session.user.email)
+
     const invitation = await prisma.invitation.findUnique({
         where: { id: invitationId },
         select: { arenaId: true }
@@ -175,13 +200,15 @@ export async function revokeInvitationAction(invitationId: string) {
     
     if (!invitation) throw new Error("Invitation not found")
 
-     const requesterMembership = await prisma.arenaMembership.findUnique({
-        where: { userId_arenaId: { userId: session.user.id, arenaId: invitation.arenaId } }
-      })
+    const requesterMembership = await prisma.arenaMembership.findUnique({
+      where: { userId_arenaId: { userId: session.user.id, arenaId: invitation.arenaId } }
+    })
 
-      if (requesterMembership?.role !== "ADMIN") {
-        throw new Error("Unauthorized")
-      }
+    const isArenaAdmin = requesterMembership?.role === "ADMIN"
+
+    if (!isArenaAdmin && !isSysAdmin) {
+      throw new Error("Unauthorized")
+    }
 
       await prisma.invitation.delete({
           where: { id: invitationId }
