@@ -1,12 +1,15 @@
-import { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useGoogleAuth, authManager } from '@/lib/auth';
+import { useGoogleAuth, authManager, isDevMode } from '@/lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function SignInScreen() {
   const router = useRouter();
   const { request, response, promptAsync, isReady } = useGoogleAuth();
+  const [devEmail, setDevEmail] = useState('dev@genoox.com');
+  const [isLoading, setIsLoading] = useState(false);
+  const showDevLogin = isDevMode();
 
   useEffect(() => {
     if (response?.type === 'success' && response.params?.id_token) {
@@ -21,8 +24,21 @@ export default function SignInScreen() {
     }
   }
 
+  async function handleDevSignIn() {
+    setIsLoading(true);
+    const success = await authManager.signInAsDev(devEmail);
+    setIsLoading(false);
+    if (success) {
+      router.replace('/(tabs)');
+    }
+  }
+
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={styles.scrollView}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.header}>
         <Text style={styles.logo}>🔮</Text>
         <Text style={styles.title}>Proph.bet</Text>
@@ -45,18 +61,53 @@ export default function SignInScreen() {
           <Text style={styles.googleButtonText}>Sign in with Google</Text>
         </Pressable>
 
+        {showDevLogin && (
+          <View style={styles.devSection}>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Dev Mode</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TextInput
+              style={styles.devInput}
+              value={devEmail}
+              onChangeText={setDevEmail}
+              placeholder="dev@genoox.com"
+              placeholderTextColor="#64748b"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <Pressable
+              style={[styles.devButton, isLoading && styles.disabled]}
+              onPress={handleDevSignIn}
+              disabled={isLoading}
+            >
+              <Ionicons name="code-slash" size={20} color="#fff" />
+              <Text style={styles.devButtonText}>
+                {isLoading ? 'Signing in...' : 'Dev Login'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
         <Text style={styles.terms}>
           By signing in, you agree to our Terms of Service and Privacy Policy
         </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
     backgroundColor: '#0f172a',
+  },
+  container: {
+    flexGrow: 1,
     padding: 24,
     justifyContent: 'center',
   },
@@ -105,6 +156,53 @@ const styles = StyleSheet.create({
   googleButtonText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: '600',
+  },
+  devSection: {
+    width: '100%',
+    marginTop: 24,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#334155',
+  },
+  dividerText: {
+    color: '#f59e0b',
+    fontSize: 12,
+    fontWeight: '600',
+    marginHorizontal: 12,
+    textTransform: 'uppercase',
+  },
+  devInput: {
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  devButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f59e0b',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
+  },
+  devButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
   terms: {

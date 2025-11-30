@@ -108,6 +108,51 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // Dev login - only available in development
+    if (grantType === "dev") {
+      if (process.env.NODE_ENV === "production") {
+        return apiError("Dev login not available in production", 403)
+      }
+
+      const { email } = body
+      
+      if (!email) {
+        return apiError("Missing email", 400)
+      }
+
+      // Find or create user
+      let user = await prisma.user.findUnique({
+        where: { email }
+      })
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email,
+            name: email.split("@")[0],
+            emailVerified: new Date()
+          }
+        })
+      }
+
+      // Generate tokens
+      const accessToken = await generateAccessToken(user.id, user.email)
+      const refreshToken = await generateRefreshToken(user.id, user.email)
+
+      return apiResponse({
+        accessToken,
+        refreshToken,
+        expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role
+        }
+      })
+    }
+
     return apiError("Invalid grantType", 400)
   } catch (error) {
     console.error("Token exchange error:", error)

@@ -9,6 +9,14 @@ const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || GOOGLE_CLIENT_ID;
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+
+// Check if running in development mode (Expo dev server)
+// __DEV__ is a global provided by React Native that's true when running via `npx expo start`
+export function isDevMode(): boolean {
+  return __DEV__;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -75,7 +83,7 @@ class AuthManager {
 
     try {
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/auth/token`,
+        `${API_URL}/auth/token`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -102,6 +110,48 @@ class AuthManager {
       return false;
     } catch (error) {
       console.error('Sign in failed:', error);
+      this.setState({ isLoading: false });
+      return false;
+    }
+  }
+
+  async signInAsDev(email: string): Promise<boolean> {
+    if (!isDevMode()) {
+      console.error('Dev sign-in is only available in development mode');
+      return false;
+    }
+
+    this.setState({ isLoading: true });
+
+    try {
+      const response = await fetch(
+        `${API_URL}/auth/token`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grantType: 'dev',
+            email,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        await api.setTokens(data.data.accessToken, data.data.refreshToken);
+        this.setState({
+          user: data.data.user,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return true;
+      }
+
+      this.setState({ isLoading: false });
+      return false;
+    } catch (error) {
+      console.error('Dev sign in failed:', error);
       this.setState({ isLoading: false });
       return false;
     }
