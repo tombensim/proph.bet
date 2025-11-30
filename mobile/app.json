@@ -19,7 +19,14 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["prophbet"]
+            "CFBundleURLSchemes": [
+              "prophbet"
+            ]
+          },
+          {
+            "CFBundleURLSchemes": [
+              "prophbet"
+            ]
           }
         ]
       }
@@ -39,7 +46,23 @@
               "scheme": "prophbet"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "prophbet"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -60,8 +83,15 @@
         "origin": false
       },
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "385bdc49-b734-45d6-9b3f-717de76599fe"
       }
+    },
+    "owner": "tombensim",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/385bdc49-b734-45d6-9b3f-717de76599fe"
     }
   }
 }
