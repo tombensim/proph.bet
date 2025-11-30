@@ -31,11 +31,18 @@ interface MarketCardProps {
   isAdmin?: boolean
   userPoints?: number
   feePercent?: number
+  seedLiquidity?: number
 }
 
-export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: MarketCardProps) {
+export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0, seedLiquidity = 50 }: MarketCardProps) {
   const t = useTranslations('Markets');
   const hasPositions = market.userBets && market.userBets.length > 0
+  
+  // Calculate total points in the market from options liquidity
+  // Subtract initial liquidity (seedLiquidity per option) to get actual bet volume
+  const totalLiquidity = market.options.reduce((sum, option) => sum + option.liquidity, 0)
+  const initialTotalLiquidity = market.options.length * seedLiquidity
+  const totalPoints = Math.round(totalLiquidity - initialTotalLiquidity)
   const coverImage = market.assets?.find(a => a.type === "IMAGE")?.url
   const isPending = market.approved === false
   const isExpired = market.status === 'OPEN' && new Date() > new Date(market.resolutionDate)
@@ -88,7 +95,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
     : `/markets/${market.id}`
 
   return (
-    <Card className={`h-full transition-all flex flex-col overflow-hidden relative group hover:shadow-md ${hasPositions ? 'border-blue-200 bg-blue-50/20' : ''} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''}`}>
+    <Card className={`h-full transition-all flex flex-col overflow-hidden relative group ${isExpired ? '' : 'hover:shadow-md'} ${hasPositions ? 'border-blue-200 bg-blue-50/20' : ''} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''} ${isExpired ? 'opacity-60 grayscale-[50%]' : ''}`}>
       {/* Navigation Link Overlay */}
       <Link href={href} className="absolute inset-0 z-0 focus:outline-none">
          <span className="sr-only">{market.title}</span>
@@ -104,8 +111,8 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
 
       {isExpired && !isPending && (
         <div className="absolute top-2 end-2 z-10">
-             <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-800 border-orange-200 shadow-sm">
-                 Expired
+             <Badge variant="secondary" className="gap-1 bg-red-100 text-red-700 border-red-300 shadow-md font-semibold">
+                 {t('expired')}
              </Badge>
         </div>
       )}
@@ -217,7 +224,11 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
       
       <CardFooter className="text-xs text-muted-foreground flex justify-between items-center border-t p-3 relative z-20 pointer-events-auto bg-card">
           <div className="flex flex-col sm:flex-row sm:gap-3 gap-1 min-w-0 flex-1 mr-2">
-             <span className="truncate">{t('betsCount', { count: market._count.bets })}</span>
+             <div className="flex items-center gap-2 sm:gap-3">
+               <span className="truncate">{t('betsCount', { count: market._count.bets })}</span>
+               <span className="text-muted-foreground/50">•</span>
+               <span className="truncate">{t('totalPoints', { count: totalPoints > 0 ? totalPoints : 0 })}</span>
+             </div>
              <span className="hidden sm:inline text-muted-foreground/50">•</span>
              <span className="truncate">{formatDistanceToNow(new Date(market.resolutionDate), { addSuffix: true })}</span>
           </div>
