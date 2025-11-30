@@ -52,3 +52,8 @@ next-env.d.ts
 # OS
 .DS_Store
 Thumbs.db
+
+# Mobile app secrets
+google-service-account.json
+*.keystore
+*.jks

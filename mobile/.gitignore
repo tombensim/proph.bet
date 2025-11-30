@@ -38,3 +38,15 @@ yarn-error.*
 
 # EAS
 .easignore
+
+# Google Play Service Account Key (NEVER commit this!)
+google-service-account.json
+*.keystore
+
+# Environment files with secrets
+.env.preview
+.env.production
+
+# Build artifacts
+android/
+ios/
