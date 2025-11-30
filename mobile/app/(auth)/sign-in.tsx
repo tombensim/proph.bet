@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, TextInput, ScrollView, Image } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, TextInput, ScrollView, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoogleAuth, authManager, isDevMode } from '@/lib/auth';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,22 +7,30 @@ import { theme } from '@/lib/theme';
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { request, response, promptAsync, isReady } = useGoogleAuth();
+  const { signIn, isReady } = useGoogleAuth();
   const [devEmail, setDevEmail] = useState('dev@genoox.com');
   const [isLoading, setIsLoading] = useState(false);
   const showDevLogin = isDevMode();
 
-  useEffect(() => {
-    if (response?.type === 'success' && response.params?.id_token) {
-      handleGoogleSignIn(response.params.id_token);
+  async function handleGooglePress() {
+    setIsLoading(true);
+    try {
+      const result = await signIn();
+      Alert.alert('Debug 1', `ID Token: ${result.idToken ? 'YES' : 'NO'}\n\nDetails: ${result.debug}`);
+      
+      if (result.idToken) {
+        const success = await authManager.signInWithGoogle(result.idToken);
+        Alert.alert('Debug 2', `Backend auth success: ${success}`);
+        
+        if (success) {
+          router.replace('/(tabs)');
+          return;
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Debug Error', error?.message || String(error));
     }
-  }, [response]);
-
-  async function handleGoogleSignIn(idToken: string) {
-    const success = await authManager.signInWithGoogle(idToken);
-    if (success) {
-      router.replace('/(tabs)');
-    }
+    setIsLoading(false);
   }
 
   async function handleDevSignIn() {
@@ -58,11 +66,11 @@ export default function SignInScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.googleButton, 
-            !isReady && styles.disabled,
+            (isLoading || !isReady) && styles.disabled,
             pressed && styles.googleButtonPressed
           ]}
-          onPress={() => promptAsync()}
-          disabled={!isReady}
+          onPress={handleGooglePress}
+          disabled={isLoading || !isReady}
         >
           <Ionicons name="logo-google" size={22} color="#fff" />
           <Text style={styles.googleButtonText}>Sign in with Google</Text>

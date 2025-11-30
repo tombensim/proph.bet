@@ -8,42 +8,42 @@
 // =============================================================================
 
 export const colors = {
-  // Light theme
+  // Light theme - matches web app globals.css
   light: {
     background: "#ffffff",
     foreground: "#1e293b",
     card: "#ffffff",
     cardForeground: "#1e293b",
-    primary: "#6366f1",
-    primaryForeground: "#ffffff",
-    secondary: "#f1f5f9",
-    secondaryForeground: "#1e293b",
-    muted: "#f1f5f9",
-    mutedForeground: "#64748b",
-    accent: "#f1f5f9",
-    accentForeground: "#1e293b",
-    border: "#e2e8f0",
-    input: "#e2e8f0",
-    ring: "#6366f1",
+    primary: "#1a1a1a", // Neutral dark - matches oklch(0.205 0 0)
+    primaryForeground: "#fafafa", // Neutral light - matches oklch(0.985 0 0)
+    secondary: "#f5f5f5", // Neutral - matches oklch(0.97 0 0)
+    secondaryForeground: "#1a1a1a",
+    muted: "#f5f5f5",
+    mutedForeground: "#737373", // matches oklch(0.556 0 0)
+    accent: "#f5f5f5",
+    accentForeground: "#1a1a1a",
+    border: "#e5e5e5", // matches oklch(0.922 0 0)
+    input: "#e5e5e5",
+    ring: "#a3a3a3", // matches oklch(0.708 0 0)
   },
 
-  // Dark theme
+  // Dark theme - matches web app globals.css
   dark: {
-    background: "#0f172a",
-    foreground: "#f8fafc",
-    card: "#1e293b",
-    cardForeground: "#f8fafc",
-    primary: "#6366f1",
-    primaryForeground: "#ffffff",
-    secondary: "#334155",
-    secondaryForeground: "#f8fafc",
-    muted: "#334155",
-    mutedForeground: "#94a3b8",
-    accent: "#334155",
-    accentForeground: "#f8fafc",
+    background: "#171717", // matches oklch(0.145 0 0)
+    foreground: "#fafafa", // matches oklch(0.985 0 0)
+    card: "#262626", // matches oklch(0.205 0 0)
+    cardForeground: "#fafafa",
+    primary: "#ededed", // Neutral light - matches oklch(0.922 0 0)
+    primaryForeground: "#1a1a1a", // Neutral dark - matches oklch(0.205 0 0)
+    secondary: "#404040", // matches oklch(0.269 0 0)
+    secondaryForeground: "#fafafa",
+    muted: "#404040",
+    mutedForeground: "#a3a3a3", // matches oklch(0.708 0 0)
+    accent: "#404040",
+    accentForeground: "#fafafa",
     border: "rgba(255, 255, 255, 0.1)",
     input: "rgba(255, 255, 255, 0.15)",
-    ring: "#6366f1",
+    ring: "#737373", // matches oklch(0.556 0 0)
   },
 
   // Semantic colors (same for both themes)
@@ -56,9 +56,12 @@ export const colors = {
     destructiveLight: "#ef444420",
     info: "#3b82f6",
     infoLight: "#3b82f620",
+    // Neutral highlight - for selected items, badges, etc.
+    highlight: "#f5f5f5", // neutral gray for light theme
+    highlightStrong: "#e5e5e5", // slightly darker neutral
   },
 
-  // Brand colors
+  // Brand colors (for specific branding needs, not primary UI)
   brand: {
     indigo: "#6366f1",
     indigoLight: "#6366f120",

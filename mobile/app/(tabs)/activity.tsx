@@ -181,8 +181,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.muted,
   },
   unread: {
-    backgroundColor: theme.colors.indigoLight,
-    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.highlight,
+    borderColor: theme.colors.foreground,
     borderLeftWidth: 3,
   },
   iconContainer: {

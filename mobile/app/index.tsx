@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { theme } from '@/lib/theme';
 
 export default function Index() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -8,7 +9,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color={theme.colors.foreground} />
       </View>
     );
   }
@@ -25,6 +26,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: theme.colors.background,
   },
 });

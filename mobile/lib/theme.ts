@@ -55,8 +55,11 @@ export const {
   warningLight,
   destructive,
   destructiveLight,
+  highlight,
+  highlightStrong,
 } = colors.semantic;
 
+// Brand colors available if needed for specific branding
 export const { indigo, indigoLight } = colors.brand;
 
 

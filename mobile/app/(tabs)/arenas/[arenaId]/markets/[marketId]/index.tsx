@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.successLight,
   },
   resolvedBadge: {
-    backgroundColor: theme.colors.indigoLight,
+    backgroundColor: theme.colors.highlight,
   },
   expiredBadge: {
     backgroundColor: theme.colors.warningLight,
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   },
   selectedOption: {
     borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.indigoLight,
+    backgroundColor: theme.colors.highlight,
   },
   winnerOption: {
     borderColor: theme.colors.success,

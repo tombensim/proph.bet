@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   yourRank: {
-    backgroundColor: theme.colors.indigoLight,
+    backgroundColor: theme.colors.highlight,
     padding: theme.spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   currentUser: {
-    backgroundColor: theme.colors.indigoLight,
+    backgroundColor: theme.colors.highlight,
     borderColor: theme.colors.primary,
     borderWidth: 2,
   },
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semibold,
   },
   adminBadge: {
-    backgroundColor: theme.colors.indigoLight,
+    backgroundColor: theme.colors.highlight,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,

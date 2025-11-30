@@ -176,3 +176,21 @@ export const transferApi = {
   transfer: (data: { toUserEmail: string; amount: number; arenaId: string }) => 
     api.post<any>('/transfers', data),
 };
+
+export const aiApi = {
+  generateDescription: (data: {
+    title: string;
+    type: 'BINARY' | 'MULTIPLE_CHOICE' | 'NUMERIC_RANGE';
+    options?: string[];
+    resolutionDate?: string;
+    arenaId?: string;
+  }) => api.post<{ description: string }>('/ai/generate-description', data),
+};
+
+export const storageApi = {
+  getUploadUrl: (contentType: string, folder: string = 'market-assets') =>
+    api.post<{ uploadUrl: string; publicUrl: string; fileKey: string }>(
+      '/storage/upload-url',
+      { contentType, folder }
+    ),
+};

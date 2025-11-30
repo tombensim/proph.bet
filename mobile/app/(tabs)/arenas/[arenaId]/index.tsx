@@ -17,6 +17,7 @@ import { generateGradientColors } from '@proph-bet/shared/utils';
 import { theme } from '@/lib/theme';
 import { InlineBetOptions } from '@/components/InlineBetOptions';
 import { CompactBetForm } from '@/components/CompactBetForm';
+import { CreateMarketModal } from '@/components/CreateMarketModal';
 
 interface Market {
   id: string;
@@ -36,6 +37,9 @@ export default function ArenaScreen() {
   const router = useRouter();
   const { data: arena } = useArena(arenaId);
   const { data: markets, isLoading, refetch, isRefetching } = useArenaMarkets(arenaId);
+  
+  // Create market modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Inline betting state - tracks which market/option is currently being bet on
   const [bettingState, setBettingState] = useState<{
@@ -262,6 +266,26 @@ export default function ArenaScreen() {
           ) : null
         }
       />
+
+      {/* Floating Action Button */}
+      {arena?.membership && (
+        <Pressable
+          style={({ pressed }) => [
+            styles.fab,
+            pressed && styles.fabPressed,
+          ]}
+          onPress={() => setShowCreateModal(true)}
+        >
+          <Ionicons name="add" size={28} color={theme.colors.primaryForeground} />
+        </Pressable>
+      )}
+
+      {/* Create Market Modal */}
+      <CreateMarketModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        arenaId={arenaId}
+      />
     </View>
   );
 }
@@ -321,7 +345,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
   },
   resolvedBadge: {
-    backgroundColor: theme.colors.indigoLight,
+    backgroundColor: theme.colors.highlight,
   },
   expiredBadge: {
     backgroundColor: theme.colors.warningLight,
@@ -430,5 +454,22 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.mutedForeground,
     textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: theme.spacing.xl,
+    right: theme.spacing.xl,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.lg,
+    elevation: 8,
+  },
+  fabPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.95 }],
   },
 });

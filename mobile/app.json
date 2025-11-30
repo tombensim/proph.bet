@@ -28,7 +28,9 @@
               "prophbet"
             ]
           }
-        ]
+        ],
+        "NSPhotoLibraryUsageDescription": "Allow Proph.bet to access your photos to add cover images to your markets.",
+        "NSCameraUsageDescription": "Allow Proph.bet to use your camera to take photos for market covers."
       }
     },
     "android": {
@@ -73,7 +75,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Proph.bet to access your photos to add cover images to your markets.",
+          "cameraPermission": "Allow Proph.bet to use your camera to take photos for market covers."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

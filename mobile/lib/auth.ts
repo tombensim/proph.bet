@@ -1,13 +1,21 @@
-import * as AuthSession from 'expo-auth-session';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { api } from './api';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || GOOGLE_CLIENT_ID;
+
+// Log the client ID for debugging (first 30 chars)
+console.log('[GoogleSignIn] webClientId:', GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID.substring(0, 30) + '...' : 'NOT SET');
+
+// Configure Google Sign-In
+GoogleSignin.configure({
+  webClientId: GOOGLE_CLIENT_ID, // Web client ID for ID token
+  iosClientId: GOOGLE_CLIENT_ID_IOS,
+  offlineAccess: false,
+});
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
@@ -82,6 +90,7 @@ class AuthManager {
     this.setState({ isLoading: true });
 
     try {
+      console.log('[Auth] Calling API:', `${API_URL}/auth/token`);
       const response = await fetch(
         `${API_URL}/auth/token`,
         {
@@ -95,6 +104,7 @@ class AuthManager {
       );
 
       const data = await response.json();
+      console.log('[Auth] API Response:', JSON.stringify(data).substring(0, 200));
 
       if (data.success && data.data) {
         await api.setTokens(data.data.accessToken, data.data.refreshToken);
@@ -106,12 +116,14 @@ class AuthManager {
         return true;
       }
 
+      // Return error info for debugging
+      console.log('[Auth] Auth failed:', data.error || 'Unknown error');
       this.setState({ isLoading: false });
       return false;
-    } catch (error) {
-      console.error('Sign in failed:', error);
+    } catch (error: any) {
+      console.error('[Auth] Sign in exception:', error?.message || error);
       this.setState({ isLoading: false });
-      return false;
+      throw error; // Re-throw so the UI can show it
     }
   }
 
@@ -169,18 +181,37 @@ class AuthManager {
 
 export const authManager = new AuthManager();
 
-// Google Auth hook configuration
+// Google Auth hook - uses native Google Sign-In
 export function useGoogleAuth() {
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: GOOGLE_CLIENT_ID,
-    iosClientId: GOOGLE_CLIENT_ID_IOS,
-    androidClientId: GOOGLE_CLIENT_ID_ANDROID,
-  });
+  const signIn = async (): Promise<{ idToken: string | null; debug: string }> => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      
+      // Debug: show full response structure
+      const debugInfo = `type: ${response.type}, hasIdToken: ${!!response.data?.idToken}, user: ${response.data?.user?.email || 'none'}, webClientId: ${GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID.substring(0, 25) + '...' : 'NOT SET!'}`;
+      
+      if (response.type === 'success' && response.data.idToken) {
+        return { idToken: response.data.idToken, debug: debugInfo };
+      }
+      return { idToken: null, debug: debugInfo };
+    } catch (error: any) {
+      let errorMsg = 'Unknown error';
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        errorMsg = 'User cancelled';
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        errorMsg = 'Sign in in progress';
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        errorMsg = 'Play services not available';
+      } else {
+        errorMsg = error?.message || String(error);
+      }
+      return { idToken: null, debug: `Error: ${errorMsg}\n\nwebClientId: ${GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID.substring(0, 25) + '...' : 'NOT SET!'}` };
+    }
+  };
 
   return {
-    request,
-    response,
-    promptAsync,
-    isReady: !!request,
+    signIn,
+    isReady: true,
   };
 }
