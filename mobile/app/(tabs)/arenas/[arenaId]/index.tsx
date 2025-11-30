@@ -56,6 +56,8 @@ export default function ArenaScreen() {
   const userPoints = arena?.membership?.points ?? 0;
   // Convert trading fee percentage (e.g., 2%) to decimal (0.02) for fee calculations
   const feePercent = (arena?.settings?.tradingFeePercent ?? 0) / 100;
+  // Get seed liquidity from arena settings (default 50 per schema)
+  const seedLiquidity = arena?.settings?.seedLiquidity ?? 50;
 
   function calculateProbability(option: { liquidity: number }, allOptions: { liquidity: number }[]) {
     const inverseSum = allOptions.reduce((sum, o) => sum + 1 / o.liquidity, 0);
@@ -82,6 +84,12 @@ export default function ArenaScreen() {
     const coverImage = item.assets?.find(a => a.type === 'IMAGE')?.url;
     const gradient = generateGradientColors(item.id);
     const canBet = !isResolved && !isExpired;
+    
+    // Calculate total points in the market from options liquidity
+    // Subtract initial liquidity (seedLiquidity per option) to get actual bet volume
+    const totalLiquidity = item.options.reduce((sum, option) => sum + option.liquidity, 0);
+    const initialTotalLiquidity = item.options.length * seedLiquidity;
+    const totalPoints = Math.round(totalLiquidity - initialTotalLiquidity);
     
     // Check if this market is currently in betting mode
     const isBettingThisMarket = bettingState?.marketId === item.id;
@@ -180,6 +188,8 @@ export default function ArenaScreen() {
         <View style={styles.marketFooter}>
           <View style={styles.footerStats}>
             <Text style={styles.footerText}>{item._count.bets} bets</Text>
+            <Text style={styles.footerDot}>•</Text>
+            <Text style={styles.footerText}>{totalPoints > 0 ? totalPoints : 0} pts</Text>
             <Text style={styles.footerDot}>•</Text>
             <Text style={styles.footerText}>
               {formatDistanceToNow(resolutionDate, { addSuffix: true })}
