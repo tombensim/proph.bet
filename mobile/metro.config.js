@@ -18,4 +18,19 @@ config.resolver.nodeModulesPaths = [
 // Force resolving nested modules to the folders below
 config.resolver.disableHierarchicalLookup = true;
 
+// Exclude Next.js app directories and other non-mobile files from Metro bundling
+// This prevents Metro from trying to process .ico files and other web-specific assets
+config.resolver.blockList = [
+  // Next.js app directory (contains favicon.ico that Jimp can't process)
+  new RegExp(`${monorepoRoot}/app/.*`),
+  // Next.js build output
+  new RegExp(`${monorepoRoot}/\\.next/.*`),
+  // Components directory (web-specific React components)
+  new RegExp(`${monorepoRoot}/components/.*`),
+  // Web-specific lib files (avoid conflicts with mobile/lib)
+  new RegExp(`${monorepoRoot}/lib/.*`),
+  // Public assets (web-specific)
+  new RegExp(`${monorepoRoot}/public/.*`),
+];
+
 module.exports = config;
