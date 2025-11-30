@@ -1,37 +1,23 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+// Re-export shared utilities
+export {
+  generateGradient,
+  generateGradientColors,
+  formatBytes,
+  formatPoints,
+  calculateProbability,
+  formatProbability,
+  generateId,
+  truncateText,
+  parseDate,
+  isPastDate,
+} from "@proph-bet/shared/utils"
+
+// Re-export design tokens
+export * from "@proph-bet/shared/design-tokens"
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
-}
-
-export function generateGradient(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  const h1 = Math.abs(hash % 360);
-  const h2 = (h1 + 30 + (Math.abs(hash) % 60)) % 360;
-  const h3 = (h2 + 60 + (Math.abs(hash >> 8) % 60)) % 360;
-
-  const c1 = `hsl(${h1}, 70%, 75%)`;
-  const c2 = `hsl(${h2}, 80%, 65%)`;
-  const c3 = `hsl(${h3}, 70%, 75%)`;
-
-  const angle = Math.abs(hash % 180) + 90; // 90-270 degrees usually looks better for cards
-
-  return `linear-gradient(${angle}deg, ${c1}, ${c2}, ${c3})`;
-}
-
-export function formatBytes(bytes: number, decimals = 2) {
-  if (!+bytes) return '0 Bytes'
-
-  const k = 1024
-  const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }

@@ -42,10 +42,12 @@
     "trending": "חם עכשיו",
     "createdBy": "נוצר על ידי {name}",
     "betsCount": "{count} הימורים",
+    "totalPoints": "{count} נק׳",
     "endsIn": "מסתיים {timeAgo}",
     "chance": "סיכוי",
     "polymarket": "Polymarket",
-    "importedFromPolymarket": "צפה ב-Polymarket"
+    "importedFromPolymarket": "צפה ב-Polymarket",
+    "expired": "פג תוקף"
   },
   "UserNav": {
     "profile": "פרופיל",

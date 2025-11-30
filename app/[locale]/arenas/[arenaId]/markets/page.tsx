@@ -40,7 +40,7 @@ export default async function MarketsPage(props: PageProps) {
   const [arenaSettings, arena] = await Promise.all([
      prisma.arenaSettings.findUnique({
         where: { arenaId },
-        select: { tradingFeePercent: true }
+        select: { tradingFeePercent: true, seedLiquidity: true }
      }),
      prisma.arena.findUnique({
         where: { id: arenaId },
@@ -194,6 +194,7 @@ export default async function MarketsPage(props: PageProps) {
 
   const userPoints = membership?.points || 0
   const feePercent = (arenaSettings?.tradingFeePercent || 0) / 100
+  const seedLiquidity = arenaSettings?.seedLiquidity || 50
 
   // Filter out trending markets from main list to avoid duplication
   const trendingIds = new Set(trendingMarkets.map(m => m.id))
@@ -263,6 +264,7 @@ export default async function MarketsPage(props: PageProps) {
                       isAdmin={isAdmin}
                       userPoints={userPoints}
                       feePercent={feePercent}
+                      seedLiquidity={seedLiquidity}
                     />
                   ))}
               </div>
@@ -294,6 +296,7 @@ export default async function MarketsPage(props: PageProps) {
               isAdmin={isAdmin}
               userPoints={userPoints}
               feePercent={feePercent}
+              seedLiquidity={seedLiquidity}
             />
           ))}
         </div>

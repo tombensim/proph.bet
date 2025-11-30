@@ -42,10 +42,12 @@
     "trending": "Trending Now",
     "createdBy": "Created by {name}",
     "betsCount": "{count} bets",
+    "totalPoints": "{count} pts",
     "endsIn": "Ends {timeAgo}",
     "chance": "Chance",
     "polymarket": "Polymarket",
-    "importedFromPolymarket": "View on Polymarket"
+    "importedFromPolymarket": "View on Polymarket",
+    "expired": "Expired"
   },
   "UserNav": {
     "profile": "Profile",
