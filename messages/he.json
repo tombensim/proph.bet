@@ -275,13 +275,17 @@
     "arenas": {
       "title": "זירות",
       "create": "צור זירה",
+      "join": "הצטרף",
+      "leave": "עזוב",
+      "hidden": "מוסתר",
       "table": {
         "name": "שם",
         "slug": "מזהה",
         "members": "חברים",
         "markets": "שווקים",
         "storage": "אחסון",
-        "created": "נוצר"
+        "created": "נוצר",
+        "access": "גישה"
       }
     },
     "analytics": {

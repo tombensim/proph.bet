@@ -7,11 +7,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { Button } from "@/components/ui/button"
 import { getTranslations } from 'next-intl/server';
 import { formatBytes } from "@/lib/utils"
+import { ArenaJoinButton } from "@/components/admin/arena-join-button"
 
 export default async function ArenasPage({
   searchParams,
@@ -20,7 +20,7 @@ export default async function ArenasPage({
 }) {
   const params = await searchParams
   const page = Number(params.page) || 1
-  const { arenas, total, pages } = await getAllArenas(page)
+  const { arenas, total, pages, isSystemAdmin } = await getAllArenas(page)
   const t = await getTranslations('Admin.arenas');
   const tCommon = await getTranslations('Common');
 
@@ -44,6 +44,7 @@ export default async function ArenasPage({
               <TableHead className="text-end">{t('table.storage')}</TableHead>
               <TableHead className="text-end">AI Usage</TableHead>
               <TableHead className="text-end">{t('table.created')}</TableHead>
+              {isSystemAdmin && <TableHead className="text-center">{t('table.access')}</TableHead>}
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -73,6 +74,15 @@ export default async function ArenasPage({
                 <TableCell className="text-end text-muted-foreground">
                   {new Date(arena.createdAt).toLocaleDateString()}
                 </TableCell>
+                {isSystemAdmin && (
+                  <TableCell className="text-center">
+                    <ArenaJoinButton 
+                      arenaId={arena.id} 
+                      isMember={!!arena.currentUserMembership}
+                      isHidden={arena.currentUserMembership?.hidden}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>
                     <Link href={`/arenas/${arena.id}/markets`}>
                         <Button variant="ghost" size="sm">{tCommon('view')}</Button>

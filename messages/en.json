@@ -275,13 +275,17 @@
     "arenas": {
       "title": "Arenas",
       "create": "Create Arena",
+      "join": "Join",
+      "leave": "Leave",
+      "hidden": "Hidden",
       "table": {
         "name": "Name",
         "slug": "Slug",
         "members": "Members",
         "markets": "Markets",
         "storage": "Storage",
-        "created": "Created"
+        "created": "Created",
+        "access": "Access"
       }
     },
     "analytics": {
