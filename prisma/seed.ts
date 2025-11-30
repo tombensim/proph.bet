@@ -2,9 +2,18 @@ import { PrismaClient, Role, ArenaRole, MarketType, MarketStatus, TransactionTyp
 
 const prisma = new PrismaClient()
 
-// Prevent running in production
-if (process.env.NODE_ENV === 'production') {
+// Strict production guard - only allow seeding in test environments with explicit permission
+const isProduction = process.env.NODE_ENV === 'production'
+const isTestBranch = process.env.VERCEL_GIT_COMMIT_REF === 'test'
+const allowSeed = process.env.ALLOW_SEED === 'true'
+
+if (isProduction && !isTestBranch) {
   console.error('🚫 Seed script cannot run in production!')
+  process.exit(1)
+}
+
+if (isProduction && isTestBranch && !allowSeed) {
+  console.error('🚫 Seed script requires ALLOW_SEED=true for test branch deployments')
   process.exit(1)
 }
 
@@ -27,6 +36,14 @@ const TEST_USERS = [
 ]
 
 async function main() {
+  // Check if database is already seeded
+  const existingArenas = await prisma.arena.count()
+  if (existingArenas > 0) {
+    console.log('📦 Database already has data (' + existingArenas + ' arenas found), skipping seed.')
+    console.log('💡 To re-seed, manually clear the database first.')
+    return
+  }
+
   console.log('🌱 Starting database seed...')
 
   // 1. Create Users
@@ -865,4 +882,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
+
 
