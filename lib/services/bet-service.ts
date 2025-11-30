@@ -229,7 +229,7 @@ export async function placeBet(params: PlaceBetParams): Promise<PlaceBetResult> 
     // Handle idempotency violation gracefully
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       const target = error.meta?.target
-      if (Array.isArray(target) && target.includes('idempotencyKey') || target === 'idempotencyKey') {
+      if (Array.isArray(target) && target.includes('idempotencyKey')) {
         // Return success as it was already processed
         return { success: true }
       }
