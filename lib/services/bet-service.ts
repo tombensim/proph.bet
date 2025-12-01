@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma"
 import { Prisma, TransactionType, MarketType } from "@prisma/client"
 import { analyzeMarketSentiment } from "@/app/actions/analyze-sentiment"
+import {
+  calculateCPMMTrade,
+  calculateProbabilities,
+  PoolState
+} from "@/lib/amm"
 
 export interface PlaceBetParams {
   userId: string
@@ -142,11 +147,17 @@ export async function placeBet(params: PlaceBetParams): Promise<PlaceBetResult> 
         }
       }
 
-      // CPMM Logic
+      // CPMM Logic using AMM module
       let calculatedShares = 0
       const finalOptionId = optionId
 
-      if ((market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE || (market.type === MarketType.NUMERIC_RANGE && market.options.length > 0)) && optionId && market.options.length > 0) {
+      const isAMMMarket = (
+        market.type === MarketType.BINARY ||
+        market.type === MarketType.MULTIPLE_CHOICE ||
+        (market.type === MarketType.NUMERIC_RANGE && market.options.length > 0)
+      )
+
+      if (isAMMMarket && optionId && market.options.length > 0) {
         const options = await tx.option.findMany({
           where: { marketId: market.id }
         })
@@ -154,56 +165,50 @@ export async function placeBet(params: PlaceBetParams): Promise<PlaceBetResult> 
         const targetOption = options.find(o => o.id === optionId)
         if (!targetOption) throw new Error("Option not found")
 
-        // Calculate k (product of all pools)
-        const poolBalances = options.map(o => o.liquidity)
-        const k = poolBalances.reduce((acc, val) => acc * val, 1)
+        // Convert to pool states for AMM calculation
+        const pools: PoolState[] = options.map(o => ({
+          optionId: o.id,
+          liquidity: o.liquidity
+        }))
 
-        const otherOptions = options.filter(o => o.id !== optionId)
+        // Calculate trade using AMM module
+        const tradeResult = calculateCPMMTrade(pools, optionId, netBetAmount)
+        calculatedShares = tradeResult.shares
 
-        // Update other pools
-        for (const other of otherOptions) {
+        // Update pool liquidities
+        for (const newPool of tradeResult.newPools) {
           await tx.option.update({
-            where: { id: other.id },
-            data: { liquidity: { increment: netBetAmount } }
+            where: { id: newPool.optionId },
+            data: { liquidity: newPool.liquidity }
           })
         }
-
-        // Calculate new target liquidity
-        const newOtherProduct = otherOptions.reduce((acc, o) => acc * (o.liquidity + netBetAmount), 1)
-        const newTargetLiquidity = k / newOtherProduct
-
-        // Update target pool
-        await tx.option.update({
-          where: { id: targetOption.id },
-          data: { liquidity: newTargetLiquidity }
-        })
-
-        // Calculate Shares
-        const swappedShares = targetOption.liquidity - newTargetLiquidity
-        calculatedShares = netBetAmount + swappedShares
 
         // --- RECORD PRICE HISTORY ---
         const updatedOptions = await tx.option.findMany({
           where: { marketId: market.id }
         })
 
-        const inverseSum = updatedOptions.reduce((sum, o) => sum + (1 / o.liquidity), 0)
+        const updatedPools: PoolState[] = updatedOptions.map(o => ({
+          optionId: o.id,
+          liquidity: o.liquidity
+        }))
+
+        const probabilities = calculateProbabilities(updatedPools)
         const batchTimestamp = new Date()
 
-        for (const opt of updatedOptions) {
-          const probability = (1 / opt.liquidity) / inverseSum
-
+        for (const prob of probabilities) {
           await tx.priceHistory.create({
             data: {
               marketId: market.id,
-              optionId: opt.id,
-              price: probability,
+              optionId: prob.optionId,
+              price: prob.probability,
               createdAt: batchTimestamp
             }
           })
         }
 
       } else if (market.type === MarketType.NUMERIC_RANGE) {
+        // Old numeric range without buckets - shares equal bet amount
         calculatedShares = netBetAmount
       }
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react"
 import { Market, Option, MarketType } from "@prisma/client"
-import { useForm } from "react-hook-form"
+import { useForm, UseFormReturn, FieldValues, Control, Path } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { placeBetAction } from "@/app/actions/place-bet"
-import { Loader2, Info } from "lucide-react"
+import { Info } from "lucide-react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -24,7 +24,7 @@ interface BetFormProps {
   userPoints: number
   totalPool?: number
   feePercent?: number
-  translations?: any
+  translations?: Record<string, string>
   isExpired?: boolean
 }
 
@@ -32,10 +32,9 @@ const betSchema = z.object({
   amount: z.coerce.number().positive().int(),
   optionId: z.string().optional(),
   numericValue: z.coerce.number().optional(),
-}).refine((data) => {
-    // Custom validation to ensure optionId is present for non-numeric markets
-    return true
 })
+
+type BetFormValues = z.infer<typeof betSchema>
 
 type PotentialReturn = 
   | { type: "NUMERIC"; totalPool: number }
@@ -46,7 +45,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
   const tHook = useTranslations('MarketDetail.betForm');
   
   // Fallback to provided translations or use hook
-  const t = (key: string, params?: Record<string, string | number>) => {
+  const t = (key: string, params?: Record<string, string | number>): string => {
       if (translations && translations[key]) {
           let text = translations[key];
           if (params) {
@@ -56,8 +55,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
           }
           return text;
       }
-      // @ts-ignore
-      return tHook(key, params);
+      return tHook(key as Parameters<typeof tHook>[0], params as Parameters<typeof tHook>[1]);
   }
 
   const [isPending, startTransition] = useTransition()
@@ -65,13 +63,12 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
   const [success, setSuccess] = useState(false)
   const [idempotencyKey, setIdempotencyKey] = useState(uuidv4())
 
-  const form = useForm<z.infer<typeof betSchema>>({
-    // @ts-ignore
+  const form = useForm({
     resolver: zodResolver(betSchema),
     defaultValues: {
       amount: market.minBet || 10,
     }
-  })
+  }) as ReturnType<typeof useForm<BetFormValues>>
 
   const isMounted = useIsMounted();
 
@@ -133,7 +130,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [market.options, market.type])
 
-  function onSubmit(data: z.infer<typeof betSchema>) {
+  function onSubmit(data: BetFormValues) {
     setError(null)
     setSuccess(false)
 
@@ -175,13 +172,15 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
     })
   }
 
+  // Type-safe form control accessor
+  const formControl = form.control as unknown as Control<BetFormValues>
+
   const renderMarketInputs = () => {
     switch (market.type) {
       case "BINARY":
         return (
           <FormField
-            // @ts-ignore
-            control={form.control}
+            control={formControl}
             name="optionId"
             render={({ field }) => (
               <FormItem className="space-y-3">
@@ -227,8 +226,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
       case "MULTIPLE_CHOICE":
         return (
           <FormField
-            // @ts-ignore
-            control={form.control}
+            control={formControl}
             name="optionId"
             render={({ field }) => (
               <FormItem>
@@ -263,8 +261,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
         if (market.options && market.options.length > 0) {
              return (
                  <FormField
-                   // @ts-ignore
-                   control={form.control}
+                   control={formControl}
                    name="optionId"
                    render={({ field }) => (
                      <FormItem className="space-y-4">
@@ -328,8 +325,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
         }
         return (
           <FormField
-            // @ts-ignore
-            control={form.control}
+            control={formControl}
             name="numericValue"
             render={({ field }) => (
               <FormItem>
@@ -340,7 +336,8 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
                     step="any" 
                     placeholder={t('enterValue')}
                     {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                    value={field.value ?? ''}
+                    onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -355,7 +352,6 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
 
   return (
     <Form {...form}>
-      {/* @ts-ignore */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
         
         {isExpired && (
@@ -369,8 +365,7 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
           {renderMarketInputs()}
 
           <FormField
-            // @ts-ignore
-            control={form.control}
+            control={formControl}
             name="amount"
             render={({ field }) => (
               <FormItem>

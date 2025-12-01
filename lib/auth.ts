@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { Role } from "@prisma/client"
+import { isSystemAdmin } from "@/lib/admin-config"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   debug: true,
@@ -51,11 +52,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = user.role
         token.email = user.email // Explicitly set email in token
 
-        // Auto-assign admin role to tombensim@gmail.com
-        if (user.email === "tombensim@gmail.com") {
+        // Auto-assign admin role to system admins
+        if (user.email && isSystemAdmin(user.email)) {
           try {
              await prisma.user.update({
-               where: { email: "tombensim@gmail.com" },
+               where: { email: user.email },
                data: { role: "ADMIN" }
              })
           } catch (e) {
@@ -63,28 +64,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
           token.role = "ADMIN"
         }
-        
-        // Auto-assign admin role to dev@genoox.com in development
-        if (process.env.NODE_ENV === "development" && user.email === "dev@genoox.com") {
-          try {
-             await prisma.user.update({
-               where: { email: "dev@genoox.com" },
-               data: { role: "ADMIN" }
-             })
-          } catch (e) {
-             console.error("Failed to auto-assign admin role to dev user", e)
-          }
-          token.role = "ADMIN"
-        }
       }
       
-      // Ensure admin role in token even if not re-logged in
-      if (token.email === "tombensim@gmail.com") {
-        token.role = "ADMIN"
-      }
-      
-      // Ensure admin role in token for dev user in development
-      if (process.env.NODE_ENV === "development" && token.email === "dev@genoox.com") {
+      // Ensure admin role in token for system admins even if not re-logged in
+      if (token.email && isSystemAdmin(token.email as string)) {
         token.role = "ADMIN"
       }
 

@@ -1,5 +1,17 @@
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import type {
+  Arena,
+  ArenaMembership,
+  Market,
+  Bet,
+  Notification,
+  User,
+  PlaceBetRequest,
+  CreateMarketRequest,
+  ApiResponse,
+  ArenaRole,
+} from '@proph-bet/shared';
 
 // Get API URL from app.config.js extra (loaded via dotenv)
 const config = Constants.expoConfig?.extra ?? {};
@@ -8,10 +20,68 @@ const API_BASE_URL = config.apiUrl ?? 'http://localhost:3000/api/v1';
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
+// Extended types for API responses
+export interface ArenaWithMembership extends Arena {
+  membership?: {
+    role: ArenaRole;
+    points: number;
+    joinedAt: string;
+  };
+  _count?: {
+    members: number;
+    markets: number;
+  };
+}
+
+export interface MarketWithDetails extends Market {
+  creator?: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+  _count?: {
+    bets: number;
+    comments: number;
+  };
+}
+
+export interface BetWithDetails extends Bet {
+  market?: {
+    id: string;
+    title: string;
+    status: string;
+    arenaId: string | null;
+    winningOptionId: string | null;
+  };
+  option?: {
+    id: string;
+    text: string;
+  } | null;
+  won?: boolean;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email: string;
+  };
+  points: number;
+  role: ArenaRole;
+}
+
+export interface TransactionWithDetails {
+  id: string;
+  amount: number;
+  type: string;
+  createdAt: string;
+  fromUser?: { id: string; name: string | null; image: string | null } | null;
+  toUser?: { id: string; name: string | null; image: string | null } | null;
+  market?: { id: string; title: string } | null;
+  arena?: { id: string; name: string } | null;
 }
 
 class ApiClient {
@@ -140,44 +210,45 @@ export const api = new ApiClient();
 
 // API function exports for react-query
 export const arenaApi = {
-  getArenas: () => api.get<any[]>('/arenas'),
-  getArena: (arenaId: string) => api.get<any>(`/arenas/${arenaId}`),
+  getArenas: () => api.get<ArenaWithMembership[]>('/arenas'),
+  getArena: (arenaId: string) => api.get<ArenaWithMembership>(`/arenas/${arenaId}`),
   getLeaderboard: (arenaId: string, limit = 50) => 
-    api.get<any[]>(`/arenas/${arenaId}/leaderboard?limit=${limit}`),
+    api.get<LeaderboardEntry[]>(`/arenas/${arenaId}/leaderboard?limit=${limit}`),
   getMarkets: (arenaId: string, status?: string) => 
-    api.get<any[]>(`/arenas/${arenaId}/markets${status ? `?status=${status}` : ''}`),
-  createMarket: (arenaId: string, data: any) => 
-    api.post<any>(`/arenas/${arenaId}/markets`, data),
+    api.get<MarketWithDetails[]>(`/arenas/${arenaId}/markets${status ? `?status=${status}` : ''}`),
+  createMarket: (arenaId: string, data: CreateMarketRequest) => 
+    api.post<{ success: boolean; marketId: string }>(`/arenas/${arenaId}/markets`, data),
 };
 
 export const marketApi = {
-  getMarket: (marketId: string) => api.get<any>(`/markets/${marketId}`),
-  resolveMarket: (marketId: string, data: any) => 
-    api.post<any>(`/markets/${marketId}/resolve`, data),
+  getMarket: (marketId: string) => api.get<MarketWithDetails>(`/markets/${marketId}`),
+  resolveMarket: (marketId: string, data: { winningOptionId?: string; winningValue?: number; resolutionImage?: string }) => 
+    api.post<{ success: boolean }>(`/markets/${marketId}/resolve`, data),
 };
 
 export const betApi = {
   getBets: (arenaId?: string) => 
-    api.get<any[]>(`/bets${arenaId ? `?arenaId=${arenaId}` : ''}`),
-  placeBet: (data: any) => api.post<any>('/bets', data),
+    api.get<BetWithDetails[]>(`/bets${arenaId ? `?arenaId=${arenaId}` : ''}`),
+  placeBet: (data: PlaceBetRequest) => 
+    api.post<{ success: boolean; betId?: string; shares?: number }>('/bets', data),
 };
 
 export const notificationApi = {
   getNotifications: (arenaId?: string) => 
-    api.get<any[]>(`/notifications${arenaId ? `?arenaId=${arenaId}` : ''}`),
+    api.get<Notification[]>(`/notifications${arenaId ? `?arenaId=${arenaId}` : ''}`),
   markRead: (notificationIds?: string[]) => 
-    api.patch<any>('/notifications', { notificationIds }),
+    api.patch<{ success: boolean }>('/notifications', { notificationIds }),
 };
 
 export const userApi = {
-  getProfile: () => api.get<any>('/auth/me'),
+  getProfile: () => api.get<User>('/auth/me'),
   getTransactions: (arenaId?: string) => 
-    api.get<any[]>(`/users/transactions${arenaId ? `?arenaId=${arenaId}` : ''}`),
+    api.get<TransactionWithDetails[]>(`/users/transactions${arenaId ? `?arenaId=${arenaId}` : ''}`),
 };
 
 export const transferApi = {
   transfer: (data: { toUserEmail: string; amount: number; arenaId: string }) => 
-    api.post<any>('/transfers', data),
+    api.post<{ success: boolean }>('/transfers', data),
 };
 
 export const aiApi = {
@@ -196,4 +267,34 @@ export const storageApi = {
       '/storage/upload-url',
       { contentType, folder }
     ),
+};
+
+export interface InvitationDetails {
+  arena: {
+    id: string;
+    name: string;
+    description: string | null;
+    coverImage: string | null;
+    logo: string | null;
+  };
+  inviter: {
+    name: string;
+    image: string | null;
+  };
+  email: string | null; // null for public invites
+}
+
+export interface AcceptInvitationResponse {
+  message: string;
+  arena: {
+    id: string;
+    name: string;
+  };
+}
+
+export const invitationApi = {
+  getInvitation: (token: string) =>
+    api.get<InvitationDetails>(`/invitations/${token}`),
+  acceptInvitation: (token: string) =>
+    api.post<AcceptInvitationResponse>(`/invitations/${token}`, {}),
 };
