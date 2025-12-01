@@ -1,6 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+// Get API URL from app.config.js extra (loaded via dotenv)
+const config = Constants.expoConfig?.extra ?? {};
+const API_BASE_URL = config.apiUrl ?? 'http://localhost:3000/api/v1';
 
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
