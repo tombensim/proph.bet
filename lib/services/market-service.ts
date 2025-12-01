@@ -230,7 +230,7 @@ export async function resolveMarket(params: ResolveMarketParams): Promise<Resolv
         determinedWinningOptionId = findWinningNumericBucket(
           winningValue,
           market.options.map(o => ({ id: o.id, text: o.text }))
-        )
+        ) ?? undefined
 
         if (!determinedWinningOptionId) {
           throw new Error(`Value ${winningValue} does not fall into any bucket`)

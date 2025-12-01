@@ -63,13 +63,12 @@ export function BetForm({ market, userPoints, totalPool = 0, feePercent = 0, tra
   const [success, setSuccess] = useState(false)
   const [idempotencyKey, setIdempotencyKey] = useState(uuidv4())
 
-  const form = useForm<BetFormValues>({
-    // @ts-expect-error - zod v4 resolver type compatibility with react-hook-form
+  const form = useForm({
     resolver: zodResolver(betSchema),
     defaultValues: {
       amount: market.minBet || 10,
     }
-  })
+  }) as ReturnType<typeof useForm<BetFormValues>>
 
   const isMounted = useIsMounted();
 
