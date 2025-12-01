@@ -42,14 +42,17 @@ export function useResolveMarket() {
       marketId,
       winningOptionId,
       winningValue,
+      resolutionImage,
     }: {
       marketId: string;
       winningOptionId?: string;
       winningValue?: number;
+      resolutionImage?: string;
     }) => {
       const response = await marketApi.resolveMarket(marketId, {
         winningOptionId,
         winningValue,
+        resolutionImage,
       });
       if (!response.success) throw new Error(response.error);
       return response.data;
