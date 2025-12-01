@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.prophbet.app",
+        "paths": [
+          "/invite/*",
+          "/*/invite/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAMID.com.prophbet.app"
+    ]
+  }
+}
+

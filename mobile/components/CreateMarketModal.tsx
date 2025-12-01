@@ -103,10 +103,37 @@ export function CreateMarketModal({ visible, onClose, arenaId }: CreateMarketMod
     }
   };
 
-  const pickImage = async () => {
+  const handleImageResult = (result: ImagePicker.ImagePickerResult) => {
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      setCoverImage({
+        uri: asset.uri,
+        type: asset.mimeType || 'image/jpeg',
+      });
+    }
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission Required', 'Please allow access to your camera to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    handleImageResult(result);
+  };
+
+  const pickFromLibrary = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission Required', 'Please allow access to your photo library to add a cover image.');
+      Alert.alert('Permission Required', 'Please allow access to your photo library to select an image.');
       return;
     }
 
@@ -117,13 +144,20 @@ export function CreateMarketModal({ visible, onClose, arenaId }: CreateMarketMod
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      setCoverImage({
-        uri: asset.uri,
-        type: asset.mimeType || 'image/jpeg',
-      });
-    }
+    handleImageResult(result);
+  };
+
+  const pickImage = () => {
+    Alert.alert(
+      'Add Cover Image',
+      'Choose how you want to add a cover image',
+      [
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Library', onPress: pickFromLibrary },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
   };
 
   const uploadImage = async (): Promise<string | null> => {

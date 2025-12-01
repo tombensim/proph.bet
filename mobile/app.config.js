@@ -20,6 +20,10 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.prophbet.app',
+      associatedDomains: [
+        'applinks:proph.bet',
+        'applinks:test.proph.bet',
+      ],
       infoPlist: {
         CFBundleURLTypes: [
           {
@@ -43,6 +47,26 @@ module.exports = {
           action: 'VIEW',
           autoVerify: true,
           data: [{ scheme: 'prophbet' }],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [
+            { scheme: 'https', host: 'proph.bet', pathPrefix: '/invite' },
+            { scheme: 'https', host: 'test.proph.bet', pathPrefix: '/invite' },
+          ],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [
+            { scheme: 'https', host: 'proph.bet', pathPrefix: '/en/invite' },
+            { scheme: 'https', host: 'test.proph.bet', pathPrefix: '/en/invite' },
+            { scheme: 'https', host: 'proph.bet', pathPrefix: '/he/invite' },
+            { scheme: 'https', host: 'test.proph.bet', pathPrefix: '/he/invite' },
+          ],
           category: ['BROWSABLE', 'DEFAULT'],
         },
       ],

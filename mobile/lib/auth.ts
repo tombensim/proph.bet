@@ -104,8 +104,12 @@ class AuthManager {
   async signInWithGoogle(idToken: string): Promise<boolean> {
     this.setState({ isLoading: true });
 
+    const authUrl = `${API_URL}/auth/token`;
+    console.log('[Auth] Attempting sign-in to:', authUrl);
+    console.log('[Auth] ID Token length:', idToken?.length || 0);
+
     try {
-      const response = await fetch(`${API_URL}/auth/token`, {
+      const response = await fetch(authUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -114,7 +118,9 @@ class AuthManager {
         }),
       });
 
+      console.log('[Auth] Response status:', response.status);
       const data = await response.json();
+      console.log('[Auth] Response success:', data.success);
 
       if (data.success && data.data) {
         await api.setTokens(data.data.accessToken, data.data.refreshToken);
@@ -126,10 +132,12 @@ class AuthManager {
         return true;
       }
 
+      console.error('[Auth] Sign in failed - no success:', data.error);
       this.setState({ isLoading: false });
       return false;
-    } catch (error) {
-      console.error('Sign in failed:', error);
+    } catch (error: any) {
+      console.error('[Auth] Sign in failed:', error?.message || error);
+      console.error('[Auth] API URL was:', authUrl);
       this.setState({ isLoading: false });
       return false;
     }

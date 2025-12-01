@@ -1,0 +1,98 @@
+---
+description: Core architecture patterns for the proph.bet codebase
+globs: 
+alwaysApply: true
+---
+
+# Architecture Patterns
+
+## Server Actions vs Services
+
+Server actions in `app/actions/` should be **thin wrappers** that:
+1. Authenticate the user via `auth()`
+2. Validate input with Zod schemas
+3. Call the corresponding service from `lib/services/`
+4. Handle revalidation with `revalidatePath()`
+5. Redirect if needed
+
+**DO NOT** duplicate business logic in server actions. All business logic belongs in services.
+
+```typescript
+// GOOD - Server action as thin wrapper
+"use server"
+export async function placeBetAction(data: PlaceBetValues) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+  
+  const validated = placeBetSchema.safeParse(data)
+  if (!validated.success) throw new Error("Invalid data")
+
+  await placeBet({ userId: session.user.id, ...validated.data })
+  revalidatePath(`/arenas/${arenaId}/markets/${marketId}`)
+}
+
+// BAD - Duplicating service logic in action
+"use server"
+export async function placeBetAction(data: PlaceBetValues) {
+  // 200+ lines of business logic that already exists in bet-service.ts
+}
+```
+
+## Services Layer (`lib/services/`)
+
+Services contain the core business logic and are used by:
+- Server actions (web app)
+- API routes (mobile app via `/api/v1/`)
+
+Services should:
+- Accept a params object with userId and other data
+- Return a result object with success/error
+- Handle database transactions
+- Trigger side effects (notifications, analytics)
+
+## AMM Calculations (`lib/amm.ts`)
+
+All market maker calculations should use the centralized AMM module:
+- `calculateProbabilities()` - Get probabilities for all options
+- `calculateCPMMTrade()` - Calculate shares for a trade
+- `calculateResolutionPayouts()` - Calculate winner payouts
+- `findWinningNumericBucket()` - Find winning bucket for numeric markets
+
+## TypeScript + Zod v4 + react-hook-form
+
+There are known type compatibility issues. Use this pattern:
+
+```typescript
+// Cast the form result, not the resolver
+const form = useForm({
+  resolver: zodResolver(schema),
+  defaultValues: { ... }
+}) as ReturnType<typeof useForm<FormValues>>
+```
+
+## Admin Configuration
+
+System admin emails are configured via `SYSTEM_ADMIN_EMAILS` environment variable (comma-separated).
+Use `isSystemAdmin()` from `lib/admin-config.ts` - never hardcode admin emails.
+
+## Mobile App Types
+
+The mobile app (`mobile/`) should import types from `@proph-bet/shared`:
+
+```typescript
+import type { Arena, Market, Bet } from '@proph-bet/shared'
+
+// NOT
+api.get<any>('/arenas')
+```
+
+## API Response Format
+
+All API routes return:
+```typescript
+{ success: true, data: T }
+// or
+{ success: false, error: string }
+```
+
+Use `apiResponse()` and `apiError()` helpers from `lib/api-auth.ts`.

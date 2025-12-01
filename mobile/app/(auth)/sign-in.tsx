@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, TextInput, ScrollView, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useGoogleAuth, authManager, isDevMode } from '@/lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/lib/theme';
@@ -9,10 +9,23 @@ const chamiImage = require('@/assets/images/chami-beige.png');
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { inviteToken } = useLocalSearchParams<{ inviteToken?: string }>();
   const { signIn, isReady } = useGoogleAuth();
   const [devEmail, setDevEmail] = useState('dev@genoox.com');
   const [isLoading, setIsLoading] = useState(false);
   const showDevLogin = isDevMode();
+
+  // Navigate after successful login - to invite page if there's an invite token, otherwise to tabs
+  const navigateAfterLogin = () => {
+    if (inviteToken) {
+      router.replace({
+        pathname: '/invite/[token]',
+        params: { token: inviteToken },
+      });
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
 
   async function handleGooglePress() {
     setIsLoading(true);
@@ -23,7 +36,7 @@ export default function SignInScreen() {
         const success = await authManager.signInWithGoogle(result.idToken);
         
         if (success) {
-          router.replace('/(tabs)');
+          navigateAfterLogin();
           return;
         }
       }
@@ -38,7 +51,7 @@ export default function SignInScreen() {
     const success = await authManager.signInAsDev(devEmail);
     setIsLoading(false);
     if (success) {
-      router.replace('/(tabs)');
+      navigateAfterLogin();
     }
   }
 
