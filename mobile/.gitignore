@@ -42,6 +42,7 @@ yarn-error.*
 # Google Play Service Account Key (NEVER commit this!)
 google-service-account.json
 *.keystore
+keystore.properties
 
 # Environment files with secrets
 .env.preview

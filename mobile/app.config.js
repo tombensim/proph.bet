@@ -20,6 +20,10 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.prophbet.app',
+      associatedDomains: [
+        'applinks:proph.bet',
+        'applinks:test.proph.bet',
+      ],
       infoPlist: {
         CFBundleURLTypes: [
           {
@@ -38,11 +42,37 @@ module.exports = {
         backgroundColor: '#0f172a',
       },
       package: 'com.prophbet.app',
+      permissions: [
+        'android.permission.CAMERA',
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+        'android.permission.READ_MEDIA_IMAGES',
+      ],
       intentFilters: [
         {
           action: 'VIEW',
           autoVerify: true,
           data: [{ scheme: 'prophbet' }],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [
+            { scheme: 'https', host: 'proph.bet', pathPrefix: '/invite' },
+            { scheme: 'https', host: 'test.proph.bet', pathPrefix: '/invite' },
+          ],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [
+            { scheme: 'https', host: 'proph.bet', pathPrefix: '/en/invite' },
+            { scheme: 'https', host: 'test.proph.bet', pathPrefix: '/en/invite' },
+            { scheme: 'https', host: 'proph.bet', pathPrefix: '/he/invite' },
+            { scheme: 'https', host: 'test.proph.bet', pathPrefix: '/he/invite' },
+          ],
           category: ['BROWSABLE', 'DEFAULT'],
         },
       ],
