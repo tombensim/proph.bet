@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
-import { MarketType, MarketStatus, TransactionType, NotificationType } from "@prisma/client"
+import { MarketType, MarketStatus, TransactionType } from "@prisma/client"
 import { createNotification } from "@/lib/notifications"
+import { calculateResolutionPayouts, findWinningNumericBucket } from "@/lib/amm"
 
 export interface CreateMarketParams {
   userId: string
@@ -213,43 +214,23 @@ export async function resolveMarket(params: ResolveMarketParams): Promise<Resolv
   const resolutionResult = await prisma.$transaction(async (tx) => {
     let winningBets: typeof market.bets = []
     let totalPayoutPool = 0
-    let totalWinningWeight = 0
-    const payouts = new Map<string, number>()
-
     let determinedWinningOptionId = winningOptionId
 
     if (market.type === MarketType.BINARY || market.type === MarketType.MULTIPLE_CHOICE) {
       if (!winningOptionId) throw new Error("Must select a winning option")
 
       totalPayoutPool = market.options.reduce((sum, opt) => sum + opt.liquidity, 0)
-
       winningBets = market.bets.filter(b => b.optionId === winningOptionId)
-      totalWinningWeight = winningBets.reduce((sum, b) => sum + b.shares, 0)
 
     } else if (market.type === MarketType.NUMERIC_RANGE) {
       if (winningValue === undefined) throw new Error("Must provide winning value")
 
       if (market.options.length > 0) {
-        const sortedOptions = [...market.options].sort((a, b) => {
-          const minA = parseFloat(a.text.split(" - ")[0])
-          const minB = parseFloat(b.text.split(" - ")[0])
-          return minA - minB
-        })
-
-        for (let i = 0; i < sortedOptions.length; i++) {
-          const opt = sortedOptions[i]
-          const parts = opt.text.split(" - ")
-          if (parts.length === 2) {
-            const min = parseFloat(parts[0])
-            const max = parseFloat(parts[1])
-
-            const isLast = i === sortedOptions.length - 1
-            if (winningValue >= min && (winningValue < max || (isLast && winningValue <= max))) {
-              determinedWinningOptionId = opt.id
-              break
-            }
-          }
-        }
+        // Use AMM module to find winning bucket
+        determinedWinningOptionId = findWinningNumericBucket(
+          winningValue,
+          market.options.map(o => ({ id: o.id, text: o.text }))
+        )
 
         if (!determinedWinningOptionId) {
           throw new Error(`Value ${winningValue} does not fall into any bucket`)
@@ -257,9 +238,9 @@ export async function resolveMarket(params: ResolveMarketParams): Promise<Resolv
 
         totalPayoutPool = market.options.reduce((sum, opt) => sum + opt.liquidity, 0)
         winningBets = market.bets.filter(b => b.optionId === determinedWinningOptionId)
-        totalWinningWeight = winningBets.reduce((sum, b) => sum + b.shares, 0)
 
       } else {
+        // Old Numeric Logic (Parimutuel - closest to winning value)
         totalPayoutPool = market.bets.reduce((sum, bet) => sum + bet.amount, 0)
 
         const betsWithDiff = market.bets.map(b => ({
@@ -269,48 +250,50 @@ export async function resolveMarket(params: ResolveMarketParams): Promise<Resolv
 
         const minDiff = Math.min(...betsWithDiff.map(b => b.diff))
         winningBets = betsWithDiff.filter(b => b.diff === minDiff)
-        totalWinningWeight = winningBets.reduce((sum, b) => sum + b.amount, 0)
       }
     }
 
+    // Use AMM module for payout calculations
+    const isAMM = (market.type === MarketType.NUMERIC_RANGE && market.options.length > 0) ||
+                  market.type !== MarketType.NUMERIC_RANGE
+
+    const payouts = calculateResolutionPayouts(
+      totalPayoutPool,
+      winningBets.map(b => ({
+        userId: b.userId,
+        shares: b.shares,
+        amount: b.amount
+      })),
+      isAMM // Use shares for AMM markets, amounts for parimutuel
+    )
+
     // Distribute Winnings
-    if (winningBets.length > 0 && totalWinningWeight > 0) {
-      for (const bet of winningBets) {
-        const isAmm = (market.type === MarketType.NUMERIC_RANGE && market.options.length > 0) || market.type !== MarketType.NUMERIC_RANGE
-        const weight = isAmm ? bet.shares : bet.amount
-
-        const share = weight / totalWinningWeight
-        const payout = Math.floor(share * totalPayoutPool)
-
-        if (payout > 0) {
-          const currentPayout = payouts.get(bet.userId) || 0
-          payouts.set(bet.userId, currentPayout + payout)
-
-          const membership = await tx.arenaMembership.findUnique({
-            where: {
-              userId_arenaId: {
-                userId: bet.userId,
-                arenaId
-              }
+    for (const [betUserId, payout] of payouts.entries()) {
+      if (payout > 0) {
+        const membership = await tx.arenaMembership.findUnique({
+          where: {
+            userId_arenaId: {
+              userId: betUserId,
+              arenaId
             }
+          }
+        })
+
+        if (membership) {
+          await tx.arenaMembership.update({
+            where: { id: membership.id },
+            data: { points: { increment: payout } }
           })
 
-          if (membership) {
-            await tx.arenaMembership.update({
-              where: { id: membership.id },
-              data: { points: { increment: payout } }
-            })
-
-            await tx.transaction.create({
-              data: {
-                amount: payout,
-                type: TransactionType.WIN_PAYOUT,
-                toUserId: bet.userId,
-                marketId: market.id,
-                arenaId
-              }
-            })
-          }
+          await tx.transaction.create({
+            data: {
+              amount: payout,
+              type: TransactionType.WIN_PAYOUT,
+              toUserId: betUserId,
+              marketId: market.id,
+              arenaId
+            }
+          })
         }
       }
     }
