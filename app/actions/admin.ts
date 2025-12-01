@@ -2,27 +2,58 @@
 
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { Role } from "@prisma/client"
+import { Role, ArenaRole } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { s3Client, BUCKET_NAME } from "@/lib/s3"
 import { HeadObjectCommand } from "@aws-sdk/client-s3"
 import { isSystemAdmin } from "@/lib/roles"
 
+// Helper to get user email from session or database
+async function getUserEmail(session: { user: { id: string; email?: string | null } }) {
+  if (session.user.email) {
+    return session.user.email
+  }
+  // Fallback: look up email from database
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { email: true }
+  })
+  return dbUser?.email ?? undefined
+}
+
 // Helper to ensure admin access
 async function requireAdmin() {
   const session = await auth()
-  if (!session?.user) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized")
   }
 
+  const userEmail = await getUserEmail(session)
+
   // Allow system admin regardless of role
-  if (isSystemAdmin(session.user.email)) {
+  if (isSystemAdmin(userEmail)) {
     return
   }
 
   if (session.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized")
   }
+}
+
+// Helper to require system admin specifically and return user info
+async function requireSystemAdmin() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  const userEmail = await getUserEmail(session)
+
+  if (!isSystemAdmin(userEmail)) {
+    throw new Error("Unauthorized: Only system admins can perform this action")
+  }
+
+  return session.user
 }
 
 async function getObjectSize(url: string): Promise<number> {
@@ -118,7 +149,19 @@ export async function getAllUsers(page = 1, limit = 20, search = "") {
 }
 
 export async function getAllArenas(page = 1, limit = 20, excludeArchived = true) {
-  await requireAdmin()
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  // Get user email from session or database
+  const userEmail = await getUserEmail(session)
+
+  // Check admin access
+  const isSysAdmin = isSystemAdmin(userEmail)
+  if (!isSysAdmin && session.user.role !== Role.ADMIN) {
+    throw new Error("Unauthorized")
+  }
 
   const skip = (page - 1) * limit
   const where: any = {}
@@ -156,6 +199,16 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
               }
             }
           }
+        },
+        // Include current user's membership if exists
+        members: {
+          where: { userId: session.user.id },
+          select: {
+            id: true,
+            hidden: true,
+            role: true
+          },
+          take: 1
         }
       }
     }),
@@ -196,7 +249,10 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
     const usage = llmUsage.find(u => u.arenaId === arena.id)
 
     // Remove huge markets object from result to keep payload small
-    const { markets, ...arenaData } = arena
+    const { markets, members, ...arenaData } = arena
+    
+    // Get current user's membership
+    const currentUserMembership = members[0] || null
 
     return {
       ...arenaData,
@@ -207,11 +263,12 @@ export async function getAllArenas(page = 1, limit = 20, excludeArchived = true)
       llm: {
         requests: usage?._count._all || 0,
         tokens: usage?._sum.tokens || 0
-      }
+      },
+      currentUserMembership
     }
   }))
 
-  return { arenas: arenasWithStorage, total, pages: Math.ceil(total / limit) }
+  return { arenas: arenasWithStorage, total, pages: Math.ceil(total / limit), isSystemAdmin: isSysAdmin }
 }
 
 export async function updateUserRole(userId: string, role: Role) {
@@ -414,4 +471,69 @@ export async function getBillingReport(from?: Date, to?: Date): Promise<BillingR
     console.error('Failed to fetch billing report:', error);
     return null;
   }
+}
+
+/**
+ * Join an arena as a hidden admin member
+ * Only accessible by system admins
+ */
+export async function joinArenaAsHiddenAdmin(arenaId: string) {
+  const user = await requireSystemAdmin()
+
+  // Check if already a member
+  const existing = await prisma.arenaMembership.findUnique({
+    where: { userId_arenaId: { userId: user.id, arenaId } }
+  })
+
+  if (existing) {
+    throw new Error("Already a member of this arena")
+  }
+
+  // Verify arena exists
+  const arena = await prisma.arena.findUnique({
+    where: { id: arenaId }
+  })
+
+  if (!arena) {
+    throw new Error("Arena not found")
+  }
+
+  // Create hidden admin membership
+  await prisma.arenaMembership.create({
+    data: {
+      userId: user.id,
+      arenaId,
+      role: ArenaRole.ADMIN,
+      hidden: true,
+      points: 1000
+    }
+  })
+
+  revalidatePath("/admin/arenas")
+  return { success: true }
+}
+
+/**
+ * Leave an arena (remove hidden admin membership)
+ * Only accessible by system admins
+ */
+export async function leaveArenaAsHiddenAdmin(arenaId: string) {
+  const user = await requireSystemAdmin()
+
+  // Check if member exists
+  const membership = await prisma.arenaMembership.findUnique({
+    where: { userId_arenaId: { userId: user.id, arenaId } }
+  })
+
+  if (!membership) {
+    throw new Error("Not a member of this arena")
+  }
+
+  // Delete the membership
+  await prisma.arenaMembership.delete({
+    where: { id: membership.id }
+  })
+
+  revalidatePath("/admin/arenas")
+  return { success: true }
 }

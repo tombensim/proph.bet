@@ -5,15 +5,15 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Link } from "@/lib/navigation"
 import { formatDistanceToNow } from "date-fns"
-import { Coins, AlertTriangle, Zap, Bot, TrendingUp, TrendingDown, ExternalLink } from "lucide-react"
+import { Coins, AlertTriangle, Bot, ExternalLink } from "lucide-react"
 import { ApproveMarketButton } from "./ApproveMarketButton"
 import { useTranslations } from 'next-intl';
 import { generateGradient } from "@/lib/utils"
+import { getPolymarketEventUrl } from "@/lib/polymarket-service"
 import { ShareMarketButton } from "./ShareMarketButton"
-import { BetForm } from "./BetForm"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { useState } from "react"
+import { InlineBetOptions } from "./InlineBetOptions"
+import { CompactBetForm } from "./CompactBetForm"
+import { useState, useCallback } from "react"
 
 interface MarketWithDetails extends Market {
   creator: User
@@ -31,15 +31,38 @@ interface MarketCardProps {
   isAdmin?: boolean
   userPoints?: number
   feePercent?: number
+  seedLiquidity?: number
 }
 
-export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: MarketCardProps) {
+export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0, seedLiquidity = 50 }: MarketCardProps) {
   const t = useTranslations('Markets');
   const hasPositions = market.userBets && market.userBets.length > 0
+  
+  // Calculate total points in the market from options liquidity
+  // Subtract initial liquidity (seedLiquidity per option) to get actual bet volume
+  const totalLiquidity = market.options.reduce((sum, option) => sum + option.liquidity, 0)
+  const initialTotalLiquidity = market.options.length * seedLiquidity
+  const totalPoints = Math.round(totalLiquidity - initialTotalLiquidity)
   const coverImage = market.assets?.find(a => a.type === "IMAGE")?.url
   const isPending = market.approved === false
   const isExpired = market.status === 'OPEN' && new Date() > new Date(market.resolutionDate)
-  const [isBetOpen, setIsBetOpen] = useState(false)
+  
+  // Inline betting state
+  const [bettingOption, setBettingOption] = useState<{ optionId: string; side: "yes" | "no" } | null>(null)
+  
+  const handleSelectBet = useCallback((optionId: string, side: "yes" | "no") => {
+    setBettingOption({ optionId, side })
+  }, [])
+  
+  const handleCloseBet = useCallback(() => {
+    setBettingOption(null)
+  }, [])
+  
+  const selectedOption = bettingOption 
+    ? market.options.find(o => o.id === bettingOption.optionId) 
+    : null
+  
+  const canBet = market.status === "OPEN" && !isPending && !isExpired
   
   let probabilityDisplay = null
   
@@ -72,7 +95,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
     : `/markets/${market.id}`
 
   return (
-    <Card className={`h-full transition-all flex flex-col overflow-hidden relative group hover:shadow-md ${hasPositions ? 'border-blue-200 bg-blue-50/20' : ''} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''}`}>
+    <Card className={`h-full transition-all flex flex-col overflow-hidden relative group ${isExpired ? '' : 'hover:shadow-md'} ${hasPositions ? 'border-blue-200 bg-blue-50/20' : ''} ${isPending ? 'border-yellow-400 border-dashed bg-yellow-50/30' : ''} ${isExpired ? 'opacity-60 grayscale-[50%]' : ''}`}>
       {/* Navigation Link Overlay */}
       <Link href={href} className="absolute inset-0 z-0 focus:outline-none">
          <span className="sr-only">{market.title}</span>
@@ -88,8 +111,8 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
 
       {isExpired && !isPending && (
         <div className="absolute top-2 end-2 z-10">
-             <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-800 border-orange-200 shadow-sm">
-                 Expired
+             <Badge variant="secondary" className="gap-1 bg-red-100 text-red-700 border-red-300 shadow-md font-semibold">
+                 {t('expired')}
              </Badge>
         </div>
       )}
@@ -107,7 +130,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
       {/* Polymarket Badge Overlay */}
       {market.source === "POLYMARKET" && market.polymarketId && (
         <a 
-          href={`https://polymarket.com/market/${market.polymarketId}`}
+          href={getPolymarketEventUrl(market.polymarketId)}
           target="_blank"
           rel="noopener noreferrer"
           className="absolute top-2 left-2 z-10 pointer-events-auto"
@@ -149,14 +172,7 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
             {market.description}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
-           {/* Probability for Binary Markets */}
-           {probabilityDisplay && (
-             <div className="bg-background/50 p-3 rounded-lg border shadow-sm">
-               {probabilityDisplay}
-             </div>
-           )}
-
+        <CardContent className="space-y-3 relative z-10 pb-2">
            {/* User Positions Indicator */}
            {hasPositions && (
              <div className="flex flex-wrap gap-2">
@@ -176,9 +192,43 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
         </CardContent>
       </div>
       
+      {/* Inline Betting Section */}
+      {canBet && !bettingOption && (
+        <div className="relative z-20 pointer-events-auto border-t">
+          <InlineBetOptions
+            options={market.options}
+            marketType={market.type as "BINARY" | "MULTIPLE_CHOICE" | "NUMERIC_RANGE"}
+            onSelectBet={handleSelectBet}
+            coverImage={coverImage}
+          />
+        </div>
+      )}
+      
+      {/* Compact Bet Form (when option selected) */}
+      {canBet && bettingOption && selectedOption && (
+        <div className="relative z-20 pointer-events-auto border-t">
+          <CompactBetForm
+            marketId={market.id}
+            option={selectedOption}
+            side={bettingOption.side}
+            allOptions={market.options}
+            userPoints={userPoints}
+            feePercent={feePercent}
+            minBet={market.minBet || 10}
+            maxBet={market.maxBet || undefined}
+            coverImage={coverImage}
+            onClose={handleCloseBet}
+          />
+        </div>
+      )}
+      
       <CardFooter className="text-xs text-muted-foreground flex justify-between items-center border-t p-3 relative z-20 pointer-events-auto bg-card">
           <div className="flex flex-col sm:flex-row sm:gap-3 gap-1 min-w-0 flex-1 mr-2">
-             <span className="truncate">{t('betsCount', { count: market._count.bets })}</span>
+             <div className="flex items-center gap-2 sm:gap-3">
+               <span className="truncate">{t('betsCount', { count: market._count.bets })}</span>
+               <span className="text-muted-foreground/50">•</span>
+               <span className="truncate">{t('totalPoints', { count: totalPoints > 0 ? totalPoints : 0 })}</span>
+             </div>
              <span className="hidden sm:inline text-muted-foreground/50">•</span>
              <span className="truncate">{formatDistanceToNow(new Date(market.resolutionDate), { addSuffix: true })}</span>
           </div>
@@ -191,33 +241,6 @@ export function MarketCard({ market, isAdmin, userPoints = 0, feePercent = 0 }: 
                 variant="ghost"
                 className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
             />
-
-            {market.status === "OPEN" && !isPending && (
-                isExpired ? (
-                    <Button size="sm" variant="secondary" disabled className="h-9 px-4 shadow-sm shrink-0 font-medium opacity-70">
-                        Expired
-                    </Button>
-                ) : (
-                    <Dialog open={isBetOpen} onOpenChange={setIsBetOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm" variant="default" className="h-9 px-4 shadow-sm shrink-0 font-medium">
-                                <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" />
-                                Bet
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]" onClick={(e) => e.stopPropagation()}>
-                            <DialogHeader>
-                                <DialogTitle>{market.title}</DialogTitle>
-                            </DialogHeader>
-                            <BetForm 
-                                market={market}
-                                userPoints={userPoints}
-                                feePercent={feePercent}
-                            />
-                        </DialogContent>
-                    </Dialog>
-                )
-            )}
           </div>
       </CardFooter>
       

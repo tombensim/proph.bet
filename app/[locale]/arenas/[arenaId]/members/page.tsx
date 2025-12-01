@@ -19,9 +19,19 @@ export default async function MembersPage(props: PageProps) {
     const t = await getTranslations('Members');
     const tCommon = await getTranslations('Common');
     
-    if (!session?.user) return redirect("/auth/signin")
+    if (!session?.user?.id) return redirect("/auth/signin")
     
     const { arenaId } = await props.params
+    
+    // Get user email from session or database for system admin check
+    let userEmail = session.user.email
+    if (!userEmail) {
+        const dbUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { email: true }
+        })
+        userEmail = dbUser?.email ?? undefined
+    }
     
     // Check if admin
     const membership = await prisma.arenaMembership.findUnique({
@@ -32,7 +42,7 @@ export default async function MembersPage(props: PageProps) {
     const isGlobalOrSystemAdmin = 
         session.user.role === "ADMIN" || 
         session.user.role === "GLOBAL_ADMIN" || 
-        isSystemAdmin(session.user.email)
+        isSystemAdmin(userEmail)
     
     if (membership?.role !== "ADMIN" && !isGlobalOrSystemAdmin) {
         return (

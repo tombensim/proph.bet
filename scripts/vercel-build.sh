@@ -23,6 +23,13 @@ npx prisma generate
 echo "Running prisma db push..."
 npx prisma db push --accept-data-loss
 
+# Seed the database for test branch only (will skip if already seeded)
+if [ "$VERCEL_GIT_COMMIT_REF" = "test" ]; then
+  echo "Running database seed for test environment..."
+  ALLOW_SEED=true npx tsx prisma/seed.ts || echo "⚠️ Seeding encountered an issue (may already be seeded)"
+fi
+
 echo "Running next build..."
 npx next build
+
 

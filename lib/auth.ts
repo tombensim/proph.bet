@@ -14,7 +14,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   secret: process.env.AUTH_SECRET,
   providers: [
-    Google,
+    Google({
+      allowDangerousEmailAccountLinking: true,
+    }),
     ...(process.env.NODE_ENV === "development" ? [
       Credentials({
         name: "Dev Login",
@@ -47,6 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.email = user.email // Explicitly set email in token
 
         // Auto-assign admin role to tombensim@gmail.com
         if (user.email === "tombensim@gmail.com") {
@@ -88,10 +91,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token
     },
     async session({ session, token }) {
-      console.log("Session Callback", { sessionUser: session?.user?.email, tokenId: token?.id })
+      console.log("Session Callback", { sessionUser: session?.user?.email, tokenId: token?.id, tokenEmail: token?.email })
       if (session.user && token.id) {
         session.user.id = token.id as string
         session.user.role = token.role as Role
+        // Explicitly set email from token to ensure it's available in server actions
+        if (token.email) {
+          session.user.email = token.email as string
+        }
         
         // For dev mode, ensure user exists in DB
         if (process.env.NODE_ENV === "development" && session.user.email) {
