@@ -32,7 +32,7 @@ export default function ProfileScreen() {
   const winRate = totalBets > 0 ? ((wonBets / totalBets) * 100).toFixed(1) : '0';
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} testID="profile-screen">
       {/* Profile Header */}
       <View style={styles.header}>
         {user?.image ? (
@@ -165,6 +165,7 @@ export default function ProfileScreen() {
             pressed && styles.menuItemPressed
           ]} 
           onPress={handleSignOut}
+          testID="logout-button"
         >
           <View style={[styles.menuIconContainer, styles.signOutIcon]}>
             <Ionicons name="log-out-outline" size={20} color={theme.colors.destructive} />

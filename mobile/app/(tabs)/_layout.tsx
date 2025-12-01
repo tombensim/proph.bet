@@ -51,6 +51,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />
           ),
+          tabBarTestID: 'tab-arenas',
         }}
       />
       <Tabs.Screen
@@ -66,6 +67,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications-outline" size={size} color={color} />
           ),
+          tabBarTestID: 'tab-activity',
         }}
       />
       <Tabs.Screen
@@ -75,6 +77,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),
+          tabBarTestID: 'tab-profile',
         }}
       />
     </Tabs>

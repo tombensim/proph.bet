@@ -40,6 +40,7 @@ export default function ArenasScreen() {
           pressed && styles.arenaCardPressed,
         ]}
         onPress={() => router.push(`/(tabs)/arenas/${item.id}`)}
+        testID={`arena-card-${item.id}`}
       >
         <View style={styles.arenaContent}>
           {item.logo && (
@@ -74,12 +75,13 @@ export default function ArenasScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="arenas-screen">
       <FlatList
         data={arenas}
         renderItem={renderArena}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        testID="arenas-list"
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
