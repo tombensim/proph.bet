@@ -54,5 +54,9 @@
     "@types/react": "~19.0.10",
     "typescript": "~5.8.3"
   },
+  "overrides": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
   "private": true
 }

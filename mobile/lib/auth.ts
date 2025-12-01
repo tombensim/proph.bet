@@ -4,20 +4,18 @@ import {
 } from '@react-native-google-signin/google-signin';
 import { api } from './api';
 
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+// TODO: Fix env var loading in Expo - currently hardcoded due to workspace issues
+// These should come from EXPO_PUBLIC_GOOGLE_CLIENT_ID and EXPO_PUBLIC_API_URL
+const GOOGLE_CLIENT_ID = '663244529078-5kip5f6e4dir5fj32nbuj8v1k5ork7es.apps.googleusercontent.com';
 const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || GOOGLE_CLIENT_ID;
-
-// Log the client ID for debugging (first 30 chars)
-console.log('[GoogleSignIn] webClientId:', GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID.substring(0, 30) + '...' : 'NOT SET');
+const API_URL = 'https://test.proph.bet/api/v1';
 
 // Configure Google Sign-In
 GoogleSignin.configure({
-  webClientId: GOOGLE_CLIENT_ID, // Web client ID for ID token
+  webClientId: GOOGLE_CLIENT_ID,
   iosClientId: GOOGLE_CLIENT_ID_IOS,
   offlineAccess: false,
 });
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 // Check if running in development mode (Expo dev server)
 // __DEV__ is a global provided by React Native that's true when running via `npx expo start`
@@ -90,7 +88,6 @@ class AuthManager {
     this.setState({ isLoading: true });
 
     try {
-      console.log('[Auth] Calling API:', `${API_URL}/auth/token`);
       const response = await fetch(
         `${API_URL}/auth/token`,
         {
@@ -104,7 +101,6 @@ class AuthManager {
       );
 
       const data = await response.json();
-      console.log('[Auth] API Response:', JSON.stringify(data).substring(0, 200));
 
       if (data.success && data.data) {
         await api.setTokens(data.data.accessToken, data.data.refreshToken);
@@ -116,14 +112,12 @@ class AuthManager {
         return true;
       }
 
-      // Return error info for debugging
-      console.log('[Auth] Auth failed:', data.error || 'Unknown error');
       this.setState({ isLoading: false });
       return false;
-    } catch (error: any) {
-      console.error('[Auth] Sign in exception:', error?.message || error);
+    } catch (error) {
+      console.error('Sign in failed:', error);
       this.setState({ isLoading: false });
-      throw error; // Re-throw so the UI can show it
+      return false;
     }
   }
 
@@ -183,30 +177,26 @@ export const authManager = new AuthManager();
 
 // Google Auth hook - uses native Google Sign-In
 export function useGoogleAuth() {
-  const signIn = async (): Promise<{ idToken: string | null; debug: string }> => {
+  const signIn = async (): Promise<{ idToken: string | null }> => {
     try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       
-      // Debug: show full response structure
-      const debugInfo = `type: ${response.type}, hasIdToken: ${!!response.data?.idToken}, user: ${response.data?.user?.email || 'none'}, webClientId: ${GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID.substring(0, 25) + '...' : 'NOT SET!'}`;
-      
       if (response.type === 'success' && response.data.idToken) {
-        return { idToken: response.data.idToken, debug: debugInfo };
+        return { idToken: response.data.idToken };
       }
-      return { idToken: null, debug: debugInfo };
+      return { idToken: null };
     } catch (error: any) {
-      let errorMsg = 'Unknown error';
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        errorMsg = 'User cancelled';
+        console.log('User cancelled sign in');
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        errorMsg = 'Sign in in progress';
+        console.log('Sign in already in progress');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        errorMsg = 'Play services not available';
+        console.log('Play services not available');
       } else {
-        errorMsg = error?.message || String(error);
+        console.error('Google sign in error:', error);
       }
-      return { idToken: null, debug: `Error: ${errorMsg}\n\nwebClientId: ${GOOGLE_CLIENT_ID ? GOOGLE_CLIENT_ID.substring(0, 25) + '...' : 'NOT SET!'}` };
+      return { idToken: null };
     }
   };
 

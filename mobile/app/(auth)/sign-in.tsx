@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, TextInput, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, TextInput, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGoogleAuth, authManager, isDevMode } from '@/lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '@/lib/theme';
+
+const chamiImage = require('@/assets/images/chami-beige.png');
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -16,19 +18,17 @@ export default function SignInScreen() {
     setIsLoading(true);
     try {
       const result = await signIn();
-      Alert.alert('Debug 1', `ID Token: ${result.idToken ? 'YES' : 'NO'}\n\nDetails: ${result.debug}`);
       
       if (result.idToken) {
         const success = await authManager.signInWithGoogle(result.idToken);
-        Alert.alert('Debug 2', `Backend auth success: ${success}`);
         
         if (success) {
           router.replace('/(tabs)');
           return;
         }
       }
-    } catch (error: any) {
-      Alert.alert('Debug Error', error?.message || String(error));
+    } catch (error) {
+      console.error('Google sign-in error:', error);
     }
     setIsLoading(false);
   }
@@ -49,19 +49,21 @@ export default function SignInScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoEmoji}>🔮</Text>
+        <View style={styles.mascotContainer}>
+          <Image 
+            source={chamiImage}
+            style={styles.mascot}
+            resizeMode="contain"
+          />
         </View>
-        <Text style={styles.title}>proph.bet</Text>
-        <Text style={styles.subtitle}>Prediction Markets for Everyone</Text>
+        <Text style={styles.title}>Welcome to proph.bet</Text>
+        <Text style={styles.subtitle}>
+          Join your colleagues in friendly betting competitions.{'\n'}
+          Predict outcomes, climb the leaderboard, and claim the glory!
+        </Text>
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.description}>
-          Create and bet on prediction markets within your community. Track
-          your predictions, compete on leaderboards, and prove your forecasting
-          skills.
-        </Text>
 
         <Pressable
           style={({ pressed }) => [
@@ -132,41 +134,31 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: theme.spacing['4xl'],
+    marginBottom: theme.spacing['3xl'],
   },
-  logoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: theme.borderRadius['2xl'],
-    backgroundColor: theme.colors.muted,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.md,
+  mascotContainer: {
+    marginBottom: theme.spacing.xl,
   },
-  logoEmoji: {
-    fontSize: 56,
+  mascot: {
+    width: 128,
+    height: 128,
   },
   title: {
-    fontSize: theme.typography.fontSize['4xl'],
+    fontSize: theme.typography.fontSize['3xl'],
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.foreground,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: theme.typography.fontSize.lg,
-    color: theme.colors.mutedForeground,
-  },
-  content: {
-    alignItems: 'center',
-  },
-  description: {
     fontSize: theme.typography.fontSize.base,
     color: theme.colors.mutedForeground,
     textAlign: 'center',
-    marginBottom: theme.spacing['3xl'],
     lineHeight: theme.typography.fontSize.base * theme.typography.lineHeight.relaxed,
     maxWidth: 320,
+  },
+  content: {
+    alignItems: 'center',
   },
   googleButton: {
     flexDirection: 'row',
