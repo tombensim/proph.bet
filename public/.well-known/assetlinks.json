@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.prophbet.app",
+      "sha256_cert_fingerprints": [
+        "81:8E:CA:8C:2D:B9:D0:12:3E:C8:56:EA:E9:93:83:B2:0C:5D:0F:B5:22:1F:44:F6:5D:B7:77:9A:13:62:B4:21"
+      ]
+    }
+  }
+]
+
