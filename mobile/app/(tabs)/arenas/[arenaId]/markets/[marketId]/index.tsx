@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { formatDistanceToNow, format } from 'date-fns';
 import { generateGradientColors } from '@proph-bet/shared/utils';
 import { theme } from '@/lib/theme';
+import { ResolveMarketModal } from '@/components/ResolveMarketModal';
 
 export default function MarketScreen() {
   const { marketId, arenaId } = useLocalSearchParams<{
@@ -27,6 +28,7 @@ export default function MarketScreen() {
   const placeBetMutation = usePlaceBet();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState('');
+  const [showResolveModal, setShowResolveModal] = useState(false);
 
   if (isLoading || !market) {
     return (
@@ -83,7 +85,7 @@ export default function MarketScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} bounces={false}>
+    <ScrollView style={styles.container} bounces={false} testID="market-details-screen">
       <Stack.Screen 
         options={{ 
           title: '',
@@ -168,6 +170,7 @@ export default function MarketScreen() {
                 ]}
                 onPress={() => canBet && setSelectedOption(option.id)}
                 disabled={!canBet}
+                testID={`bet-option-${option.id}`}
               >
                 <View style={styles.optionContent}>
                   <View style={styles.optionLeft}>
@@ -221,6 +224,7 @@ export default function MarketScreen() {
                   keyboardType="numeric"
                   value={betAmount}
                   onChangeText={setBetAmount}
+                  testID="bet-amount-input"
                 />
                 <Text style={styles.inputSuffix}>pts</Text>
               </View>
@@ -231,6 +235,7 @@ export default function MarketScreen() {
                 ]}
                 onPress={handlePlaceBet}
                 disabled={!selectedOption || !betAmount || placeBetMutation.isPending}
+                testID="place-bet-button"
               >
                 <Ionicons name="flash" size={16} color={theme.colors.primaryForeground} />
                 <Text style={styles.betButtonText}>
@@ -246,6 +251,26 @@ export default function MarketScreen() {
                 </Text>
               </View>
             )}
+          </View>
+        )}
+
+        {/* Resolve Market Section - Show when market is expired */}
+        {isExpired && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Resolve Market</Text>
+            <View style={styles.resolveBox}>
+              <Ionicons name="time-outline" size={24} color={theme.colors.warning} />
+              <Text style={styles.resolveText}>
+                This market has expired and is pending resolution.
+              </Text>
+            </View>
+            <Pressable
+              style={styles.resolveButton}
+              onPress={() => setShowResolveModal(true)}
+            >
+              <Ionicons name="checkmark-circle" size={20} color={theme.colors.destructiveForeground} />
+              <Text style={styles.resolveButtonText}>Resolve Market</Text>
+            </Pressable>
           </View>
         )}
 
@@ -267,6 +292,15 @@ export default function MarketScreen() {
           </View>
         )}
       </View>
+
+      {/* Resolve Market Modal */}
+      <ResolveMarketModal
+        visible={showResolveModal}
+        onClose={() => setShowResolveModal(false)}
+        marketId={marketId}
+        marketTitle={market.title}
+        options={market.options}
+      />
     </ScrollView>
   );
 }
@@ -542,5 +576,36 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.base,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.primary,
+  },
+  resolveBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.warningLight,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+  },
+  resolveText: {
+    flex: 1,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.foreground,
+    lineHeight: theme.typography.fontSize.sm * 1.5,
+  },
+  resolveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.destructive,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  resolveButtonText: {
+    color: theme.colors.destructiveForeground,
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
   },
 });

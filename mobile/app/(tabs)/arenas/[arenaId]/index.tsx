@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { theme } from '@/lib/theme';
 import { InlineBetOptions } from '@/components/InlineBetOptions';
 import { CompactBetForm } from '@/components/CompactBetForm';
 import { CreateMarketModal } from '@/components/CreateMarketModal';
+import { MarketFilters, useMarketFilters, filterMarkets } from '@/components/MarketFilters';
 
 interface Market {
   id: string;
@@ -38,6 +39,16 @@ export default function ArenaScreen() {
   const { data: arena } = useArena(arenaId);
   const { data: markets, isLoading, refetch, isRefetching } = useArenaMarkets(arenaId);
   
+  // Filter state
+  const {
+    searchQuery,
+    setSearchQuery,
+    selectedStatuses,
+    toggleStatus,
+    showMyBets,
+    toggleMyBets,
+  } = useMarketFilters();
+  
   // Create market modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
   
@@ -47,6 +58,12 @@ export default function ArenaScreen() {
     optionId: string;
     side: 'yes' | 'no';
   } | null>(null);
+  
+  // Apply filters to markets
+  const filteredMarkets = useMemo(() => {
+    if (!markets) return [];
+    return filterMarkets(markets, searchQuery, selectedStatuses);
+  }, [markets, searchQuery, selectedStatuses]);
 
   const handleSelectBet = useCallback((marketId: string, optionId: string, side: 'yes' | 'no') => {
     setBettingState({ marketId, optionId, side });
@@ -102,12 +119,13 @@ export default function ArenaScreen() {
       : null;
 
     return (
-      <View style={styles.marketCard}>
+      <View style={styles.marketCard} testID={`market-card-${item.id}`}>
         <Pressable
           style={({ pressed }) => [
             pressed && styles.marketCardPressed,
           ]}
           onPress={() => router.push(`/(tabs)/arenas/${arenaId}/markets/${item.id}`)}
+          testID={`market-card-pressable-${item.id}`}
         >
           {/* Cover Image or Gradient */}
           {coverImage ? (
@@ -213,7 +231,7 @@ export default function ArenaScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="arena-details-screen">
       <Stack.Screen
         options={{
           title: arena?.name || 'Arena',
@@ -240,8 +258,16 @@ export default function ArenaScreen() {
         </View>
       )}
 
+      {/* Filters */}
+      <MarketFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedStatuses={selectedStatuses}
+        onStatusToggle={toggleStatus}
+      />
+
       <FlatList
-        data={markets}
+        data={filteredMarkets}
         renderItem={renderMarket}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
@@ -256,11 +282,20 @@ export default function ArenaScreen() {
           !isLoading ? (
             <View style={styles.empty}>
               <View style={styles.emptyIconContainer}>
-                <Ionicons name="bar-chart-outline" size={48} color={theme.colors.mutedForeground} />
+                <Ionicons 
+                  name={markets && markets.length > 0 ? "search-outline" : "bar-chart-outline"} 
+                  size={48} 
+                  color={theme.colors.mutedForeground} 
+                />
               </View>
-              <Text style={styles.emptyText}>No markets yet</Text>
+              <Text style={styles.emptyText}>
+                {markets && markets.length > 0 ? 'No matches found' : 'No markets yet'}
+              </Text>
               <Text style={styles.emptySubtext}>
-                Markets will appear here once they're created
+                {markets && markets.length > 0 
+                  ? 'Try adjusting your search or filters'
+                  : 'Markets will appear here once they\'re created'
+                }
               </Text>
             </View>
           ) : null
