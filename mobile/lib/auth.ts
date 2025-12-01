@@ -234,6 +234,11 @@ function useNativeGoogleAuth() {
   const signIn = async (): Promise<{ idToken: string | null }> => {
     try {
       await GoogleSignin.hasPlayServices();
+      
+      // Sign out first to clear cached user and show account picker
+      // This allows the user to choose which Google account to use
+      await GoogleSignin.signOut();
+      
       const response = await GoogleSignin.signIn();
 
       if (response.type === 'success' && response.data.idToken) {
