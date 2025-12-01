@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,11 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  PermissionsAndroid,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
+import * as ExpoImagePicker from 'expo-image-picker';
+import { launchCamera, launchImageLibrary, CameraOptions, ImageLibraryOptions } from 'react-native-image-picker';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { theme } from '@/lib/theme';
 import { useCreateMarket, CreateMarketData } from '@/hooks/useArenas';
@@ -55,6 +57,9 @@ export function CreateMarketModal({ visible, onClose, arenaId }: CreateMarketMod
   
   // AI generation state
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  
+  // Image picker modal state
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
   const createMarket = useCreateMarket(arenaId);
 
@@ -103,28 +108,115 @@ export function CreateMarketModal({ visible, onClose, arenaId }: CreateMarketMod
     }
   };
 
-  const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission Required', 'Please allow access to your photo library to add a cover image.');
-      return;
-    }
+  const takePhoto = async () => {
+    try {
+      console.log('[Camera] Starting takePhoto with react-native-image-picker...');
+      
+      // Request camera permission on Android
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'Proph.bet needs access to your camera to take photos.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Permission Required', 'Camera permission is required to take photos.');
+          return;
+        }
+      }
+      
+      const options: CameraOptions = {
+        mediaType: 'photo',
+        quality: 0.8,
+        saveToPhotos: false,
+        cameraType: 'back',
+      };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      setCoverImage({
-        uri: asset.uri,
-        type: asset.mimeType || 'image/jpeg',
+      launchCamera(options, (response) => {
+        console.log('[Camera] Response:', response.didCancel ? 'canceled' : 'success');
+        
+        if (response.didCancel) {
+          console.log('[Camera] User cancelled');
+          return;
+        }
+        
+        if (response.errorCode) {
+          console.error('[Camera] Error:', response.errorCode, response.errorMessage);
+          Alert.alert('Camera Error', response.errorMessage || 'Failed to open camera');
+          return;
+        }
+        
+        if (response.assets && response.assets[0]) {
+          const asset = response.assets[0];
+          console.log('[Camera] Got image:', asset.uri);
+          setCoverImage({
+            uri: asset.uri!,
+            type: asset.type || 'image/jpeg',
+          });
+        }
       });
+    } catch (error) {
+      console.error('[Camera] Error:', error);
+      Alert.alert('Camera Error', `Failed to open camera: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
+
+  const pickFromLibrary = async () => {
+    try {
+      const options: ImageLibraryOptions = {
+        mediaType: 'photo',
+        quality: 0.8,
+        selectionLimit: 1,
+      };
+
+      launchImageLibrary(options, (response) => {
+        if (response.didCancel) {
+          return;
+        }
+        
+        if (response.errorCode) {
+          Alert.alert('Error', response.errorMessage || 'Failed to open photo library');
+          return;
+        }
+        
+        if (response.assets && response.assets[0]) {
+          const asset = response.assets[0];
+          setCoverImage({
+            uri: asset.uri!,
+            type: asset.type || 'image/jpeg',
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Library error:', error);
+      Alert.alert('Error', 'Failed to open photo library. Please try again.');
+    }
+  };
+
+  const pickImage = () => {
+    setShowImagePickerModal(true);
+  };
+
+  const handleImagePickerSelect = useCallback((action: 'camera' | 'library') => {
+    // Close modal first
+    setShowImagePickerModal(false);
+    
+    // Wait for modal to fully close, then trigger the action
+    // Using 300ms to ensure fade animation completes
+    setTimeout(() => {
+      if (action === 'camera') {
+        takePhoto();
+      } else {
+        pickFromLibrary();
+      }
+    }, 300);
+  }, []);
 
   const uploadImage = async (): Promise<string | null> => {
     if (!coverImage) return null;
@@ -541,6 +633,47 @@ export function CreateMarketModal({ visible, onClose, arenaId }: CreateMarketMod
           <View style={styles.bottomSpace} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Image Picker Modal */}
+      <Modal
+        visible={showImagePickerModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowImagePickerModal(false)}
+      >
+        <Pressable 
+          style={styles.imagePickerOverlay} 
+          onPress={() => setShowImagePickerModal(false)}
+        >
+          <View style={styles.imagePickerSheet}>
+            <Text style={styles.imagePickerTitle}>Add Cover Image</Text>
+            <Text style={styles.imagePickerSubtitle}>Choose how you want to add a cover image</Text>
+            
+            <Pressable 
+              style={styles.imagePickerOption}
+              onPress={() => handleImagePickerSelect('camera')}
+            >
+              <Ionicons name="camera-outline" size={24} color={theme.colors.foreground} />
+              <Text style={styles.imagePickerOptionText}>Take Photo</Text>
+            </Pressable>
+            
+            <Pressable 
+              style={styles.imagePickerOption}
+              onPress={() => handleImagePickerSelect('library')}
+            >
+              <Ionicons name="images-outline" size={24} color={theme.colors.foreground} />
+              <Text style={styles.imagePickerOptionText}>Choose from Library</Text>
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.imagePickerOption, styles.imagePickerCancel]}
+              onPress={() => setShowImagePickerModal(false)}
+            >
+              <Text style={styles.imagePickerCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </Modal>
   );
 }
@@ -788,5 +921,56 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: 40,
+  },
+  // Image Picker Modal
+  imagePickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  imagePickerSheet: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: theme.borderRadius['2xl'],
+    borderTopRightRadius: theme.borderRadius['2xl'],
+    padding: theme.spacing.xl,
+    paddingBottom: theme.spacing['2xl'],
+  },
+  imagePickerTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.foreground,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  imagePickerSubtitle: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  imagePickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.sm,
+  },
+  imagePickerOptionText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.foreground,
+  },
+  imagePickerCancel: {
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  imagePickerCancelText: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.mutedForeground,
+    textAlign: 'center',
   },
 });
