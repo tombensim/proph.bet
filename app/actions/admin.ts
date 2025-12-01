@@ -8,15 +8,30 @@ import { s3Client, BUCKET_NAME } from "@/lib/s3"
 import { HeadObjectCommand } from "@aws-sdk/client-s3"
 import { isSystemAdmin } from "@/lib/roles"
 
+// Helper to get user email from session or database
+async function getUserEmail(session: { user: { id: string; email?: string | null } }) {
+  if (session.user.email) {
+    return session.user.email
+  }
+  // Fallback: look up email from database
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { email: true }
+  })
+  return dbUser?.email ?? undefined
+}
+
 // Helper to ensure admin access
 async function requireAdmin() {
   const session = await auth()
-  if (!session?.user) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized")
   }
 
+  const userEmail = await getUserEmail(session)
+
   // Allow system admin regardless of role
-  if (isSystemAdmin(session.user.email)) {
+  if (isSystemAdmin(userEmail)) {
     return
   }
 
@@ -32,7 +47,9 @@ async function requireSystemAdmin() {
     throw new Error("Unauthorized")
   }
 
-  if (!isSystemAdmin(session.user.email)) {
+  const userEmail = await getUserEmail(session)
+
+  if (!isSystemAdmin(userEmail)) {
     throw new Error("Unauthorized: Only system admins can perform this action")
   }
 
@@ -133,12 +150,15 @@ export async function getAllUsers(page = 1, limit = 20, search = "") {
 
 export async function getAllArenas(page = 1, limit = 20, excludeArchived = true) {
   const session = await auth()
-  if (!session?.user) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized")
   }
 
+  // Get user email from session or database
+  const userEmail = await getUserEmail(session)
+
   // Check admin access
-  const isSysAdmin = isSystemAdmin(session.user.email)
+  const isSysAdmin = isSystemAdmin(userEmail)
   if (!isSysAdmin && session.user.role !== Role.ADMIN) {
     throw new Error("Unauthorized")
   }

@@ -7,12 +7,22 @@ import { Role, ArenaRole } from "@prisma/client"
 
 export async function getUsersAction(query: string = "", arenaId?: string, userIds?: string[]) {
   const session = await auth()
-  if (!session?.user) return []
+  if (!session?.user?.id) return []
+
+  // Get user email from session or database
+  let userEmail = session.user.email
+  if (!userEmail) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true }
+    })
+    userEmail = dbUser?.email ?? undefined
+  }
 
   const isGlobalOrSystemAdmin = 
     session.user.role === Role.ADMIN || 
     session.user.role === Role.GLOBAL_ADMIN || 
-    isSystemAdmin(session.user.email)
+    isSystemAdmin(userEmail)
 
   // Special case: Fetch specific users by ID (for pre-filling selections)
   if (userIds && userIds.length > 0) {

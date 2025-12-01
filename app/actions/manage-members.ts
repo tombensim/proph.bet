@@ -13,7 +13,23 @@ export async function addMemberAction(email: string, arenaId: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
-  const isSysAdmin = isSystemAdmin(session.user.email)
+  // Get the user's email - try session first, then look up from DB
+  let userEmail = session.user.email
+  if (!userEmail) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true }
+    })
+    userEmail = dbUser?.email ?? undefined
+  }
+
+  console.log("addMemberAction auth check", { 
+    userId: session.user.id, 
+    sessionEmail: session.user.email,
+    resolvedEmail: userEmail 
+  })
+
+  const isSysAdmin = isSystemAdmin(userEmail)
 
   // Check requester role
   const requesterMembership = await prisma.arenaMembership.findUnique({
@@ -22,6 +38,13 @@ export async function addMemberAction(email: string, arenaId: string) {
   })
 
   const isArenaAdmin = requesterMembership?.role === "ADMIN"
+
+  console.log("addMemberAction permission check", { 
+    isArenaAdmin, 
+    isSysAdmin, 
+    userEmail,
+    membershipRole: requesterMembership?.role 
+  })
 
   if (!isArenaAdmin && !isSysAdmin) {
     throw new Error("Unauthorized: Only arena admins can invite members")
@@ -152,7 +175,23 @@ export async function createPublicInviteAction(arenaId: string, expiresInHours: 
     const session = await auth()
     if (!session?.user?.id) throw new Error("Unauthorized")
 
-    const isSysAdmin = isSystemAdmin(session.user.email)
+    // Get the user's email - try session first, then look up from DB
+    let userEmail = session.user.email
+    if (!userEmail) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { email: true }
+      })
+      userEmail = dbUser?.email ?? undefined
+    }
+
+    console.log("createPublicInviteAction auth check", { 
+      userId: session.user.id, 
+      sessionEmail: session.user.email,
+      resolvedEmail: userEmail 
+    })
+
+    const isSysAdmin = isSystemAdmin(userEmail)
 
     // Check admin
     const requesterMembership = await prisma.arenaMembership.findUnique({
@@ -160,6 +199,13 @@ export async function createPublicInviteAction(arenaId: string, expiresInHours: 
     })
 
     const isArenaAdmin = requesterMembership?.role === "ADMIN"
+
+    console.log("createPublicInviteAction permission check", { 
+      isArenaAdmin, 
+      isSysAdmin, 
+      userEmail,
+      membershipRole: requesterMembership?.role 
+    })
 
     if (!isArenaAdmin && !isSysAdmin) {
       throw new Error("Unauthorized: Only arena admins can create invites")
@@ -191,7 +237,17 @@ export async function revokeInvitationAction(invitationId: string) {
     const session = await auth()
     if (!session?.user?.id) throw new Error("Unauthorized")
 
-    const isSysAdmin = isSystemAdmin(session.user.email)
+    // Get the user's email - try session first, then look up from DB
+    let userEmail = session.user.email
+    if (!userEmail) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { email: true }
+      })
+      userEmail = dbUser?.email ?? undefined
+    }
+
+    const isSysAdmin = isSystemAdmin(userEmail)
 
     const invitation = await prisma.invitation.findUnique({
         where: { id: invitationId },
@@ -221,13 +277,23 @@ export async function toggleMemberVisibilityAction(arenaId: string, userId: stri
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
+  // Get the user's email - try session first, then look up from DB
+  let userEmail = session.user.email
+  if (!userEmail) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true }
+    })
+    userEmail = dbUser?.email ?? undefined
+  }
+
   const requesterMembership = await prisma.arenaMembership.findUnique({
     where: { userId_arenaId: { userId: session.user.id, arenaId } }
   })
 
   const isArenaAdmin = requesterMembership?.role === ArenaRole.ADMIN
   const isGlobalAdmin = session.user.role === Role.GLOBAL_ADMIN || session.user.role === Role.ADMIN
-  const isSysAdmin = isSystemAdmin(session.user.email)
+  const isSysAdmin = isSystemAdmin(userEmail)
 
   if (!isArenaAdmin && !isGlobalAdmin && !isSysAdmin) {
     throw new Error("Unauthorized")
@@ -251,13 +317,23 @@ export async function updateMemberRoleAction(arenaId: string, userId: string, ro
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
+  // Get the user's email - try session first, then look up from DB
+  let userEmail = session.user.email
+  if (!userEmail) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true }
+    })
+    userEmail = dbUser?.email ?? undefined
+  }
+
   const requesterMembership = await prisma.arenaMembership.findUnique({
     where: { userId_arenaId: { userId: session.user.id, arenaId } }
   })
 
   const isArenaAdmin = requesterMembership?.role === ArenaRole.ADMIN
   const isGlobalAdmin = session.user.role === Role.GLOBAL_ADMIN || session.user.role === Role.ADMIN
-  const isSysAdmin = isSystemAdmin(session.user.email)
+  const isSysAdmin = isSystemAdmin(userEmail)
 
   if (!isArenaAdmin && !isGlobalAdmin && !isSysAdmin) {
     throw new Error("Unauthorized")

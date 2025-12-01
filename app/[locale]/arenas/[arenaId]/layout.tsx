@@ -16,8 +16,18 @@ export default async function ArenaLayout({ children, params }: ArenaLayoutProps
 
   const { arenaId } = await params
 
+  // Get user email from session or database for system admin check
+  let userEmail = session.user.email
+  if (!userEmail) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true }
+    })
+    userEmail = dbUser?.email ?? undefined
+  }
+
   // System admins can access any arena
-  const isSysAdmin = isSystemAdmin(session.user.email)
+  const isSysAdmin = isSystemAdmin(userEmail)
 
   // Verify membership (unless system admin)
   if (!isSysAdmin) {
